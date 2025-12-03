@@ -54,8 +54,7 @@ import {
 
 const storyLinks = [
   { href: '/about', label: 'Our Story' },
-  { href: '/quality', label: 'Quality' },
-  { href: '/faq', label: 'FAQ' },
+  { href: '/quality', label: 'Quality' }
 ];
 
 const productCategories = [
@@ -418,7 +417,18 @@ export function Header() {
               >
                 Contact
               </Link>
+              
+              <Link
+              href="/FAQ"
+              className="px-8 py-2 text-2xl font-bold text-primary-nav-foreground hover:bg-black/5"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              FAQ
+            </Link>
             </nav>
+
+          
+
 
             <div className="flex items-center gap-2">
               <Link href="/cart">

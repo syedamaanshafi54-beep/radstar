@@ -67,7 +67,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const salePrice = selectedVariant?.salePrice ?? product.salePrice;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-full gap-4 md:gap-0">
+    <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-full gap-4 md:gap-0 pt-8">
       <div className="flex flex-col space-y-4 p-0 md:p-8 md:pt-0">
         <div className="relative aspect-square rounded-lg overflow-hidden flex-shrink-0">
           <Image

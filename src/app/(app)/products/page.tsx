@@ -109,7 +109,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const { toast } = useToast();
   const { addToCart } = useCart();
   const router = useRouter();
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
