@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -300,8 +301,12 @@ export function Header() {
                       <User className="h-6 w-6" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md sm:rounded-xl">
-                      <LoginForm onSuccess={() => setIsLoginOpen(false)} />
+                  <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
+                    <DialogHeader className="sr-only">
+                      <DialogTitle>Login</DialogTitle>
+                      <DialogDescription>Log in to your account to continue.</DialogDescription>
+                    </DialogHeader>
+                    <LoginForm onSuccess={() => setIsLoginOpen(false)} />
                   </DialogContent>
                 </Dialog>
               ))}
@@ -479,10 +484,14 @@ export function Header() {
                         <User className="h-6 w-6" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md sm:rounded-xl">
-                        <LoginForm
-                          onSuccess={() => setIsLoginOpen(false)}
-                        />
+                    <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
+                      <DialogHeader className="sr-only">
+                        <DialogTitle>Login</DialogTitle>
+                        <DialogDescription>Log in to your account to continue.</DialogDescription>
+                      </DialogHeader>
+                      <LoginForm
+                        onSuccess={() => setIsLoginOpen(false)}
+                      />
                     </DialogContent>
                   </Dialog>
                 ))}

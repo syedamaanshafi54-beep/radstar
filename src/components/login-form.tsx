@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -153,15 +154,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-none border-0 p-4">
-      <CardHeader className="p-2 pb-0">
-        <CardTitle className="text-lg sm:text-xl">Welcome Back</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
+    <Card className="w-full max-w-md shadow-none border-0 p-0">
+      <CardHeader className="p-0">
+        <CardTitle className="text-xl">Welcome Back</CardTitle>
+        <CardDescription className="text-sm">
           Choose your preferred login method.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 p-2">
+      <CardContent className="space-y-3 p-0 pt-3">
         <Button
           variant="outline"
           className="w-full h-10 text-sm"
@@ -180,7 +181,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
-          <div className="relative flex justify-center text-[10px] uppercase">
+          <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
               Or continue with
             </span>
@@ -313,8 +314,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex justify-center p-2 pt-1">
-        <p className="text-xs text-center text-muted-foreground">
+      <CardFooter className="flex justify-center p-0 pt-3">
+        <p className="text-sm text-center text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
             <DialogTrigger asChild>
@@ -323,7 +324,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               </button>
             </DialogTrigger>
             <DialogContent
-              className="sm:max-w-md sm:rounded-xl"
+              className="sm:max-w-md p-4 sm:p-5 rounded-xl"
             >
               <DialogHeader>
                 <DialogTitle>Sign Up</DialogTitle>
