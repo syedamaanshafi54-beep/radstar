@@ -153,18 +153,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-none border-0 sm:p-6 p-3">
-      <CardHeader className="sm:p-6 p-3 pb-2">
+    <Card className="w-full max-w-md shadow-none border-0 p-4">
+      <CardHeader className="p-2 pb-0">
         <CardTitle className="text-lg sm:text-xl">Welcome Back</CardTitle>
         <CardDescription className="text-xs sm:text-sm">
           Choose your preferred login method.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6">
+      <CardContent className="space-y-3 p-2">
         <Button
           variant="outline"
-          className="w-full h-10 sm:h-11 text-sm sm:text-base"
+          className="w-full h-10 text-sm"
           onClick={handleGoogleSignIn}
           disabled={isSubmitting}
         >
@@ -180,7 +180,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
-          <div className="relative flex justify-center text-[10px] sm:text-xs uppercase">
+          <div className="relative flex justify-center text-[10px] uppercase">
             <span className="bg-background px-2 text-muted-foreground">
               Or continue with
             </span>
@@ -188,7 +188,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </div>
 
         <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-9 sm:h-10 text-sm">
+          <TabsList className="grid w-full grid-cols-2 h-9 text-sm">
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
           </TabsList>
@@ -197,7 +197,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <Form {...emailForm}>
               <form
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-                className="space-y-3 sm:space-y-4 pt-3 sm:pt-4"
+                className="space-y-3 pt-2"
               >
                 <FormField
                   control={emailForm.control}
@@ -207,7 +207,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       <FormLabel className="text-sm">Email</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 sm:h-10 text-sm"
+                          className="h-9 text-sm"
                           placeholder="you@example.com"
                           {...field}
                           type="email"
@@ -228,7 +228,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                         <FormLabel className="text-sm">Password</FormLabel>
                         <Link
                           href="/forgot-password"
-                          className="text-xs sm:text-sm text-primary hover:underline"
+                          className="text-xs text-primary hover:underline"
                         >
                           Forgot Password?
                         </Link>
@@ -236,7 +236,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                       <FormControl>
                         <Input
-                          className="h-9 sm:h-10 text-sm"
+                          className="h-9 text-sm"
                           placeholder="••••••••"
                           {...field}
                           type="password"
@@ -253,7 +253,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   control={emailForm.control}
                   name="rememberMe"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3">
+                    <FormItem className="flex flex-row items-center space-x-2 space-y-0 pt-1">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -261,14 +261,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                           disabled={isSubmitting}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm">Remember this account</FormLabel>
+                      <FormLabel className="text-sm">Remember me</FormLabel>
                     </FormItem>
                   )}
                 />
 
                 <Button
                   type="submit"
-                  className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                  className="w-full h-10 text-sm"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && (
@@ -284,7 +284,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <Form {...phoneForm}>
               <form
                 onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
-                className="space-y-3 sm:space-y-4 pt-3 sm:pt-4"
+                className="space-y-3 pt-2"
               >
                 <FormField
                   control={phoneForm.control}
@@ -294,7 +294,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       <FormLabel className="text-sm">Phone Number</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 sm:h-10 text-sm"
+                          className="h-9 text-sm"
                           placeholder="+91 12345 67890"
                           {...field}
                         />
@@ -304,7 +304,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   )}
                 />
 
-                <Button className="w-full h-10 sm:h-11 text-sm sm:text-base">
+                <Button className="w-full h-10 text-sm">
                   Send Code
                 </Button>
               </form>
@@ -313,8 +313,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-3 p-3 sm:p-6 pt-0">
-        <p className="text-xs sm:text-sm text-center text-muted-foreground">
+      <CardFooter className="flex justify-center p-2 pt-1">
+        <p className="text-xs text-center text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
             <DialogTrigger asChild>
@@ -322,29 +322,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 Sign up
               </button>
             </DialogTrigger>
-
-            {/*
-              ⭐ FIX: MOBILE FULLSCREEN DIALOG ⭐
-              Fully visible from top to bottom on mobile.
-              No cutoff. No scroll needed.
-            */}
             <DialogContent
-              className="
-                sm:max-w-md 
-                sm:max-h-[90vh] 
-                px-4
-
-                max-w-full
-                w-full
-                h-[100vh]
-                max-h-[100vh]
-                overflow-y-auto
-                rounded-none
-                top-0
-                left-0
-                translate-x-0
-                translate-y-0
-              "
+              className="sm:max-w-md sm:rounded-xl"
             >
               <DialogHeader>
                 <DialogTitle>Sign Up</DialogTitle>

@@ -300,18 +300,8 @@ export function Header() {
                       <User className="h-6 w-6" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md flex flex-col max-h-screen h-screen w-full overflow-y-auto rounded-none p-0">
-                    <DialogHeader>
-                      <DialogTitle>Login</DialogTitle>
-                      <DialogDescription>
-                        Log in to your account to continue.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <ScrollArea className="flex-1">
-                      <div className="px-1 py-4">
-                        <LoginForm onSuccess={() => setIsLoginOpen(false)} />
-                      </div>
-                    </ScrollArea>
+                  <DialogContent className="sm:max-w-md sm:rounded-xl">
+                      <LoginForm onSuccess={() => setIsLoginOpen(false)} />
                   </DialogContent>
                 </Dialog>
               ))}
@@ -489,20 +479,10 @@ export function Header() {
                         <User className="h-6 w-6" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md flex flex-col max-h-screen h-screen w-full overflow-y-auto rounded-none p-0">
-                      <DialogHeader>
-                        <DialogTitle>Login</DialogTitle>
-                        <DialogDescription>
-                          Log in to your account to continue.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <ScrollArea className="flex-1">
-                        <div className="px-1 py-4">
-                          <LoginForm
-                            onSuccess={() => setIsLoginOpen(false)}
-                          />
-                        </div>
-                      </ScrollArea>
+                    <DialogContent className="sm:max-w-md sm:rounded-xl">
+                        <LoginForm
+                          onSuccess={() => setIsLoginOpen(false)}
+                        />
                     </DialogContent>
                   </Dialog>
                 ))}
