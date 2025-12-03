@@ -1,0 +1,370 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import Link from 'next/link';
+import {
+  useAuth,
+  initiateEmailSignIn,
+  useUser,
+  initiateGoogleSignIn,
+  setSessionPersistence,
+} from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { GoogleIcon } from '@/components/icons/social-icons';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { SignupForm } from '@/components/signup-form';
+
+const emailSchema = z.object({
+  email: z.string().email({ message: 'Invalid email address.' }),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
+  rememberMe: z.boolean().default(false).optional(),
+});
+
+const phoneSchema = z.object({
+  phone: z.string().min(10, 'Please enter a valid phone number.'),
+});
+
+interface LoginFormProps {
+  onSuccess?: () => void;
+}
+
+export function LoginForm({ onSuccess }: LoginFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
+
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      onSuccess?.();
+    }
+  }, [user, isUserLoading, onSuccess]);
+
+  const emailForm = useForm<z.infer<typeof emailSchema>>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: '', password: '', rememberMe: false },
+  });
+
+  const phoneForm = useForm<z.infer<typeof phoneSchema>>({
+    resolver: zodResolver(phoneSchema),
+    defaultValues: { phone: '' },
+  });
+
+  const onEmailSubmit = async (values: z.infer<typeof emailSchema>) => {
+    setIsSubmitting(true);
+    try {
+      await setSessionPersistence(auth, values.rememberMe);
+      await initiateEmailSignIn(auth, values.email, values.password);
+      toast({
+        title: 'Signed in!',
+        description: "You're now logged in.",
+      });
+      onSuccess?.();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Sign in failed.',
+        description: error.message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onPhoneSubmit = () => {
+    toast({
+      title: 'Coming Soon!',
+      description: 'Phone sign-in is not yet available.',
+    });
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsSubmitting(true);
+    try {
+      await setSessionPersistence(auth, true);
+      const userCredential = await initiateGoogleSignIn(auth);
+      const firstName =
+        userCredential.user.displayName?.split(' ')[0] || 'there';
+
+      toast({
+        title: `Welcome back, ${firstName} 👋`,
+        description: "You're now logged in.",
+        duration: 4000,
+      });
+
+      onSuccess?.();
+    } catch (error: any) {
+      if (
+        error.code !== 'auth/popup-closed-by-user' &&
+        error.code !== 'auth/cancelled-popup-request'
+      ) {
+        toast({
+          variant: 'destructive',
+          title: 'Google sign-in failed.',
+          description: error.message,
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isUserLoading || user) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <Card className="w-full max-w-md shadow-none border-0 sm:p-6 p-3">
+      <CardHeader className="sm:p-6 p-3 pb-2">
+        <CardTitle className="text-lg sm:text-xl">Welcome Back</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Choose your preferred login method.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6">
+        <Button
+          variant="outline"
+          className="w-full h-10 sm:h-11 text-sm sm:text-base"
+          onClick={handleGoogleSignIn}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <GoogleIcon className="mr-2 h-4 w-4" />
+          )}
+          Sign in with Google
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-[10px] sm:text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        <Tabs defaultValue="email" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-9 sm:h-10 text-sm">
+            <TabsTrigger value="email">Email</TabsTrigger>
+            <TabsTrigger value="phone">Phone</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="email">
+            <Form {...emailForm}>
+              <form
+                onSubmit={emailForm.handleSubmit(onEmailSubmit)}
+                className="space-y-3 sm:space-y-4 pt-3 sm:pt-4"
+              >
+                <FormField
+                  control={emailForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="h-9 sm:h-10 text-sm"
+                          placeholder="you@example.com"
+                          {...field}
+                          type="email"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={emailForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center">
+                        <FormLabel className="text-sm">Password</FormLabel>
+                        <Link
+                          href="/forgot-password"
+                          className="text-xs sm:text-sm text-primary hover:underline"
+                        >
+                          Forgot Password?
+                        </Link>
+                      </div>
+
+                      <FormControl>
+                        <Input
+                          className="h-9 sm:h-10 text-sm"
+                          placeholder="••••••••"
+                          {...field}
+                          type="password"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={emailForm.control}
+                  name="rememberMe"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm">Remember this account</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Sign In with Email
+                </Button>
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value="phone">
+            <Form {...phoneForm}>
+              <form
+                onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
+                className="space-y-3 sm:space-y-4 pt-3 sm:pt-4"
+              >
+                <FormField
+                  control={phoneForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Phone Number</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="h-9 sm:h-10 text-sm"
+                          placeholder="+91 12345 67890"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button className="w-full h-10 sm:h-11 text-sm sm:text-base">
+                  Send Code
+                </Button>
+              </form>
+            </Form>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+
+      <CardFooter className="flex flex-col gap-3 p-3 sm:p-6 pt-0">
+        <p className="text-xs sm:text-sm text-center text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
+            <DialogTrigger asChild>
+              <button className="font-medium text-primary hover:underline text-sm">
+                Sign up
+              </button>
+            </DialogTrigger>
+
+            {/*
+              ⭐ FIX: MOBILE FULLSCREEN DIALOG ⭐
+              Fully visible from top to bottom on mobile.
+              No cutoff. No scroll needed.
+            */}
+            <DialogContent
+              className="
+                sm:max-w-md 
+                sm:max-h-[90vh] 
+                px-4
+
+                max-w-full
+                w-full
+                h-[100vh]
+                max-h-[100vh]
+                overflow-y-auto
+                rounded-none
+                top-0
+                left-0
+                translate-x-0
+                translate-y-0
+              "
+            >
+              <DialogHeader>
+                <DialogTitle>Sign Up</DialogTitle>
+                <DialogDescription>
+                  Create a new account to get started.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="pb-4">
+                <SignupForm
+                  onSuccess={() => {
+                    setIsSignupOpen(false);
+                    onSuccess?.();
+                  }}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}
