@@ -147,16 +147,18 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   return (
     <Card className="w-full max-w-md shadow-none border-0 p-0">
-      <CardHeader className="px-0">
-        <CardTitle>Create an Account</CardTitle>
-        <CardDescription>Join us to start your journey.</CardDescription>
+      <CardHeader className="p-0">
+        <CardTitle className="text-xl">Create an Account</CardTitle>
+        <CardDescription className="text-sm">
+          Join us to start your journey.
+        </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4 px-0">
+      <CardContent className="space-y-3 p-0 pt-3">
         {/* Google Signup */}
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full h-10 text-sm"
           onClick={handleGoogleSignIn}
           disabled={isSubmitting}
         >
@@ -182,7 +184,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
         {/* Tabs */}
         <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 h-9 text-sm">
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
           </TabsList>
@@ -192,16 +194,17 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             <Form {...emailForm}>
               <form
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-                className="space-y-4 pt-4"
+                className="space-y-3 pt-2"
               >
                 <FormField
                   control={emailForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-sm">Email</FormLabel>
                       <FormControl>
                         <Input
+                          className="h-9 text-sm"
                           placeholder="you@example.com"
                           {...field}
                           type="email"
@@ -218,9 +221,10 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-sm">Password</FormLabel>
                       <FormControl>
                         <Input
+                          className="h-9 text-sm"
                           placeholder="••••••••"
                           {...field}
                           type="password"
@@ -234,7 +238,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-10 text-sm"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && (
@@ -251,23 +255,27 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             <Form {...phoneForm}>
               <form
                 onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
-                className="space-y-4 pt-4"
+                className="space-y-3 pt-2"
               >
                 <FormField
                   control={phoneForm.control}
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel className="text-sm">Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="+91 12345 67890" {...field} />
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="+91 12345 67890"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <Button type="submit" className="w-full">
+                <Button className="w-full h-10 text-sm">
                   Send Code
                 </Button>
               </form>

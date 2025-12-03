@@ -326,7 +326,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <DialogContent
               className="sm:max-w-md p-4 sm:p-5 rounded-xl"
             >
-              <DialogHeader>
+              <DialogHeader className="p-0 mb-3 text-left">
                 <DialogTitle>Sign Up</DialogTitle>
                 <DialogDescription>
                   Create a new account to get started.

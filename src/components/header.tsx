@@ -273,20 +273,17 @@ export function Header() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {isAdmin && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin">
-                            <Shield className="mr-2 h-4 w-4" />
-                            Admin Dashboard
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
                     <DropdownMenuItem asChild>
                       <Link href="/account">My Account</Link>
                     </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
@@ -302,7 +299,7 @@ export function Header() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
-                    <DialogHeader className="sr-only">
+                    <DialogHeader className="p-0 mb-3 text-left">
                       <DialogTitle>Login</DialogTitle>
                       <DialogDescription>Log in to your account to continue.</DialogDescription>
                     </DialogHeader>
@@ -447,20 +444,17 @@ export function Header() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {isAdmin && (
-                        <>
-                          <DropdownMenuItem asChild>
-                            <Link href="/admin">
-                              <Shield className="mr-2 h-4 w-4" />
-                              Admin Dashboard
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
                       <DropdownMenuItem asChild>
                         <Link href="/account">My Account</Link>
                       </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin">
+                            <Shield className="mr-2 h-4 w-4" />
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={handleSignOut}
@@ -485,7 +479,7 @@ export function Header() {
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
-                      <DialogHeader className="sr-only">
+                      <DialogHeader className="p-0 mb-3 text-left">
                         <DialogTitle>Login</DialogTitle>
                         <DialogDescription>Log in to your account to continue.</DialogDescription>
                       </DialogHeader>
