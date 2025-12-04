@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useDoc, useMemoFirebase, updateUserProfile, useCollection } from '@/firebase';
@@ -14,13 +15,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save, Home, User, Phone, Mail } from 'lucide-react';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import type { Order, OrderItem, UserProfile } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 import { formatPrice } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 function OrderDetails({ items }: { items: OrderItem[] }) {
   if (!items || items.length === 0) {
@@ -109,13 +111,14 @@ export default function AccountPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [isSavingName, setIsSavingName] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch the user's Firestore document
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
   const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -123,22 +126,24 @@ export default function AccountPage() {
     }
     if (userProfile) {
         setDisplayName(userProfile.displayName || '');
+        setPhone(userProfile.phone || '');
+        setAddress(userProfile.address || '');
     }
   }, [user, userProfile, isUserLoading, router]);
 
-  const handleNameChange = async () => {
+  const handleProfileUpdate = async () => {
     if (!user || !displayName.trim()) {
         toast({ variant: "destructive", title: "Display name cannot be empty." });
         return;
     }
-    setIsSavingName(true);
+    setIsSaving(true);
     try {
-        await updateUserProfile(user, { displayName });
-        toast({ title: "Display name updated successfully!" });
+        await updateUserProfile(user, { displayName, phone, address });
+        toast({ title: "Profile updated successfully!" });
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to update name.", description: error.message });
+        toast({ variant: "destructive", title: "Failed to update profile.", description: error.message });
     } finally {
-        setIsSavingName(false);
+        setIsSaving(false);
     }
   };
 
@@ -175,36 +180,56 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl font-headline flex items-center gap-2"><Package/> My Account</CardTitle>
             <CardDescription>
-              Manage your account settings and view your order history.
+              Manage your account settings, profile information, and view your order history.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
-                <div>
-                    <h3 className="font-semibold mb-2">Display Name</h3>
-                    <div className="flex items-center gap-2">
-                        <Input 
-                            value={displayName} 
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            placeholder="Enter your name"
-                        />
-                        <Button onClick={handleNameChange} disabled={isSavingName} size="icon">
-                           {isSavingName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                           <span className="sr-only">Save name</span>
-                        </Button>
+             <div className="space-y-4">
+                 <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><User size={16}/> Personal Information</h3>
+                        <div className="space-y-2">
+                           <Input 
+                                value={displayName} 
+                                onChange={(e) => setDisplayName(e.target.value)}
+                                placeholder="Enter your name"
+                            />
+                            <div className="relative">
+                               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                               <Input value={user.email || ''} disabled className="pl-9 bg-secondary/50"/>
+                            </div>
+                             <div className="relative">
+                               <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                               <Input 
+                                    value={phone} 
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="Phone number"
+                                    className="pl-9"
+                                />
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div>
-                    <h3 className="font-semibold">Email</h3>
-                    <p className="text-muted-foreground">{user.email || 'No email provided'}</p>
+                     <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><Home size={16}/> Shipping Address</h3>
+                         <Textarea 
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            placeholder="Enter your full shipping address."
+                            rows={5}
+                         />
+                    </div>
                 </div>
                  <div>
                     <h3 className="font-semibold">User ID</h3>
                     <p className="text-muted-foreground text-sm break-all">{userProfile?.customUserId || 'Not assigned yet'}</p>
                 </div>
-            </div>
+             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="justify-between">
+            <Button onClick={handleProfileUpdate} disabled={isSaving}>
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                <span>Save Changes</span>
+            </Button>
             <Button variant="destructive" onClick={handleSignOut}>
               Sign Out
             </Button>

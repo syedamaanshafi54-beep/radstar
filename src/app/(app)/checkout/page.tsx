@@ -29,9 +29,10 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError, useDoc, useMemoFirebase, updateUserProfile } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { formatPrice } from "@/lib/utils";
+import type { UserProfile } from "@/lib/types";
 
 
 const formSchema = z.object({
@@ -58,6 +59,9 @@ export default function CheckoutPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
+  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+
 
   useEffect(() => {
     if (cartItems.length === 0 && !isProcessing) {
@@ -69,8 +73,8 @@ export default function CheckoutPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: user?.email || "",
-      firstName: user?.displayName?.split(' ')[0] || "",
-      lastName: user?.displayName?.split(' ')[1] || "",
+      firstName: "",
+      lastName: "",
       address: "",
       city: "",
       state: "",
@@ -80,14 +84,29 @@ export default function CheckoutPage() {
     },
   });
 
-  // Sync form with user data
+  // Sync form with user data from Firestore
   useEffect(() => {
-    if (user) {
-        form.setValue('email', user.email || '');
-        form.setValue('firstName', user.displayName?.split(' ')[0] || '');
-        form.setValue('lastName', user.displayName?.split(' ')[1] || '');
+    if (userProfile) {
+      form.setValue('email', userProfile.email || user?.email || '');
+      
+      const nameParts = userProfile.displayName?.split(' ') || [];
+      form.setValue('firstName', nameParts[0] || '');
+      form.setValue('lastName', nameParts.slice(1).join(' ') || '');
+      
+      form.setValue('phone', userProfile.phone || '');
+
+      if (userProfile.address) {
+        const addressParts = userProfile.address.split(', ');
+         form.setValue('address', userProfile.address);
+      }
+    } else if (user) {
+      // Fallback to basic user object if profile is not loaded yet
+      form.setValue('email', user.email || '');
+      const nameParts = user.displayName?.split(' ') || [];
+      form.setValue('firstName', nameParts[0] || '');
+      form.setValue('lastName', nameParts.slice(1).join(' ') || '');
     }
-  }, [user, form]);
+  }, [user, userProfile, form]);
 
 
   const placeOrder = async (shippingInfo: ShippingInfo) => {
@@ -103,6 +122,15 @@ export default function CheckoutPage() {
         router.push('/login');
         return;
     }
+
+    // Save/update user's address info in their profile
+    const fullAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state}, ${shippingInfo.zip}`;
+    await updateUserProfile(user, {
+      displayName: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+      phone: shippingInfo.phone,
+      address: fullAddress,
+    });
+
 
     const now = new Date();
     const datePart = now.toISOString().slice(0, 10).replace(/-/g, "");
@@ -300,5 +328,3 @@ export default function CheckoutPage() {
 function getCartItemId(productId: string, variantId?: string) {
     return variantId ? `${productId}-${variantId}` : productId;
 }
-
-    

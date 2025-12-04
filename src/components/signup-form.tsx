@@ -24,14 +24,17 @@ import {
   useAuth,
   initiateEmailSignUp,
   useUser,
+  updateUserProfile,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/social-icons';
 import { handleGoogleSignIn, getFirstName } from '@/firebase/user-actions';
 import { useRouter } from 'next/navigation';
+import { UserCredential } from 'firebase/auth';
 
 const emailSchema = z.object({
+  displayName: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
@@ -54,13 +57,15 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/onboarding');
+      // If a user is successfully created, the onSuccess callback or a redirect will be triggered.
+      // If they land here while logged in, it's likely after a signup flow.
+      onSuccess?.();
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, onSuccess]);
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { displayName: '', email: '', password: '' },
   });
 
   const phoneForm = useForm<z.infer<typeof phoneSchema>>({
@@ -68,17 +73,38 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     defaultValues: { phone: '' },
   });
 
+  const handleNewUser = async (userCredential: UserCredential, isNew: boolean) => {
+     if (isNew) {
+        toast({
+          title: `Welcome!`,
+          description: "Let's complete your profile.",
+          duration: 4000,
+        });
+        router.push('/onboarding');
+      } else {
+        const firstName = getFirstName(userCredential.user);
+        toast({
+          title: `Welcome back, ${firstName}!`,
+          description: "You're now logged in.",
+          duration: 4000,
+        });
+        onSuccess?.();
+      }
+  }
+
+
   const onEmailSubmit = async (values: z.infer<typeof emailSchema>) => {
     setIsSubmitting(true);
     try {
-      await initiateEmailSignUp(auth, values.email, values.password);
+      const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
+      await updateUserProfile(userCredential.user, { displayName: values.displayName });
 
       toast({
         title: 'Account created!',
-        description: "Let's complete your profile.",
+        description: `Welcome, ${getFirstName(userCredential.user)}!`,
       });
 
-      router.push('/onboarding');
+      onSuccess?.();
 
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
@@ -111,23 +137,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     setIsSubmitting(true);
     try {
       const { userCredential, isNewUser } = await handleGoogleSignIn('signup');
-
-       if (isNewUser) {
-        toast({
-          title: `Welcome!`,
-          description: "Let's complete your profile.",
-          duration: 4000,
-        });
-        router.push('/onboarding');
-      } else {
-        const firstName = getFirstName(userCredential.user);
-        toast({
-          title: `Welcome back, ${firstName}!`,
-          description: "You're now logged in.",
-          duration: 4000,
-        });
-        onSuccess?.();
-      }
+      handleNewUser(userCredential, isNewUser);
     } catch (error: any) {
       if (
         error.code !== 'auth/popup-closed-by-user' &&
@@ -193,6 +203,23 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
                 className="space-y-4 pt-2"
               >
+                 <FormField
+                  control={emailForm.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter your name"
+                          {...field}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={emailForm.control}
                   name="email"

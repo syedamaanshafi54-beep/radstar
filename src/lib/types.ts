@@ -1,3 +1,4 @@
+
 import { type StaticImageData } from "next/image";
 import { type Timestamp } from "firebase/firestore";
 
@@ -74,6 +75,8 @@ export type UserProfile = {
   customUserId?: string;
   displayName: string;
   email: string;
+  phone?: string;
+  address?: string;
   photoURL?: string;
   role: 'user' | 'admin';
   isProfileComplete?: boolean;

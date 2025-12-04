@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   UserCredential,
   User,
-  updateProfile,
+  updateProfile as updateAuthProfile,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -130,13 +130,22 @@ export async function updateUserProfile(user: User, data: { displayName?: string
 
     // Prepare data for Firestore update
     const firestoreData: any = { ...data, updatedAt: serverTimestamp() };
-    if (data.displayName !== undefined) {
-      firestoreData.isProfileComplete = true; // Mark as complete if they're saving profile info
+    
+    // Check if essential fields are being provided to mark profile as complete
+    const userSnap = await getDoc(userRef);
+    const existingData = userSnap.data();
+    const hasName = !!(data.displayName || existingData?.displayName);
+    const hasPhone = !!(data.phone || existingData?.phone);
+    const hasAddress = !!(data.address || existingData?.address);
+
+    if (hasName && hasPhone && hasAddress) {
+       firestoreData.isProfileComplete = true;
     }
 
+
     // Update Firebase Auth profile if displayName is being changed
-    if (auth.currentUser && data.displayName) {
-        await updateProfile(auth.currentUser, {
+    if (auth.currentUser && data.displayName && data.displayName !== auth.currentUser.displayName) {
+        await updateAuthProfile(auth.currentUser, {
             displayName: data.displayName,
         });
     }
