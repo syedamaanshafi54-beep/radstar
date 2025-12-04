@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateUserProfile } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, updateUserProfile, useCollection } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
