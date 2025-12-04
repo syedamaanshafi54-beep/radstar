@@ -3,13 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -46,6 +40,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/signup-form';
+import {
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 const emailSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -97,11 +97,19 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       });
       onSuccess?.();
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Sign in failed.',
-        description: error.message,
-      });
+      if (error.code === 'auth/invalid-credential') {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Invalid email or password. Please try again.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Sign in failed.',
+          description: error.message,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -166,7 +174,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
     );
   }
-  
+
   if (user) {
     // If user is already logged in, no need to show the form.
     // The parent component will handle closing the dialog.
@@ -175,7 +183,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <div className="p-0">
-       <CardHeader className="text-center p-0 mb-4">
+      <CardHeader className="text-center p-0 mb-4">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
         <CardDescription>
           Choose your preferred login method to continue.
@@ -331,7 +339,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex justify-center p-0 pt-3">
+      <CardFooter className="flex justify-center p-0 pt-4">
         <p className="text-sm text-center text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
@@ -341,18 +349,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
-               <DialogHeader>
-                  <DialogTitle>Create an Account</DialogTitle>
-                  <DialogDescription>
-                    Join us to start your journey to wellness.
-                  </DialogDescription>
-                </DialogHeader>
+              <DialogHeader>
+                <DialogTitle>Create an Account</DialogTitle>
+                <DialogDescription>
+                  Join us to start your journey to wellness.
+                </DialogDescription>
+              </DialogHeader>
               <SignupForm
-                  onSuccess={() => {
-                    setIsSignupOpen(false);
-                    onSuccess?.();
-                  }}
-                />
+                onSuccess={() => {
+                  setIsSignupOpen(false);
+                  onSuccess?.();
+                }}
+              />
             </DialogContent>
           </Dialog>
         </p>
