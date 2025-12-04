@@ -347,32 +347,33 @@ export function Header() {
                 open={productsOpen}
                 onOpenChange={setProductsOpen}
               >
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={navButtonClasses}
-                    onMouseEnter={() => setProductsOpen(true)}
+                <div onMouseLeave={() => setProductsOpen(false)}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(navButtonClasses, "flex flex-col items-center")}
+                      onMouseEnter={() => setProductsOpen(true)}
+                    >
+                      Products
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
                   >
-                    Products{' '}
-                    <ChevronDown className="ml-1 h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  onMouseLeave={() => setProductsOpen(false)}
-                  className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm"
-                >
-                  <DropdownMenuItem asChild>
-                    <Link href="/products" className="text-lg font-semibold cursor-pointer focus:bg-primary-foreground/20">All Products</Link>
-                  </DropdownMenuItem>
-
-                  {productCategories.map((category) => (
-                    <DropdownMenuItem key={category.href} asChild>
-                      <Link href={category.href} className="text-lg font-semibold cursor-pointer focus:bg-primary-foreground/20">
-                        {category.label}
-                      </Link>
+                    <DropdownMenuItem asChild>
+                      <Link href="/products" className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">All Products</Link>
                     </DropdownMenuItem>
-                  ))}
 
-                </DropdownMenuContent>
+                    {productCategories.map((category) => (
+                      <DropdownMenuItem key={category.href} asChild>
+                        <Link href={category.href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">
+                          {category.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+
+                  </DropdownMenuContent>
+                </div>
               </DropdownMenu>
 
               <DropdownMenu
@@ -380,25 +381,26 @@ export function Header() {
                 open={storyOpen}
                 onOpenChange={setStoryOpen}
               >
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={navButtonClasses}
-                    onMouseEnter={() => setStoryOpen(true)}
+                 <div onMouseLeave={() => setStoryOpen(false)}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={cn(navButtonClasses, "flex flex-col items-center")}
+                      onMouseEnter={() => setStoryOpen(true)}
+                    >
+                      Our Story
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
                   >
-                    Our Story{' '}
-                    <ChevronDown className="ml-1 h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  onMouseLeave={() => setStoryOpen(false)}
-                  className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm"
-                >
-                  {storyLinks.map(({ href, label }) => (
-                    <DropdownMenuItem key={href} asChild>
-                      <Link href={href} className="text-lg font-semibold cursor-pointer focus:bg-primary-foreground/20">{label}</Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
+                    {storyLinks.map(({ href, label }) => (
+                      <DropdownMenuItem key={href} asChild>
+                        <Link href={href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">{label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </div>
               </DropdownMenu>
 
               <Link
@@ -409,11 +411,10 @@ export function Header() {
               </Link>
               
               <Link
-              href="/faq"
-              className={navLinkClasses}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              FAQ
+                href="/faq"
+                className={navLinkClasses}
+              >
+                FAQ
             </Link>
             </nav>
 
