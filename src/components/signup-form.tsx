@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -147,8 +148,8 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   }
 
   return (
-    <>
-      <CardHeader className="text-center p-0 mb-4">
+    <div className="p-1">
+      <CardHeader className="text-center p-0 mb-3">
         <CardTitle className="text-2xl">Create an Account</CardTitle>
         <CardDescription>
           Join us to start your journey to wellness.
@@ -276,6 +277,11 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           </TabsContent>
         </Tabs>
       </CardContent>
-    </>
+       <CardFooter className="flex justify-center p-0 pt-3">
+          <p className="text-xs text-center text-muted-foreground">
+              By creating an account, you agree to our Terms of Service.
+          </p>
+      </CardFooter>
+    </div>
   );
 }
