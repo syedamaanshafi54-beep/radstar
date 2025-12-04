@@ -5,13 +5,10 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
   setPersistence,
   browserSessionPersistence,
   browserLocalPersistence,
   sendPasswordResetEmail,
-  UserCredential,
   // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
 
@@ -45,16 +42,6 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
   // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
-/** Initiate Google sign-in with a popup (non-blocking). */
-export function initiateGoogleSignIn(authInstance: Auth): Promise<UserCredential> {
-  const provider = new GoogleAuthProvider();
-  // CRITICAL: Call signInWithPopup directly. It returns a promise we can use for success/error handling.
-  return signInWithPopup(authInstance, provider).catch((error) => {
-    // We will now let the caller handle the error messages for a better user experience.
-    // The specific error codes will be checked in the UI components (login/signup pages).
-    throw error;
-  });
-}
 
 /**
  * Sets the session persistence for Firebase Auth.

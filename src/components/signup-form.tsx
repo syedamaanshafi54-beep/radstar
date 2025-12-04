@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -26,8 +27,9 @@ import {
   useAuth,
   initiateEmailSignUp,
   useUser,
-  initiateGoogleSignIn,
   setSessionPersistence,
+  handleGoogleSignIn,
+  getFirstName,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -69,11 +71,10 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     defaultValues: { phone: '' },
   });
 
-  // -------- Email Sign Up -------- //
   const onEmailSubmit = async (values: z.infer<typeof emailSchema>) => {
     setIsSubmitting(true);
     try {
-      await setSessionPersistence(auth, true);
+      await setSessionPersistence(auth, true); // Remember user by default
       await initiateEmailSignUp(auth, values.email, values.password);
 
       toast({
@@ -93,7 +94,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     }
   };
 
-  // -------- Phone Sign Up (future) -------- //
   const onPhoneSubmit = (values: z.infer<typeof phoneSchema>) => {
     console.log('Phone signup attempt:', values);
     toast({
@@ -102,40 +102,35 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     });
   };
 
-  // -------- Google Sign Up -------- //
-  const handleGoogleSignIn = async () => {
+  const onGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      await setSessionPersistence(auth, true);
-
-      const userCredential = await initiateGoogleSignIn(auth);
-      const firstName =
-        userCredential.user.displayName?.split(' ')[0] || 'there';
-
+      const userCredential = await handleGoogleSignIn();
+      const firstName = getFirstName(userCredential.user);
+      
       toast({
-        title: `Welcome, ${firstName} 👋`,
-        description: 'Your account has been created.',
+        title: `Welcome, ${firstName}!`,
+        description: "Your account has been created successfully.",
         duration: 4000,
       });
 
       onSuccess?.();
     } catch (error: any) {
       if (
-        error.code === 'auth/popup-closed-by-user' ||
-        error.code === 'auth/cancelled-popup-request'
+        error.code !== 'auth/popup-closed-by-user' &&
+        error.code !== 'auth/cancelled-popup-request'
       ) {
-        // ignore — user closed popup
-      } else {
         toast({
           variant: 'destructive',
           title: 'Google sign-up failed.',
-          description: error.message,
+          description: "Something went wrong. Please try again.",
         });
       }
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   if (isUserLoading || user) {
     return (
@@ -147,19 +142,18 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   return (
     <Card className="w-full max-w-md shadow-none border-0 p-0">
-      <CardHeader className="p-0">
-        <CardTitle className="text-xl">Create an Account</CardTitle>
-        <CardDescription className="text-sm">
-          Join us to start your journey.
+      <CardHeader className="text-center p-0">
+        <CardTitle className="text-2xl">Create an Account</CardTitle>
+        <CardDescription>
+          Join us to start your journey to wellness.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 p-0 pt-3">
-        {/* Google Signup */}
+      <CardContent className="space-y-3 p-0 pt-4">
         <Button
           variant="outline"
-          className="w-full h-10 text-sm"
-          onClick={handleGoogleSignIn}
+          className="w-full"
+          onClick={onGoogleSignIn}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -170,7 +164,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           Sign up with Google
         </Button>
 
-        {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -182,14 +175,12 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-9 text-sm">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
           </TabsList>
-
-          {/* Email Signup */}
+          
           <TabsContent value="email">
             <Form {...emailForm}>
               <form
@@ -201,10 +192,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Email</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 text-sm"
                           placeholder="you@example.com"
                           {...field}
                           type="email"
@@ -221,10 +211,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Password</FormLabel>
+                      <FormLabel>Password</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 text-sm"
                           placeholder="••••••••"
                           {...field}
                           type="password"
@@ -238,7 +227,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
                 <Button
                   type="submit"
-                  className="w-full h-10 text-sm"
+                  className="w-full"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && (
@@ -250,7 +239,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             </Form>
           </TabsContent>
 
-          {/* Phone Signup */}
           <TabsContent value="phone">
             <Form {...phoneForm}>
               <form
@@ -262,10 +250,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Phone Number</FormLabel>
+                      <FormLabel>Phone Number</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 text-sm"
                           placeholder="+91 12345 67890"
                           {...field}
                         />
@@ -275,7 +262,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                   )}
                 />
 
-                <Button className="w-full h-10 text-sm">
+                <Button className="w-full">
                   Send Code
                 </Button>
               </form>

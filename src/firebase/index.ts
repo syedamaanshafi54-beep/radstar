@@ -28,11 +28,11 @@ export * from './client-provider';
 export * from './firestore/use-collection';
 export * from './firestore/use-doc';
 export * from './non-blocking-updates';
+export * from './user-actions';
 export {
   initiateAnonymousSignIn,
   initiateEmailSignUp,
   initiateEmailSignIn,
-  initiateGoogleSignIn,
   setSessionPersistence,
   sendPasswordReset
 } from './non-blocking-login';

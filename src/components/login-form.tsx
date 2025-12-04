@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -29,8 +28,9 @@ import {
   useAuth,
   initiateEmailSignIn,
   useUser,
-  initiateGoogleSignIn,
   setSessionPersistence,
+  handleGoogleSignIn,
+  getFirstName,
 } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -114,20 +114,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     });
   };
 
-  const handleGoogleSignIn = async () => {
+  const onGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      await setSessionPersistence(auth, true);
-      const userCredential = await initiateGoogleSignIn(auth);
-      const firstName =
-        userCredential.user.displayName?.split(' ')[0] || 'there';
-
+      const userCredential = await handleGoogleSignIn();
+      const firstName = getFirstName(userCredential.user);
+      
       toast({
-        title: `Welcome back, ${firstName} 👋`,
+        title: `Welcome back, ${firstName}!`,
         description: "You're now logged in.",
         duration: 4000,
       });
-
+      
       onSuccess?.();
     } catch (error: any) {
       if (
@@ -137,7 +135,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         toast({
           variant: 'destructive',
           title: 'Google sign-in failed.',
-          description: error.message,
+          description: "Something went wrong. Please try again.",
         });
       }
     } finally {
@@ -155,18 +153,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <Card className="w-full max-w-md shadow-none border-0 p-0">
-      <CardHeader className="p-0">
-        <CardTitle className="text-xl">Welcome Back</CardTitle>
-        <CardDescription className="text-sm">
-          Choose your preferred login method.
+      <CardHeader className="text-center p-0">
+        <CardTitle className="text-2xl">Welcome Back</CardTitle>
+        <CardDescription>
+          Choose your preferred login method to continue.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 p-0 pt-3">
+      <CardContent className="space-y-3 p-0 pt-4">
         <Button
           variant="outline"
-          className="w-full h-10 text-sm"
-          onClick={handleGoogleSignIn}
+          className="w-full"
+          onClick={onGoogleSignIn}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -189,7 +187,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </div>
 
         <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-9 text-sm">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
           </TabsList>
@@ -205,10 +203,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Email</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 text-sm"
                           placeholder="you@example.com"
                           {...field}
                           type="email"
@@ -226,7 +223,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-sm">Password</FormLabel>
+                        <FormLabel>Password</FormLabel>
                         <Link
                           href="/forgot-password"
                           className="text-xs text-primary hover:underline"
@@ -237,7 +234,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                       <FormControl>
                         <Input
-                          className="h-9 text-sm"
                           placeholder="••••••••"
                           {...field}
                           type="password"
@@ -262,14 +258,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                           disabled={isSubmitting}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm">Remember me</FormLabel>
+                      <FormLabel>Remember me</FormLabel>
                     </FormItem>
                   )}
                 />
 
                 <Button
                   type="submit"
-                  className="w-full h-10 text-sm"
+                  className="w-full"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && (
@@ -292,10 +288,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Phone Number</FormLabel>
+                      <FormLabel>Phone Number</FormLabel>
                       <FormControl>
                         <Input
-                          className="h-9 text-sm"
                           placeholder="+91 12345 67890"
                           {...field}
                         />
@@ -305,7 +300,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   )}
                 />
 
-                <Button className="w-full h-10 text-sm">
+                <Button className="w-full">
                   Send Code
                 </Button>
               </form>
@@ -314,33 +309,28 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex justify-center p-0 pt-3">
+      <CardFooter className="flex justify-center p-0 pt-4">
         <p className="text-sm text-center text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
             <DialogTrigger asChild>
-              <button className="font-medium text-primary hover:underline text-sm">
+              <button className="font-medium text-primary hover:underline">
                 Sign up
               </button>
             </DialogTrigger>
-            <DialogContent
-              className="sm:max-w-md p-4 sm:p-5 rounded-xl"
-            >
-              <DialogHeader className="p-0 mb-3 text-left">
-                <DialogTitle>Sign Up</DialogTitle>
-                <DialogDescription>
-                  Create a new account to get started.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="pb-4">
-                <SignupForm
+            <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
+               <DialogHeader>
+                  <DialogTitle>Create an Account</DialogTitle>
+                  <DialogDescription>
+                    Join us to start your journey to wellness.
+                  </DialogDescription>
+                </DialogHeader>
+              <SignupForm
                   onSuccess={() => {
                     setIsSignupOpen(false);
                     onSuccess?.();
                   }}
                 />
-              </div>
             </DialogContent>
           </Dialog>
         </p>
