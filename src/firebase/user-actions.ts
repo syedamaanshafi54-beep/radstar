@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -66,8 +67,13 @@ export async function handleGoogleSignIn(): Promise<GoogleSignInResult> {
     }
 
     return { userCredential, isNewUser };
-  } catch (error) {
-    console.error("Google Sign-In Error:", error);
+  } catch (error: any) {
+    if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+        console.error("Google Sign-In Error:", error);
+        throw error;
+    }
+    // If the error is that the user closed the popup, we don't need to do anything.
+    // We can just re-throw to allow the caller to handle if needed, but it won't be a breaking error.
     throw error;
   }
 }
