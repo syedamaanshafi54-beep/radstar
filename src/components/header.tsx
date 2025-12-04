@@ -55,7 +55,8 @@ import {
 
 const storyLinks = [
   { href: '/about', label: 'Our Story' },
-  { href: '/quality', label: 'Quality' }
+  { href: '/quality', label: 'Quality' },
+  { href: '/faq', label: 'FAQ' }
 ];
 
 const productCategories = [
@@ -310,14 +311,7 @@ export function Header() {
             </div>
           </div>
 
-          {/* -------------------------------------------------- */}
-          {/* 🖥️ DESKTOP HEADER — UNTOUCHED (NOT MODIFIED!) */}
-          {/* -------------------------------------------------- */}
 
-          {/* YOUR ORIGINAL DESKTOP CODE REMAINS EXACTLY SAME */}
-          {/* (I did not touch a single line here as you said) */}
-
-          {/* ... desktop markup ... (unchanged) ... */}
           <div
             className={cn(
               'hidden md:flex w-full items-center justify-between',
@@ -411,7 +405,7 @@ export function Header() {
               </Link>
               
               <Link
-              href="/FAQ"
+              href="/faq"
               className="px-8 py-2 text-2xl font-bold text-primary-nav-foreground hover:bg-black/5"
               onClick={() => setIsMobileMenuOpen(false)}
             >
