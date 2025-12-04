@@ -11,8 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import type { Order } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
-import { getAdminApp } from '@/firebase/admin';
+import admin from 'firebase-admin';
 import { AlertTriangle } from 'lucide-react';
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 type EnrichedOrder = Order & {
     id: string;
@@ -21,7 +26,7 @@ type EnrichedOrder = Order & {
 };
 
 async function getOrders(): Promise<EnrichedOrder[]> {
-    const firestore = getAdminApp().firestore();
+    const firestore = admin.firestore();
 
     const ordersSnapshot = await firestore.collectionGroup('orders').get();
     

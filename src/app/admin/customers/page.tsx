@@ -10,14 +10,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getAdminApp, getAdminAuth } from '@/firebase/admin';
+import admin from 'firebase-admin';
 import { UserRecord } from 'firebase-admin/auth';
 import type { UserProfile } from '@/lib/types';
 
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 async function getCustomers(): Promise<UserProfile[]> {
     try {
-        const auth = getAdminAuth();
-        const firestore = getAdminApp().firestore();
+        const auth = admin.auth();
+        const firestore = admin.firestore();
 
         const userRecords: UserRecord[] = (await auth.listUsers()).users;
         
@@ -40,7 +45,6 @@ async function getCustomers(): Promise<UserProfile[]> {
                 photoURL: record.photoURL || firestoreData?.photoURL,
                 providerId: record.providerData[0]?.providerId || 'password',
                 createdAt: firestoreData?.createdAt || { seconds: new Date(record.metadata.creationTime).getTime() / 1000 },
-                // Add other fields from UserProfile as needed
             } as UserProfile;
         });
 
