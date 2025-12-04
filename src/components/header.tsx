@@ -131,6 +131,10 @@ export function Header() {
   const innerHeaderClasses =
     'flex h-16 items-center justify-between bg-[hsl(var(--primary-alt))] px-4 sm:px-6 transition-all duration-300 rounded-full shadow-lg';
 
+  const navButtonClasses = "relative px-8 py-2 text-2xl font-bold text-primary-nav-foreground focus:outline-none after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-0.5 after:bg-primary-nav-foreground after:w-0 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0";
+  const navLinkClasses = "relative text-2xl font-bold text-primary-nav-foreground focus:outline-none after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-0.5 after:bg-primary-nav-foreground after:w-0 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 px-8 py-2";
+
+
   return (
     <div className={headerClasses}>
       <div className="container mx-auto px-0 md:px-4">
@@ -344,25 +348,25 @@ export function Header() {
                 onOpenChange={setProductsOpen}
               >
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center px-8 py-2 text-2xl font-bold text-primary-nav-foreground hover:bg-black/5"
+                  <button
+                    className={navButtonClasses}
                     onMouseEnter={() => setProductsOpen(true)}
                   >
                     Products{' '}
                     <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   onMouseLeave={() => setProductsOpen(false)}
+                  className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm"
                 >
                   <DropdownMenuItem asChild>
-                    <Link href="/products">All Products</Link>
+                    <Link href="/products" className="text-lg font-semibold cursor-pointer focus:bg-primary-foreground/20">All Products</Link>
                   </DropdownMenuItem>
 
                   {productCategories.map((category) => (
                     <DropdownMenuItem key={category.href} asChild>
-                      <Link href={category.href}>
+                      <Link href={category.href} className="text-lg font-semibold cursor-pointer focus:bg-primary-foreground/20">
                         {category.label}
                       </Link>
                     </DropdownMenuItem>
@@ -377,21 +381,21 @@ export function Header() {
                 onOpenChange={setStoryOpen}
               >
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center px-8 py-2 text-2xl font-bold text-primary-nav-foreground hover:bg-black/5"
+                  <button
+                    className={navButtonClasses}
                     onMouseEnter={() => setStoryOpen(true)}
                   >
                     Our Story{' '}
                     <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   onMouseLeave={() => setStoryOpen(false)}
+                  className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm"
                 >
                   {storyLinks.map(({ href, label }) => (
                     <DropdownMenuItem key={href} asChild>
-                      <Link href={href}>{label}</Link>
+                      <Link href={href} className="text-lg font-semibold cursor-pointer focus:bg-primary-foreground/20">{label}</Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -399,14 +403,14 @@ export function Header() {
 
               <Link
                 href="/contact"
-                className="px-8 py-2 text-2xl font-bold text-primary-nav-foreground hover:bg-black/5"
+                className={navLinkClasses}
               >
                 Contact
               </Link>
               
               <Link
               href="/faq"
-              className="px-8 py-2 text-2xl font-bold text-primary-nav-foreground hover:bg-black/5"
+              className={navLinkClasses}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               FAQ
