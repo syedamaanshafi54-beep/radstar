@@ -24,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -34,6 +34,7 @@ import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { formatPrice } from "@/lib/utils";
 import type { UserProfile } from "@/lib/types";
 import { AnimatedCheck } from "@/components/ui/animated-check";
+import { Loader2 } from "lucide-react";
 
 
 const formSchema = z.object({
@@ -64,12 +65,18 @@ export default function CheckoutPage() {
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
+  // This ref helps us know if it's the initial page load.
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
-    if (cartItems.length === 0 && !isProcessing && !orderPlaced) {
+    // Only redirect if the cart is empty on the *initial load* of the page.
+    // This prevents redirection after a successful order placement.
+    if (isInitialLoad.current && cartItems.length === 0) {
       router.push("/products");
     }
-  }, [cartItems, router, isProcessing, orderPlaced]);
+    // After the first render, set this to false.
+    isInitialLoad.current = false;
+  }, [cartItems.length, router]);
   
   const form = useForm<ShippingInfo>({
     resolver: zodResolver(formSchema),
@@ -204,8 +211,14 @@ export default function CheckoutPage() {
     placeOrder(shippingInfo);
   }
 
-  if (cartItems.length === 0 && !isProcessing && !orderPlaced) {
-    return null;
+  if (cartItems.length === 0 && !orderPlaced) {
+     return (
+        <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        </div>
+     );
   }
 
   return (
@@ -328,7 +341,7 @@ export default function CheckoutPage() {
                         </div>
                      ) : (
                         <Button type="submit" size="lg" className="w-full mt-4 text-lg" disabled={isProcessing}>
-                            {isProcessing ? 'Processing...' : 'Place Order'}
+                            {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : 'Place Order'}
                         </Button>
                      )}
                   </CardContent>
@@ -343,3 +356,5 @@ export default function CheckoutPage() {
 function getCartItemId(productId: string, variantId?: string) {
     return variantId ? `${productId}-${variantId}` : productId;
 }
+
+    
