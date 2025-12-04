@@ -1,9 +1,9 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -117,7 +117,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const onGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const { userCredential, isNewUser } = await handleGoogleSignIn();
+      const { userCredential, isNewUser } = await handleGoogleSignIn('signin');
 
       if (isNewUser) {
         toast({
@@ -137,9 +137,17 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       }
     } catch (error: any) {
       if (
-        error.code !== 'auth/popup-closed-by-user' &&
-        error.code !== 'auth/cancelled-popup-request'
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request'
       ) {
+        // Do nothing, user cancelled.
+      } else if (error.message.includes('Account not found')) {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Account not found. Please sign up first.',
+        });
+      } else {
         toast({
           variant: 'destructive',
           title: 'Google sign-in failed.',
@@ -166,15 +174,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-none border-0 p-0">
-       <CardHeader className="text-center p-0">
+    <div className="p-0">
+       <CardHeader className="text-center p-0 mb-4">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
         <CardDescription>
           Choose your preferred login method to continue.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4 pt-5 p-1">
+      <CardContent className="space-y-3 p-0">
         <Button
           variant="outline"
           className="w-full"
@@ -323,7 +331,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex justify-center p-0 pt-4">
+      <CardFooter className="flex justify-center p-0 pt-3">
         <p className="text-sm text-center text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
@@ -349,6 +357,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </Dialog>
         </p>
       </CardFooter>
-    </Card>
+    </div>
   );
 }

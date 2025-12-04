@@ -1,13 +1,11 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
   Form,
@@ -26,7 +24,6 @@ import {
   useAuth,
   initiateEmailSignUp,
   useUser,
-  setSessionPersistence,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -57,15 +54,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      // Check if this is a new user that needs onboarding
-      const requiresOnboarding = new URLSearchParams(window.location.search).get('onboarding');
-      if (requiresOnboarding) {
-        router.push('/onboarding');
-      } else {
-        onSuccess?.();
-      }
+      router.push('/onboarding');
     }
-  }, [user, isUserLoading, onSuccess, router]);
+  }, [user, isUserLoading, router]);
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
@@ -80,8 +71,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   const onEmailSubmit = async (values: z.infer<typeof emailSchema>) => {
     setIsSubmitting(true);
     try {
-      await setSessionPersistence(auth, true); // Remember user by default
-      const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
+      await initiateEmailSignUp(auth, values.email, values.password);
 
       toast({
         title: 'Account created!',
@@ -120,7 +110,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   const onGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const { userCredential, isNewUser } = await handleGoogleSignIn();
+      const { userCredential, isNewUser } = await handleGoogleSignIn('signup');
 
        if (isNewUser) {
         toast({
@@ -165,9 +155,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   return (
     <div className="p-1">
-      {/* The header is now in the parent Dialog */}
-
-      <CardContent className="space-y-4 p-0">
+      <CardContent className="space-y-3 p-0">
         <Button
           variant="outline"
           className="w-full"
@@ -288,7 +276,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           </TabsContent>
         </Tabs>
       </CardContent>
-       <CardFooter className="flex justify-center p-0 pt-4">
+       <CardFooter className="flex justify-center p-0 pt-3">
           <p className="text-xs text-center text-muted-foreground">
               By creating an account, you agree to our Terms of Service.
           </p>

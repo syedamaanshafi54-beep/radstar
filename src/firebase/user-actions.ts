@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -30,9 +31,10 @@ export type GoogleSignInResult = {
 /**
  * Handles the entire Google Sign-In process, including Firestore user creation/update.
  * It now returns an object indicating if the user is new to direct them to onboarding.
+ * @param {'signin' | 'signup'} mode - The mode of operation.
  * @returns {Promise<GoogleSignInResult>} The user credential and a flag for new users.
  */
-export async function handleGoogleSignIn(): Promise<GoogleSignInResult> {
+export async function handleGoogleSignIn(mode: 'signin' | 'signup'): Promise<GoogleSignInResult> {
   const auth = getAuth();
   const firestore = getFirestore();
   const provider = new GoogleAuthProvider();
@@ -47,9 +49,14 @@ export async function handleGoogleSignIn(): Promise<GoogleSignInResult> {
     let isNewUser = false;
     
     if (!userSnap.exists()) {
-      isNewUser = true;
+      if (mode === 'signin') {
+        // User is trying to sign in, but no account exists.
+        await auth.signOut(); // Sign them out to prevent being in a weird state
+        throw new Error('Account not found. Please sign up first.');
+      }
 
-      // This is a new user, generate a custom ID and create the document
+      // This is a new user signing up, generate a custom ID and create the document
+      isNewUser = true;
       await runTransaction(firestore, async (transaction) => {
         const counterRef = doc(firestore, 'metadata', 'userCounter');
         const counterSnap = await transaction.get(counterRef);
