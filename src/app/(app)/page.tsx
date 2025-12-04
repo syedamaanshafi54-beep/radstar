@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { formatPrice } from '@/lib/utils';
 
-const heroSlides = [
+const staticHeroSlides = [
   {
     id: 'hero-talbina',
     imageUrl: '/images/aslitalbina/r2.jpg',
@@ -40,7 +40,8 @@ const heroSlides = [
     headline: 'Asli Talbina',
     tagline: 'The Original Taste of Wellness',
     cta: 'Discover Talbina',
-    link: '#Asli-Talbina'
+    link: '#Asli-Talbina',
+    slug: 'talbina-regular'
   },
   {
     id: 'hero-honey',
@@ -49,7 +50,8 @@ const heroSlides = [
     headline: 'Wild Natural Honey',
     tagline: 'Pure, Raw, and Unprocessed',
     cta: 'Explore Honey',
-    link: "#King's-Asli-Honey"
+    link: "#King's-Asli-Honey",
+    slug: "kings-asli-honey"
   },
   {
     id: 'hero-shilajit',
@@ -58,7 +60,8 @@ const heroSlides = [
     headline: 'Kashmiri Gold Shilajit',
     tagline: 'The Peak of Natural Purity',
     cta: 'Learn About Shilajit',
-    link: '#Shilajit'
+    link: '#Shilajit',
+    slug: 'shilajit'
   },
 ];
 
@@ -112,6 +115,9 @@ const staggerContainer = {
 type DealsData = {
   productIds: string[];
 }
+type HeroSlidesData = {
+  productIds: string[];
+}
 
 export default function Home() {
   const plugin = React.useRef(
@@ -132,6 +138,10 @@ export default function Home() {
   const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore]);
   const { data: dealsData, isLoading: dealsLoading } = useDoc<DealsData>(dealsDocRef);
 
+  const heroSlidesDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'heroSlides'), [firestore]);
+  const { data: heroSlidesData, isLoading: heroSlidesLoading } = useDoc<HeroSlidesData>(heroSlidesDocRef);
+
+
   // Use Firestore products if available, otherwise use static products as a fallback.
   const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
 
@@ -147,16 +157,40 @@ export default function Home() {
 
   const dealProducts = React.useMemo(() => {
     if (dealsLoading || productsLoading) return [];
-    const allProducts = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
-  
+    
     if (!dealsData || !dealsData.productIds || dealsData.productIds.length === 0) {
-      return staticProducts.filter(p => p.salePrice || (p.variants && p.variants.some(v => v.salePrice)));
+      return products.filter(p => p.salePrice || (p.variants && p.variants.some(v => v.salePrice)));
     }
     
     const dealIdSet = new Set(dealsData.productIds);
-    return allProducts.filter(p => dealIdSet.has(p.id) && (p.salePrice || (p.variants && p.variants.some(v => v.salePrice))));
+    return products.filter(p => dealIdSet.has(p.id) && (p.salePrice || (p.variants && p.variants.some(v => v.salePrice))));
   
-  }, [firestoreProducts, dealsData, dealsLoading, productsLoading]);
+  }, [products, dealsData, dealsLoading, productsLoading]);
+
+  const heroSlides = React.useMemo(() => {
+    if (heroSlidesLoading || productsLoading) {
+      return staticHeroSlides;
+    }
+    if (!heroSlidesData || !heroSlidesData.productIds || heroSlidesData.productIds.length === 0) {
+      return staticHeroSlides;
+    }
+
+    const slideIdSet = new Set(heroSlidesData.productIds);
+    const slides = products
+      .filter(p => slideIdSet.has(p.id))
+      .map(p => ({
+        id: p.id,
+        imageUrl: p.image.url as string,
+        imageHint: p.image.hint,
+        headline: p.name,
+        tagline: p.tagline,
+        cta: `Shop ${p.name}`,
+        link: `/products/${p.slug}`,
+        slug: p.slug,
+      }));
+    
+    return slides.length > 0 ? slides : staticHeroSlides;
+  }, [products, heroSlidesData, heroSlidesLoading, productsLoading]);
  
   React.useEffect(() => {
     if (!api) {
@@ -193,7 +227,7 @@ export default function Home() {
                     alt={slide.headline}
                     fill
                     className="object-cover"
-                    priority={slide.id === 'hero-talbina'}
+                    priority={slide.id === 'hero-talbina' || slide.slug === 'talbina-regular'}
                     data-ai-hint={slide.imageHint}
                     sizes="100vw"
                   />
@@ -537,3 +571,4 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     </Dialog>
   );
 }
+

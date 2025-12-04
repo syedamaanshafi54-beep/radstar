@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
@@ -54,6 +55,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 
 type DealsData = {
+  productIds: string[];
+}
+type HeroSlidesData = {
   productIds: string[];
 }
 
@@ -157,12 +161,16 @@ export default function AdminDashboardPage() {
 
   const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore]);
   const { data: dealsData, isLoading: dealInfoLoading } = useDoc<DealsData>(dealsDocRef);
+
+  const heroSlidesDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'heroSlides'), [firestore]);
+  const { data: heroSlidesData, isLoading: heroSlidesLoading } = useDoc<HeroSlidesData>(heroSlidesDocRef);
   
   const [recentOrders, setRecentOrders] = useState<EnrichedOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isSeeding, setIsSeeding] = useState(false);
 
   const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
+  const [selectedHeroIds, setSelectedHeroIds] = useState<string[]>([]);
   const { toast } = useToast();
   
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'ascending' });
@@ -326,7 +334,10 @@ export default function AdminDashboardPage() {
     if (dealsData) {
       setSelectedDealIds(dealsData.productIds || []);
     }
-  }, [dealsData]);
+    if (heroSlidesData) {
+      setSelectedHeroIds(heroSlidesData.productIds || []);
+    }
+  }, [dealsData, heroSlidesData]);
   
   useEffect(() => {
     const fetchRecentOrders = async () => {
@@ -370,17 +381,28 @@ export default function AdminDashboardPage() {
     );
   };
 
+  const handleHeroSelection = (productId: string) => {
+    setSelectedHeroIds(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId) 
+        : [...prev, productId]
+    );
+  };
+
   const handleSaveChanges = () => {
     if (selectedDealIds) {
         setDocumentNonBlocking(dealsDocRef, { productIds: selectedDealIds }, { merge: true });
-        toast({
-            title: 'Deals Updated',
-            description: 'The "Deal of the Day" section has been updated successfully.',
-        });
     }
+    if (selectedHeroIds) {
+        setDocumentNonBlocking(heroSlidesDocRef, { productIds: selectedHeroIds }, { merge: true });
+    }
+    toast({
+        title: 'Site Configuration Updated',
+        description: 'Your changes to hero slides and deals have been saved.',
+    });
   }
 
-  const isLoading = productsLoading || usersLoading || dealInfoLoading || allOrdersLoading;
+  const isLoading = productsLoading || usersLoading || dealInfoLoading || allOrdersLoading || heroSlidesLoading;
 
   const { totalRevenue, totalOrders } = useMemo(() => {
     if (!allOrders) return { totalRevenue: 0, totalOrders: 0 };
@@ -839,6 +861,56 @@ export default function AdminDashboardPage() {
       </div>
 
        <Card>
+        <CardHeader>
+            <CardTitle>Site Content Management</CardTitle>
+            <CardDescription>Select products to feature on the homepage hero and deals section.</CardDescription>
+        </CardHeader>
+        <CardContent>
+             {isLoading ? (
+                <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+             ) : (
+                 <div className="grid md:grid-cols-2 gap-8">
+                     <div>
+                        <h3 className="font-semibold mb-4">Hero Slides</h3>
+                         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                             {products.map((product) => (
+                                <div key={`hero-${product.id}`} className="flex items-center gap-3 rounded-md border p-2">
+                                     <Checkbox
+                                        id={`hero-${product.id}`}
+                                        checked={selectedHeroIds.includes(product.id)}
+                                        onCheckedChange={() => handleHeroSelection(product.id)}
+                                    />
+                                    <Label htmlFor={`hero-${product.id}`} className="flex-1 cursor-pointer">{product.name}</Label>
+                                </div>
+                            ))}
+                        </div>
+                     </div>
+                      <div>
+                        <h3 className="font-semibold mb-4">"Deal of the Day" Products</h3>
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                            {products.map((product) => (
+                                <div key={`deal-${product.id}`} className="flex items-center gap-3 rounded-md border p-2">
+                                    <Checkbox
+                                        id={`deal-${product.id}`}
+                                        checked={selectedDealIds.includes(product.id)}
+                                        onCheckedChange={() => handleDealSelection(product.id)}
+                                    />
+                                    <Label htmlFor={`deal-${product.id}`} className="flex-1 cursor-pointer">{product.name}</Label>
+                                </div>
+                            ))}
+                        </div>
+                     </div>
+                 </div>
+             )}
+        </CardContent>
+        <CardFooter>
+            <Button onClick={handleSaveChanges} disabled={isLoading}>Save Changes</Button>
+        </CardFooter>
+       </Card>
+
+       <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
             <CardTitle>Products Overview</CardTitle>
@@ -981,3 +1053,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
