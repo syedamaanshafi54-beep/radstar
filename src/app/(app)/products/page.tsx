@@ -140,7 +140,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const handleQuantityChange = (e: React.MouseEvent, change: number) => {
     e.preventDefault();
     e.stopPropagation();
-    setQuantity((prevQuantity) => Math.max(0, prevQuantity + change));
+    setQuantity((prevQuantity) => Math.max(1, prevQuantity + change));
   };
   
   const handleVariantChange = (variantId: string) => {
@@ -196,24 +196,24 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
               ) : null
             }
 
-            <div className="flex justify-between items-center mt-4">
-                 <div className="flex items-baseline gap-2">
-                    {salePrice ? (
-                        <>
-                            <p className="text-xl font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
-                            <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
-                        </>
-                    ) : (
-                        <p className="text-xl font-semibold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
-                    )}
-                </div>
+            <div className="flex flex-wrap justify-between items-center mt-4 gap-2">
+              <div className="flex items-baseline gap-2">
+                {salePrice ? (
+                  <>
+                    <p className="text-xl font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
+                    <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                  </>
+                ) : (
+                  <p className="text-xl font-semibold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                )}
+              </div>
               <div className="flex items-center space-x-2">
                 <div className="flex items-center border rounded-md">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, -1)} disabled={quantity === 0}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, -1)} disabled={quantity === 1}>
                       <Minus className="h-4 w-4" />
                     </Button>
                     <span
-                      className="w-16 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground"
+                      className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                     >
                       {quantity}

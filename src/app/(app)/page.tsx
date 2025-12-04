@@ -493,34 +493,34 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
               ) : null
             }
             
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-2">
-                <div className="flex items-baseline gap-2">
-                    {salePrice ? (
-                        <>
-                            <p className="text-2xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
-                            <p className="text-base text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
-                        </>
-                    ) : (
-                        <p className="text-2xl font-bold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
-                    )}
-                </div>
-              <div className="flex items-center space-x-1 w-full sm:w-auto">
-                <div className="flex items-center border rounded-md flex-1 sm:flex-initial">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, -1)} disabled={quantity === 1}>
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span
-                      className="w-16 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground"
-                      onClick={(e) => {e.preventDefault(); e.stopPropagation();}}
-                    >
-                      {quantity}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, 1)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
+            <div className="flex flex-wrap justify-between items-center mt-4 gap-2">
+              <div className="flex items-baseline gap-2">
+                {salePrice ? (
+                  <>
+                    <p className="text-2xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
+                    <p className="text-base text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                  </>
+                ) : (
+                  <p className="text-2xl font-bold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                )}
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="flex items-center border rounded-md">
+                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, -1)} disabled={quantity === 1}>
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span
+                    className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground"
+                    onClick={(e) => {e.preventDefault(); e.stopPropagation();}}
+                  >
+                    {quantity}
+                  </span>
+                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, 1)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
                 <Button onClick={handleAddToCart} size="icon" aria-label="Add to cart" className="h-9 w-9">
-                    <ShoppingCart className="h-4 w-4" />
+                  <ShoppingCart className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -537,6 +537,3 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     </Dialog>
   );
 }
-
-
-
