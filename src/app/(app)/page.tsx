@@ -414,7 +414,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const { toast } = useToast();
   const { addToCart } = useCart();
   const router = useRouter();
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
@@ -423,7 +423,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const amountToAdd = quantity === 0 ? 1 : quantity;
+    const amountToAdd = quantity;
     
     addToCart(product, amountToAdd, selectedVariant);
      toast({
@@ -432,13 +432,12 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
       duration: 5000,
       action: <ToastAction altText="View Cart" onClick={() => router.push('/cart')}>View Cart</ToastAction>,
     });
-    if (quantity === 0) setQuantity(1);
   };
 
   const handleQuantityChange = (e: React.MouseEvent, change: number) => {
     e.preventDefault();
     e.stopPropagation();
-    setQuantity((prevQuantity) => Math.max(0, prevQuantity + change));
+    setQuantity((prevQuantity) => Math.max(1, prevQuantity + change));
   };
 
   const handleVariantChange = (variantId: string) => {
@@ -507,7 +506,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                 </div>
               <div className="flex items-center space-x-1 w-full sm:w-auto">
                 <div className="flex items-center border rounded-md flex-1 sm:flex-initial">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, -1)} disabled={quantity === 0}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => handleQuantityChange(e, -1)} disabled={quantity === 1}>
                       <Minus className="h-4 w-4" />
                     </Button>
                     <span
@@ -538,5 +537,6 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     </Dialog>
   );
 }
+
 
 

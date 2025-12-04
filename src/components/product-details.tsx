@@ -31,13 +31,13 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const { toast } = useToast();
   const { addToCart } = useCart();
   const router = useRouter();
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
 
   const handleAddToCart = () => {
-    const amountToAdd = quantity === 0 ? 1 : quantity;
+    const amountToAdd = quantity;
     addToCart(product, amountToAdd, selectedVariant);
     toast({
       title: "Added to cart",
@@ -51,11 +51,10 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         </ToastAction>
       ),
     });
-    if (quantity === 0) setQuantity(1);
   };
 
   const handleQuantityChange = (change: number) => {
-    setQuantity((prev) => Math.max(0, prev + change));
+    setQuantity((prev) => Math.max(1, prev + change));
   };
 
   const handleVariantChange = (variantId: string) => {
@@ -137,7 +136,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 size="icon"
                 className="h-10 w-10 md:h-11 md:w-11"
                 onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 0}
+                disabled={quantity <= 1}
               >
                 <Minus className="h-5 w-5" />
               </Button>
@@ -146,7 +145,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 type="number"
                 value={quantity}
                 onChange={(e) =>
-                  setQuantity(Math.max(0, parseInt(e.target.value) || 0))
+                  setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                 }
                 className="w-full md:w-20 h-10 md:h-11 text-center border-0 focus-visible:ring-0 text-lg font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />

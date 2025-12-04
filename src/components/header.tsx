@@ -56,7 +56,6 @@ import {
 const storyLinks = [
   { href: '/about', label: 'Our Story' },
   { href: '/quality', label: 'Quality' },
-  { href: '/faq', label: 'FAQ' }
 ];
 
 const productCategories = [
