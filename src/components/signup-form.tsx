@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -33,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/social-icons';
 import { handleGoogleSignIn, getFirstName } from '@/firebase/user-actions';
+import { useRouter } from 'next/navigation';
 
 const emailSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -52,13 +52,20 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      onSuccess?.();
+      // Check if this is a new user that needs onboarding
+      const requiresOnboarding = new URLSearchParams(window.location.search).get('onboarding');
+      if (requiresOnboarding) {
+        router.push('/onboarding');
+      } else {
+        onSuccess?.();
+      }
     }
-  }, [user, isUserLoading, onSuccess]);
+  }, [user, isUserLoading, onSuccess, router]);
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
@@ -74,14 +81,15 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     setIsSubmitting(true);
     try {
       await setSessionPersistence(auth, true); // Remember user by default
-      await initiateEmailSignUp(auth, values.email, values.password);
+      const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
 
       toast({
         title: 'Account created!',
-        description: "You're now logged in.",
+        description: "Let's complete your profile.",
       });
 
-      onSuccess?.();
+      router.push('/onboarding');
+
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         toast({
@@ -112,16 +120,24 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   const onGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const userCredential = await handleGoogleSignIn();
-      const firstName = getFirstName(userCredential.user);
-      
-      toast({
-        title: `Welcome, ${firstName}!`,
-        description: "Your account has been created successfully.",
-        duration: 4000,
-      });
+      const { userCredential, isNewUser } = await handleGoogleSignIn();
 
-      onSuccess?.();
+       if (isNewUser) {
+        toast({
+          title: `Welcome!`,
+          description: "Let's complete your profile.",
+          duration: 4000,
+        });
+        router.push('/onboarding');
+      } else {
+        const firstName = getFirstName(userCredential.user);
+        toast({
+          title: `Welcome back, ${firstName}!`,
+          description: "You're now logged in.",
+          duration: 4000,
+        });
+        onSuccess?.();
+      }
     } catch (error: any) {
       if (
         error.code !== 'auth/popup-closed-by-user' &&
@@ -130,7 +146,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         toast({
           variant: 'destructive',
           title: 'Google sign-up failed.',
-          description: "Something went wrong. Please try again.",
+          description: 'Something went wrong. Please try again.',
         });
       }
     } finally {
@@ -139,7 +155,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   };
 
 
-  if (isUserLoading || user) {
+  if (isUserLoading) {
     return (
       <div className="flex min-h-[30vh] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -149,14 +165,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
   return (
     <div className="p-1">
-      <CardHeader className="text-center p-0 mb-3">
-        <CardTitle className="text-2xl">Create an Account</CardTitle>
-        <CardDescription>
-          Join us to start your journey to wellness.
-        </CardDescription>
-      </CardHeader>
+      {/* The header is now in the parent Dialog */}
 
-      <CardContent className="space-y-3 p-0">
+      <CardContent className="space-y-4 p-0">
         <Button
           variant="outline"
           className="w-full"
@@ -192,7 +203,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             <Form {...emailForm}>
               <form
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-                className="space-y-3 pt-2"
+                className="space-y-4 pt-2"
               >
                 <FormField
                   control={emailForm.control}
@@ -250,7 +261,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             <Form {...phoneForm}>
               <form
                 onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
-                className="space-y-3 pt-2"
+                className="space-y-4 pt-2"
               >
                 <FormField
                   control={phoneForm.control}
@@ -269,7 +280,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                   )}
                 />
 
-                <Button className="w-full">
+                <Button className="w-full" disabled>
                   Send Code
                 </Button>
               </form>
@@ -277,7 +288,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           </TabsContent>
         </Tabs>
       </CardContent>
-       <CardFooter className="flex justify-center p-0 pt-3">
+       <CardFooter className="flex justify-center p-0 pt-4">
           <p className="text-xs text-center text-muted-foreground">
               By creating an account, you agree to our Terms of Service.
           </p>

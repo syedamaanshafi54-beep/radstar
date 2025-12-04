@@ -124,7 +124,7 @@ export function Header() {
 
   const headerClasses = cn(
     'sticky z-40 transition-all duration-500 ease-in-out',
-    isScrolled ? 'top-0' : 'top-12'
+    isScrolled ? 'top-3' : 'top-12'
   );
 
   const innerHeaderClasses =

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,9 +6,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Form,
@@ -118,16 +117,24 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const onGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const userCredential = await handleGoogleSignIn();
-      const firstName = getFirstName(userCredential.user);
-      
-      toast({
-        title: `Welcome back, ${firstName}!`,
-        description: "You're now logged in.",
-        duration: 4000,
-      });
-      
-      onSuccess?.();
+      const { userCredential, isNewUser } = await handleGoogleSignIn();
+
+      if (isNewUser) {
+        toast({
+          title: `Welcome!`,
+          description: "Let's complete your profile.",
+          duration: 4000,
+        });
+        router.push('/onboarding');
+      } else {
+        const firstName = getFirstName(userCredential.user);
+        toast({
+          title: `Welcome back, ${firstName}!`,
+          description: "You're now logged in.",
+          duration: 4000,
+        });
+        onSuccess?.();
+      }
     } catch (error: any) {
       if (
         error.code !== 'auth/popup-closed-by-user' &&
@@ -136,7 +143,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         toast({
           variant: 'destructive',
           title: 'Google sign-in failed.',
-          description: "Something went wrong. Please try again.",
+          description: 'Something went wrong. Please try again.',
         });
       }
     } finally {
@@ -144,24 +151,30 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
-  if (isUserLoading || user) {
+  if (isUserLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
+  }
+  
+  if (user) {
+    // If user is already logged in, no need to show the form.
+    // The parent component will handle closing the dialog.
+    return null;
   }
 
   return (
     <Card className="w-full max-w-md shadow-none border-0 p-0">
-      <CardHeader className="text-center p-0">
+       <CardHeader className="text-center p-0">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
         <CardDescription>
           Choose your preferred login method to continue.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 p-0 pt-4">
+      <CardContent className="space-y-4 pt-5 p-1">
         <Button
           variant="outline"
           className="w-full"
@@ -197,7 +210,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <Form {...emailForm}>
               <form
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-                className="space-y-3 pt-2"
+                className="space-y-4 pt-2"
               >
                 <FormField
                   control={emailForm.control}
@@ -251,7 +264,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   control={emailForm.control}
                   name="rememberMe"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-2 space-y-0 pt-1">
+                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -259,7 +272,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                           disabled={isSubmitting}
                         />
                       </FormControl>
-                      <FormLabel>Remember me</FormLabel>
+                      <FormLabel className="font-normal">Remember me</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -282,7 +295,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <Form {...phoneForm}>
               <form
                 onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
-                className="space-y-3 pt-2"
+                className="space-y-4 pt-2"
               >
                 <FormField
                   control={phoneForm.control}
@@ -301,7 +314,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   )}
                 />
 
-                <Button className="w-full">
+                <Button className="w-full" disabled>
                   Send Code
                 </Button>
               </form>
