@@ -152,9 +152,6 @@ export default function AdminDashboardPage() {
   
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: false });
-
-  const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
-  const { data: users, isLoading: usersLoading } = useCollection(usersCollection, { listen: false });
   
   const ordersCollectionGroup = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
   const { data: allOrders, isLoading: allOrdersLoading } = useCollection<Order>(ordersCollectionGroup, { listen: false });
@@ -402,16 +399,16 @@ export default function AdminDashboardPage() {
     });
   }
 
-  const isLoading = productsLoading || usersLoading || dealInfoLoading || allOrdersLoading || heroSlidesLoading;
+  const isLoading = productsLoading || dealInfoLoading || allOrdersLoading || heroSlidesLoading;
 
-  const { totalRevenue, totalOrders } = useMemo(() => {
-    if (!allOrders) return { totalRevenue: 0, totalOrders: 0 };
+  const { totalRevenue, totalOrders, totalCustomers } = useMemo(() => {
+    if (!allOrders) return { totalRevenue: 0, totalOrders: 0, totalCustomers: 0 };
     const revenue = allOrders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
-    return { totalRevenue: revenue, totalOrders: allOrders.length };
+    const customerIds = new Set(allOrders.map(o => o.userId));
+    return { totalRevenue: revenue, totalOrders: allOrders.length, totalCustomers: customerIds.size };
   }, [allOrders]);
   
   const totalProducts = products.length;
-  const totalCustomers = users?.length || 0;
   
   const { totalIncome, totalVisitors, monthlyChartData } = useMemo(() => {
     if (!allOrders) {
@@ -1054,3 +1051,4 @@ export default function AdminDashboardPage() {
   );
 }
 
+    
