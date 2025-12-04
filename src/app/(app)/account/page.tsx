@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save, Home, User, Phone, Mail } from 'lucide-react';
+import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save, Home, User, Phone, Mail, Edit, X } from 'lucide-react';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import type { Order, OrderItem, UserProfile } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -112,6 +112,7 @@ export default function AccountPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
@@ -140,6 +141,7 @@ export default function AccountPage() {
     try {
         await updateUserProfile(user, { displayName, phone, address });
         toast({ title: "Profile updated successfully!" });
+        setIsEditing(false); // Exit edit mode on success
     } catch (error: any) {
         toast({ variant: "destructive", title: "Failed to update profile.", description: error.message });
     } finally {
@@ -177,11 +179,30 @@ export default function AccountPage() {
     <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
       <div className="max-w-4xl mx-auto space-y-8">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl font-headline flex items-center gap-2"><Package/> My Account</CardTitle>
-            <CardDescription>
-              Manage your account settings, profile information, and view your order history.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+                <CardTitle className="text-2xl md:text-3xl font-headline flex items-center gap-2"><Package/> My Account</CardTitle>
+                <CardDescription>
+                  Manage your account settings, profile information, and view your order history.
+                </CardDescription>
+            </div>
+            {!isEditing ? (
+                 <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+                    <Edit className="h-5 w-5" />
+                    <span className="sr-only">Edit Profile</span>
+                </Button>
+            ) : (
+                <div className="flex items-center gap-2">
+                    <Button onClick={handleProfileUpdate} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        <span>Save</span>
+                    </Button>
+                     <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                        <X className="h-4 w-4" />
+                        <span>Cancel</span>
+                    </Button>
+                </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
              <div className="space-y-4">
@@ -193,6 +214,7 @@ export default function AccountPage() {
                                 value={displayName} 
                                 onChange={(e) => setDisplayName(e.target.value)}
                                 placeholder="Enter your name"
+                                disabled={!isEditing}
                             />
                             <div className="relative">
                                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -205,6 +227,7 @@ export default function AccountPage() {
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="Phone number"
                                     className="pl-9"
+                                    disabled={!isEditing}
                                 />
                             </div>
                         </div>
@@ -216,6 +239,7 @@ export default function AccountPage() {
                             onChange={(e) => setAddress(e.target.value)}
                             placeholder="Enter your full shipping address."
                             rows={5}
+                            disabled={!isEditing}
                          />
                     </div>
                 </div>
@@ -225,11 +249,7 @@ export default function AccountPage() {
                 </div>
              </div>
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button onClick={handleProfileUpdate} disabled={isSaving}>
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                <span>Save Changes</span>
-            </Button>
+          <CardFooter className="justify-end">
             <Button variant="destructive" onClick={handleSignOut}>
               Sign Out
             </Button>

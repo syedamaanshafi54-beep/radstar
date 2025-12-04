@@ -95,10 +95,11 @@ export default function CheckoutPage() {
       
       form.setValue('phone', userProfile.phone || '');
 
+      // Check if address is a string and try to parse it
       if (userProfile.address) {
-        const addressParts = userProfile.address.split(', ');
-         form.setValue('address', userProfile.address);
+          form.setValue('address', userProfile.address);
       }
+
     } else if (user) {
       // Fallback to basic user object if profile is not loaded yet
       form.setValue('email', user.email || '');
@@ -167,12 +168,8 @@ export default function CheckoutPage() {
     const ordersCollection = collection(firestore, `users/${user.uid}/orders`);
     addDoc(ordersCollection, orderPayload)
       .then((docRef) => {
-          toast({
-            title: "Order Placed Successfully!",
-            description: `Your order number is ${orderNumber}.`,
-          });
           clearCart();
-          router.push(`/checkout/success?order=${docRef.id}`);
+          router.push(`/checkout/success`);
       })
       .catch((error) => {
           console.error("Order placement error:", error);
