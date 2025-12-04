@@ -3,11 +3,12 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
+import { AnimatedCheck } from "@/components/ui/animated-check";
 
 type Order = {
   orderNumber: string;
@@ -17,21 +18,23 @@ function SuccessMessage() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order');
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const orderRef = useMemoFirebase(() => {
-    if (!firestore || !orderId) return null;
-    return doc(firestore, 'orders', orderId);
-  }, [firestore, orderId]);
+    if (!firestore || !orderId || !user) return null;
+    // Correctly reference the order within the user's subcollection
+    return doc(firestore, `users/${user.uid}/orders`, orderId);
+  }, [firestore, orderId, user]);
 
   const { data: order, isLoading } = useDoc<Order>(orderRef);
   
-  if (isLoading) {
+  if (isLoading || !user) {
     return <Loader2 className="h-20 w-20 text-primary mx-auto mb-6 animate-spin" />;
   }
 
   return (
     <>
-      <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-6" />
+      <AnimatedCheck />
       <h1 className="text-4xl md:text-5xl font-headline font-bold">
         Thank you for your order!
       </h1>
