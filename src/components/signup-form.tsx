@@ -4,7 +4,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -28,12 +27,11 @@ import {
   initiateEmailSignUp,
   useUser,
   setSessionPersistence,
-  handleGoogleSignIn,
-  getFirstName,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/social-icons';
+import { handleGoogleSignIn, getFirstName } from '@/firebase/user-actions';
 
 const emailSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -84,11 +82,19 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
       onSuccess?.();
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Sign up failed.',
-        description: error.message,
-      });
+      if (error.code === 'auth/email-already-in-use') {
+        toast({
+          variant: 'destructive',
+          title: 'Email Already Registered',
+          description: 'This email address is already in use. Please try logging in.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Sign up failed.',
+          description: error.message,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -141,15 +147,15 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-none border-0 p-0">
-      <CardHeader className="text-center p-0">
+    <>
+      <CardHeader className="text-center p-0 mb-4">
         <CardTitle className="text-2xl">Create an Account</CardTitle>
         <CardDescription>
           Join us to start your journey to wellness.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 p-0 pt-4">
+      <CardContent className="space-y-3 p-0">
         <Button
           variant="outline"
           className="w-full"
@@ -270,6 +276,6 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           </TabsContent>
         </Tabs>
       </CardContent>
-    </Card>
+    </>
   );
 }
