@@ -74,6 +74,7 @@ export async function handleGoogleSignIn(mode: 'signin' | 'signup'): Promise<Goo
           displayName: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
+          providerId: user.providerData[0]?.providerId || 'google.com',
           role: 'user',
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
@@ -118,7 +119,7 @@ export function getFirstName(user: User | null): string {
  * @param user The current Firebase user object.
  * @param data The profile data to update.
  */
-export async function updateUserProfile(user: User, data: { displayName?: string; phone?: string; address?: string }) {
+export async function updateUserProfile(user: User, data: { displayName?: string; email?: string; phone?: string; address?: string }) {
     const auth = getAuth();
     const firestore = getFirestore();
     const userRef = doc(firestore, 'users', user.uid);
@@ -126,8 +127,14 @@ export async function updateUserProfile(user: User, data: { displayName?: string
     // Prepare data for Firestore update
     const firestoreData: any = { ...data, updatedAt: serverTimestamp() };
     
-    // Check if essential fields are being provided to mark profile as complete
+    // On initial creation, set the createdAt field.
     const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+        firestoreData.createdAt = serverTimestamp();
+        firestoreData.providerId = user.providerData[0]?.providerId || 'password';
+    }
+
+    // Check if essential fields are being provided to mark profile as complete
     const existingData = userSnap.data();
     const hasName = !!(data.displayName || existingData?.displayName);
     const hasPhone = !!(data.phone || existingData?.phone);

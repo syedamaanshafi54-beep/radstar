@@ -97,7 +97,11 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     setIsSubmitting(true);
     try {
       const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
-      await updateUserProfile(userCredential.user, { displayName: values.displayName });
+      // Pass all relevant info to be stored in Firestore
+      await updateUserProfile(userCredential.user, {
+        displayName: values.displayName,
+        email: values.email,
+      });
 
       toast({
         title: 'Account created!',
