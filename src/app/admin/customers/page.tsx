@@ -12,15 +12,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
+
 
 export default function AdminCustomersPage() {
   
-  // The functionality to fetch users is temporarily disabled to address a persistent permission error.
-  // This will be re-enabled once the underlying security rule issue is resolved.
-  const users: any[] = [];
-  const isLoading = false;
-  const error = true;
+  const firestore = useFirestore();
+  const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const usersQuery = useMemoFirebase(() => query(usersCollection), [usersCollection]);
 
+  const { data: users, isLoading, error } = useCollection<WithId<UserProfile>>(usersQuery);
 
   return (
     <div className="space-y-4">
@@ -49,13 +52,14 @@ export default function AdminCustomersPage() {
                   </TableRow>
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-48 text-center text-amber-600 bg-amber-50">
+                  <TableCell colSpan={4} className="h-48 text-center text-destructive bg-destructive/10">
                     <div className="flex flex-col items-center gap-2">
                       <AlertTriangle className="h-10 w-10"/>
-                      <h3 className="font-bold text-lg">Customer List Temporarily Unavailable</h3>
+                      <h3 className="font-bold text-lg">Error Fetching Customers</h3>
                       <p className="text-sm max-w-md">
-                        We are currently resolving a permission issue with fetching the customer data. This feature will be restored shortly. Thank you for your patience.
+                        There was a permission issue fetching customer data. Please check your Firestore security rules.
                       </p>
+                       <p className="text-xs text-muted-foreground mt-2 break-all">{error.message}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -71,7 +75,7 @@ export default function AdminCustomersPage() {
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
-                    <TableCell>{user.providerId}</TableCell>
+                    <TableCell>{user.providerId || 'password'}</TableCell>
                   </TableRow>
                 ))
               ) : (
