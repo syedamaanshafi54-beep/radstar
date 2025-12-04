@@ -49,13 +49,8 @@ export async function handleGoogleSignIn(mode: 'signin' | 'signup'): Promise<Goo
     let isNewUser = false;
     
     if (!userSnap.exists()) {
-      if (mode === 'signin') {
-        // User is trying to sign in, but no account exists.
-        await auth.signOut(); // Sign them out to prevent being in a weird state
-        throw new Error('Account not found. Please sign up first.');
-      }
-
-      // This is a new user signing up, generate a custom ID and create the document
+      // User does not exist, so we create a new document regardless of mode.
+      // This simplifies the logic: if you sign in with Google and don't have an account, we make one.
       isNewUser = true;
       await runTransaction(firestore, async (transaction) => {
         const counterRef = doc(firestore, 'metadata', 'userCounter');
