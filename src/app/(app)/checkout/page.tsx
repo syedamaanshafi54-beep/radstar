@@ -33,6 +33,7 @@ import { useUser, useFirestore, errorEmitter, FirestorePermissionError, useDoc, 
 import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { formatPrice } from "@/lib/utils";
 import type { UserProfile } from "@/lib/types";
+import { AnimatedCheck } from "@/components/ui/animated-check";
 
 
 const formSchema = z.object({
@@ -56,6 +57,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -64,10 +66,10 @@ export default function CheckoutPage() {
 
 
   useEffect(() => {
-    if (cartItems.length === 0 && !isProcessing) {
+    if (cartItems.length === 0 && !isProcessing && !orderPlaced) {
       router.push("/products");
     }
-  }, [cartItems, router, isProcessing]);
+  }, [cartItems, router, isProcessing, orderPlaced]);
   
   const form = useForm<ShippingInfo>({
     resolver: zodResolver(formSchema),
@@ -95,9 +97,16 @@ export default function CheckoutPage() {
       
       form.setValue('phone', userProfile.phone || '');
 
-      // Check if address is a string and try to parse it
       if (userProfile.address) {
+        const addressParts = userProfile.address.split(', ');
+        if (addressParts.length >= 4) {
+          form.setValue('address', addressParts[0]);
+          form.setValue('city', addressParts[1]);
+          form.setValue('state', addressParts[2]);
+          form.setValue('zip', addressParts[3]);
+        } else {
           form.setValue('address', userProfile.address);
+        }
       }
 
     } else if (user) {
@@ -169,7 +178,10 @@ export default function CheckoutPage() {
     addDoc(ordersCollection, orderPayload)
       .then((docRef) => {
           clearCart();
-          router.push(`/checkout/success`);
+          setOrderPlaced(true);
+          setTimeout(() => {
+            router.push(`/account`);
+          }, 2500); // Wait for animation to play
       })
       .catch((error) => {
           console.error("Order placement error:", error);
@@ -184,9 +196,7 @@ export default function CheckoutPage() {
               title: "Could not place order",
               description: "Please try again or contact support.",
           });
-      })
-      .finally(() => {
-        setIsProcessing(false);
+          setIsProcessing(false);
       });
   }
 
@@ -194,7 +204,7 @@ export default function CheckoutPage() {
     placeOrder(shippingInfo);
   }
 
-  if (cartItems.length === 0 && !isProcessing) {
+  if (cartItems.length === 0 && !isProcessing && !orderPlaced) {
     return null;
   }
 
@@ -310,9 +320,17 @@ export default function CheckoutPage() {
                     </div>
                   </CardContent>
                   <CardContent>
-                     <Button type="submit" size="lg" className="w-full mt-4 text-lg" disabled={isProcessing}>
-                      {isProcessing ? 'Processing...' : 'Place Order'}
-                    </Button>
+                     {orderPlaced ? (
+                        <div className="flex flex-col items-center justify-center text-center py-4">
+                            <AnimatedCheck />
+                            <h2 className="text-xl font-semibold mt-4">Order Placed Successfully!</h2>
+                            <p className="text-muted-foreground">Redirecting you to your account...</p>
+                        </div>
+                     ) : (
+                        <Button type="submit" size="lg" className="w-full mt-4 text-lg" disabled={isProcessing}>
+                            {isProcessing ? 'Processing...' : 'Place Order'}
+                        </Button>
+                     )}
                   </CardContent>
               </Card>
           </div>
