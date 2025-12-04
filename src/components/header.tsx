@@ -350,11 +350,10 @@ export function Header() {
                 <div onMouseLeave={() => setProductsOpen(false)}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={cn(navButtonClasses, "flex flex-col items-center")}
+                      className={cn(navButtonClasses)}
                       onMouseEnter={() => setProductsOpen(true)}
                     >
                       Products
-                      <ChevronDown className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -384,11 +383,10 @@ export function Header() {
                  <div onMouseLeave={() => setStoryOpen(false)}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={cn(navButtonClasses, "flex flex-col items-center")}
+                      className={cn(navButtonClasses)}
                       onMouseEnter={() => setStoryOpen(true)}
                     >
                       Our Story
-                      <ChevronDown className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
