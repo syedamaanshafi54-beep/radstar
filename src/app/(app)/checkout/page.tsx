@@ -175,30 +175,29 @@ export default function CheckoutPage() {
       createdAt: serverTimestamp(),
     };
 
-    const ordersCollection = collection(firestore, `users/${user.uid}/orders`);
-    addDoc(ordersCollection, orderPayload)
-      .then((docRef) => {
-          setOrderPlaced(true);
-          clearCart();
-          setTimeout(() => {
-            router.push(`/account`);
-          }, 2500); // Wait for animation to play
-      })
-      .catch((error) => {
-          console.error("Order placement error:", error);
-          const contextualError = new FirestorePermissionError({
-            operation: 'create',
-            path: `users/${user.uid}/orders`,
-            requestResourceData: orderPayload
-          });
-          errorEmitter.emit('permission-error', contextualError);
-          toast({
-              variant: "destructive",
-              title: "Could not place order",
-              description: "Please try again or contact support.",
-          });
-          setIsProcessing(false);
+    try {
+      const ordersCollection = collection(firestore, `users/${user.uid}/orders`);
+      await addDoc(ordersCollection, orderPayload);
+      setOrderPlaced(true);
+      clearCart();
+      setTimeout(() => {
+        router.push(`/account`);
+      }, 2500); // Wait for animation to play
+    } catch (error) {
+      console.error("Order placement error:", error);
+      const contextualError = new FirestorePermissionError({
+        operation: 'create',
+        path: `users/${user.uid}/orders`,
+        requestResourceData: orderPayload
       });
+      errorEmitter.emit('permission-error', contextualError);
+      toast({
+          variant: "destructive",
+          title: "Could not place order",
+          description: "Please try again or contact support.",
+      });
+      setIsProcessing(false);
+    }
   }
 
   const handleFormSubmit = (shippingInfo: ShippingInfo) => {
@@ -350,3 +349,5 @@ export default function CheckoutPage() {
 function getCartItemId(productId: string, variantId?: string) {
     return variantId ? `${productId}-${variantId}` : productId;
 }
+
+    

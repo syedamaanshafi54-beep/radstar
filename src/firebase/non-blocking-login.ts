@@ -27,18 +27,9 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string) {
   // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-  signInWithEmailAndPassword(authInstance, email, password).catch(error => {
-    if (error.code === 'auth/operation-not-allowed') {
-      console.error(
-        'Email/Password sign-in is not enabled in the Firebase console. Please enable it to use this feature.'
-      );
-    } else {
-      // Re-throw other errors to be handled by global error handlers or other catch blocks.
-      throw error;
-    }
-  });
+  return signInWithEmailAndPassword(authInstance, email, password);
   // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
@@ -64,3 +55,5 @@ export async function setSessionPersistence(authInstance: Auth, rememberMe?: boo
 export async function sendPasswordReset(authInstance: Auth, email: string) {
     return sendPasswordResetEmail(authInstance, email);
 }
+
+    
