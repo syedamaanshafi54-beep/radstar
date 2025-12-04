@@ -32,11 +32,15 @@ async function getOrders(): Promise<EnrichedOrder[]> {
     
     const ordersData: EnrichedOrder[] = ordersSnapshot.docs.map(doc => {
         const order = doc.data() as Order;
+        // Safely access shippingInfo
+        const customerName = order.shippingInfo?.name || 'Unknown User';
+        const customerEmail = order.shippingInfo?.email || 'No email';
+
         return {
             ...order,
             id: doc.id,
-            customerName: order.shippingInfo.name || 'Unknown User',
-            customerEmail: order.shippingInfo.email || 'No email',
+            customerName: customerName,
+            customerEmail: customerEmail,
         };
     });
 
