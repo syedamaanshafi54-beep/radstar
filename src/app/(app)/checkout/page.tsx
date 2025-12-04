@@ -65,18 +65,12 @@ export default function CheckoutPage() {
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
-  // This ref helps us know if it's the initial page load.
-  const isInitialLoad = useRef(true);
-
   useEffect(() => {
-    // Only redirect if the cart is empty on the *initial load* of the page.
-    // This prevents redirection after a successful order placement.
-    if (isInitialLoad.current && cartItems.length === 0) {
+    // If cart is empty AND an order hasn't just been placed, redirect.
+    if (cartItems.length === 0 && !orderPlaced) {
       router.push("/products");
     }
-    // After the first render, set this to false.
-    isInitialLoad.current = false;
-  }, [cartItems.length, router]);
+  }, [cartItems.length, orderPlaced, router]);
   
   const form = useForm<ShippingInfo>({
     resolver: zodResolver(formSchema),
@@ -184,8 +178,8 @@ export default function CheckoutPage() {
     const ordersCollection = collection(firestore, `users/${user.uid}/orders`);
     addDoc(ordersCollection, orderPayload)
       .then((docRef) => {
-          clearCart();
           setOrderPlaced(true);
+          clearCart();
           setTimeout(() => {
             router.push(`/account`);
           }, 2500); // Wait for animation to play
@@ -356,5 +350,3 @@ export default function CheckoutPage() {
 function getCartItemId(productId: string, variantId?: string) {
     return variantId ? `${productId}-${variantId}` : productId;
 }
-
-    
