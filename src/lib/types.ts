@@ -78,6 +78,7 @@ export type UserProfile = {
   phone?: string;
   address?: string;
   photoURL?: string;
+  providerId?: string;
   role: 'user' | 'admin';
   isProfileComplete?: boolean;
   createdAt: Timestamp;

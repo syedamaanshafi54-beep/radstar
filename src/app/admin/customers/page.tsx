@@ -64,12 +64,12 @@ export default function AdminCustomersPage() {
                   </TableCell>
                 </TableRow>
               ) : users && users.length > 0 ? (
-                users.map((user: any) => (
-                  <TableRow key={user.id}>
+                users.map((user: UserProfile) => (
+                  <TableRow key={user.uid}>
                     <TableCell className="font-medium flex items-center gap-2">
                        <Avatar className="h-8 w-8">
                          {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName} />}
-                         <AvatarFallback>{user.displayName?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}</AvatarFallback>
+                         <AvatarFallback>{user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                        </Avatar>
                        {user.displayName}
                     </TableCell>
