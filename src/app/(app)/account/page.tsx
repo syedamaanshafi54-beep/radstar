@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase, WithId } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, updateUserProfile } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,13 +14,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Package, History, LifeBuoy, Repeat, FileText, ChevronDown, ChevronUp } from 'lucide-react';
-import { collection, query, orderBy, where, getDocs } from 'firebase/firestore';
-import type { Order, OrderItem } from '@/lib/types';
+import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
+import type { Order, OrderItem, UserProfile } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import Image from 'next/image';
 import { formatPrice } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 function OrderDetails({ items }: { items: OrderItem[] }) {
   if (!items || items.length === 0) {
@@ -79,7 +78,7 @@ function OrderHistory() {
                           <div className="text-left">
                               <p className="font-semibold">Order #{order.orderNumber}</p>
                               <p className="text-sm text-muted-foreground">
-                                  {new Date(order.createdAt.seconds * 1000).toLocaleDateString()} - <span className="font-currency">₹</span>{formatPrice(order.totalAmount)}
+                                  {order.createdAt ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : ''} - <span className="font-currency">₹</span>{formatPrice(order.totalAmount)}
                               </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -107,14 +106,41 @@ function OrderHistory() {
 
 export default function AccountPage() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  // Fetch the user's Firestore document
+  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
+
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, isUserLoading, router]);
+    if (userProfile) {
+        setDisplayName(userProfile.displayName || '');
+    }
+  }, [user, userProfile, isUserLoading, router]);
+
+  const handleNameChange = async () => {
+    if (!user || !displayName.trim()) {
+        toast({ variant: "destructive", title: "Display name cannot be empty." });
+        return;
+    }
+    setIsSavingName(true);
+    try {
+        await updateUserProfile(user, { displayName });
+        toast({ title: "Display name updated successfully!" });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Failed to update name.", description: error.message });
+    } finally {
+        setIsSavingName(false);
+    }
+  };
 
   const handleSignOut = async () => {
     const auth = getAuth();
@@ -134,7 +160,7 @@ export default function AccountPage() {
     }
   };
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || isProfileLoading || !user) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -152,20 +178,30 @@ export default function AccountPage() {
               Manage your account settings and view your order history.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
+          <CardContent className="space-y-6">
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
                 <div>
-                    <h3 className="font-semibold">Display Name</h3>
-                    <p className="text-muted-foreground">{user.displayName || 'Not provided'}</p>
+                    <h3 className="font-semibold mb-2">Display Name</h3>
+                    <div className="flex items-center gap-2">
+                        <Input 
+                            value={displayName} 
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="Enter your name"
+                        />
+                        <Button onClick={handleNameChange} disabled={isSavingName} size="icon">
+                           {isSavingName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                           <span className="sr-only">Save name</span>
+                        </Button>
+                    </div>
                 </div>
                 <div>
                     <h3 className="font-semibold">Email</h3>
                     <p className="text-muted-foreground">{user.email || 'No email provided'}</p>
                 </div>
-            </div>
-             <div>
-              <h3 className="font-semibold">User ID</h3>
-              <p className="text-muted-foreground text-sm break-all">{user.uid}</p>
+                 <div>
+                    <h3 className="font-semibold">User ID</h3>
+                    <p className="text-muted-foreground text-sm break-all">{userProfile?.customUserId || 'Not assigned yet'}</p>
+                </div>
             </div>
           </CardContent>
           <CardFooter>

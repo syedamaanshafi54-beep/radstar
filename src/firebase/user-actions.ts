@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -15,6 +14,7 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
+  runTransaction,
 } from 'firebase/firestore';
 
 /**
@@ -26,7 +26,6 @@ export type GoogleSignInResult = {
   userCredential: UserCredential;
   isNewUser: boolean;
 };
-
 
 /**
  * Handles the entire Google Sign-In process, including Firestore user creation/update.
@@ -46,34 +45,56 @@ export async function handleGoogleSignIn(): Promise<GoogleSignInResult> {
     const userSnap = await getDoc(userRef);
 
     let isNewUser = false;
-
-    if (!userSnap.exists() || userSnap.data()?.isProfileComplete === false) {
+    
+    if (!userSnap.exists()) {
       isNewUser = true;
-      // For a brand new user, create the document with profile incomplete.
-      // If it exists but is incomplete, this will merge and update lastLogin.
-      await setDoc(userRef, {
-        uid: user.uid,
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        role: 'user',
-        createdAt: userSnap.exists() ? userSnap.data().createdAt : serverTimestamp(),
-        lastLogin: serverTimestamp(),
-        isProfileComplete: false, // Explicitly mark profile as incomplete
-      }, { merge: true });
+
+      // This is a new user, generate a custom ID and create the document
+      await runTransaction(firestore, async (transaction) => {
+        const counterRef = doc(firestore, 'metadata', 'userCounter');
+        const counterSnap = await transaction.get(counterRef);
+        
+        let lastNumber = 0;
+        if (counterSnap.exists()) {
+          lastNumber = counterSnap.data().lastUserNumber || 0;
+        }
+        
+        const newNumber = lastNumber + 1;
+        const customUserId = `RST-${String(newNumber).padStart(4, '0')}`;
+
+        // Update the counter
+        transaction.set(counterRef, { lastUserNumber: newNumber }, { merge: true });
+
+        // Create the new user document
+        transaction.set(userRef, {
+          uid: user.uid,
+          customUserId: customUserId,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          role: 'user',
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          isProfileComplete: false, // Explicitly mark profile as incomplete
+        });
+      });
+
     } else {
-      // Existing, complete user: Just update their last login time
-      await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+        // Existing user, just update lastLogin and check if they need onboarding
+        await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+        if (userSnap.data()?.isProfileComplete === false) {
+            isNewUser = true;
+        }
     }
+
 
     return { userCredential, isNewUser };
   } catch (error: any) {
+    // Gracefully handle popup closed by user
     if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
         console.error("Google Sign-In Error:", error);
-        throw error;
     }
-    // If the error is that the user closed the popup, we don't need to do anything.
-    // We can just re-throw to allow the caller to handle if needed, but it won't be a breaking error.
+    // Re-throw the error to be handled by the calling component
     throw error;
   }
 }
@@ -95,23 +116,24 @@ export function getFirstName(user: User | null): string {
  * @param user The current Firebase user object.
  * @param data The profile data to update.
  */
-export async function updateUserProfile(user: User, data: { displayName: string; phone?: string; address?: string }) {
+export async function updateUserProfile(user: User, data: { displayName?: string; phone?: string; address?: string }) {
     const auth = getAuth();
     const firestore = getFirestore();
     const userRef = doc(firestore, 'users', user.uid);
 
-    // Update Firebase Auth profile
-    if (auth.currentUser) {
+    // Prepare data for Firestore update
+    const firestoreData: any = { ...data, updatedAt: serverTimestamp() };
+    if (data.displayName !== undefined) {
+      firestoreData.isProfileComplete = true; // Mark as complete if they're saving profile info
+    }
+
+    // Update Firebase Auth profile if displayName is being changed
+    if (auth.currentUser && data.displayName) {
         await updateProfile(auth.currentUser, {
             displayName: data.displayName,
         });
     }
 
     // Update Firestore document
-    await setDoc(userRef, {
-        displayName: data.displayName,
-        phone: data.phone,
-        address: data.address,
-        isProfileComplete: true,
-    }, { merge: true });
+    await setDoc(userRef, firestoreData, { merge: true });
 }

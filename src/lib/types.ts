@@ -1,4 +1,3 @@
-
 import { type StaticImageData } from "next/image";
 import { type Timestamp } from "firebase/firestore";
 
@@ -68,4 +67,17 @@ export type Order = {
     paymentMethod: 'COD' | 'Razorpay';
     status: 'placed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
     createdAt: Timestamp;
+}
+
+export type UserProfile = {
+  uid: string;
+  customUserId?: string;
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  role: 'user' | 'admin';
+  isProfileComplete?: boolean;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  lastLogin: Timestamp;
 }
