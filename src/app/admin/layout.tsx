@@ -37,7 +37,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <Sidebar className="border-r border-border/20">
         <SidebarHeader>
            <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-                <Sprout className="h-6 w-6 text-primary"/>
                 <span>Rad Star Admin</span>
            </Link>
         </SidebarHeader>

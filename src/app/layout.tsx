@@ -22,6 +22,9 @@ export default function RootLayout({
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
 
+  // Hide search overlay on admin routes
+  const showSearchOverlay = !pathname.startsWith('/admin');
+
   useEffect(() => {
     // We don't want to show the loader on the initial page load.
     // We can track if this is the first render, but a simpler way is to just
@@ -68,7 +71,7 @@ export default function RootLayout({
         <FirebaseClientProvider>
             <CartProvider>
                 {loading && <GlobalLoader />}
-                <SearchOverlay />
+                {showSearchOverlay && <SearchOverlay />}
                 {children}
                 <Toaster />
                 <FirebaseErrorListener />

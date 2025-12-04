@@ -25,7 +25,7 @@ import {
   setDocumentNonBlocking,
   addDocumentNonBlocking,
 } from '@/firebase/non-blocking-updates';
-import { Trash2, PlusCircle } from 'lucide-react';
+import { Trash2, PlusCircle, Upload } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
 const formSchema = z.object({
@@ -95,6 +95,17 @@ export function ProductForm({ product }: ProductFormProps) {
   });
 
   const onSubmit = (values: ProductFormValues) => {
+    // In a real app, you would handle the image file upload here.
+    // For now, we'll continue to use the imageUrl field.
+    if (!values.imageUrl) {
+        toast({
+            variant: "destructive",
+            title: "Image required",
+            description: "Please upload an image for the product.",
+        });
+        return;
+    }
+
     const productData: Omit<Product, 'id' | 'slug' | 'image'> & { image: { url: string, hint: string, id: string } } = {
       name: values.name,
       tagline: values.tagline,
@@ -134,6 +145,22 @@ export function ProductForm({ product }: ProductFormProps) {
       router.push('/admin/products');
     }
   };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For demonstration, we'll use a placeholder URL.
+      // In a real app, you'd upload the file to a service (like Firebase Storage)
+      // and get a downloadable URL.
+      const tempUrl = URL.createObjectURL(file);
+      form.setValue('imageUrl', tempUrl);
+      toast({
+        title: "Image selected",
+        description: `${file.name} is ready. Save the product to finalize.`,
+      });
+    }
+  };
+
 
   return (
     <Form {...form}>
@@ -228,25 +255,29 @@ export function ProductForm({ product }: ProductFormProps) {
                   )}
                 />
             </div>
+             <div>
+                <FormLabel>Product Image</FormLabel>
+                <div className="mt-2 flex items-center gap-4">
+                    <Input id="image-upload" type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                        <Button type="button" variant="outline" asChild>
+                           <span><Upload className="mr-2 h-4 w-4" /> Upload Image</span>
+                        </Button>
+                    </label>
+                    {form.watch('imageUrl') && (
+                        <div className="text-sm text-muted-foreground truncate">
+                           Image selected.
+                        </div>
+                    )}
+                </div>
+                 <FormDescription className="mt-2">
+                    Upload a high-quality image for the product.
+                 </FormDescription>
+            </div>
           </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://example.com/image.jpg"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
         <FormField
           control={form.control}
           name="imageHint"
