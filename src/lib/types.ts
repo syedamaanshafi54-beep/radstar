@@ -56,6 +56,8 @@ export type ShippingInfo = {
     zip: string;
 };
 
+export type OrderStatus = "placed" | "confirmed" | "packed" | "shipped" | "out_for_delivery" | "delivered" | "cancelled";
+
 export type Order = {
     id: string;
     orderNumber: string;
@@ -66,8 +68,16 @@ export type Order = {
     shipping: number;
     totalAmount: number;
     paymentMethod: 'COD' | 'Razorpay';
-    status: 'placed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    status: OrderStatus;
     createdAt: Timestamp;
+    statusUpdatedAt: Timestamp;
+    trackingId?: string;
+    courierName?: string;
+    estDeliveryDate?: Timestamp;
+    statusHistory?: {
+      status: OrderStatus;
+      changedAt: Timestamp;
+    }[];
 }
 
 export type UserProfile = {
