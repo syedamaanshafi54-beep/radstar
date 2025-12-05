@@ -204,7 +204,7 @@ export default function AccountPage() {
                 </div>
             )}
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
              <div className="space-y-4">
                  <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
                     <div>
@@ -242,10 +242,6 @@ export default function AccountPage() {
                             disabled={!isEditing}
                          />
                     </div>
-                </div>
-                 <div>
-                    <h3 className="font-semibold">User ID</h3>
-                    <p className="text-muted-foreground text-sm break-all">{userProfile?.customUserId || 'Not assigned yet'}</p>
                 </div>
              </div>
           </CardContent>

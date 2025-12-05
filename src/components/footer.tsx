@@ -12,7 +12,6 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-1 flex flex-col items-center md:items-start">
             <Link href="/" className="flex items-center space-x-2 mb-4">
-              <Sprout className="h-8 w-8 text-primary" />
               <span className="font-bold font-headline text-xl">Rad Star Trading</span>
             </Link>
             <p className="text-muted-foreground">The Original Taste of Wellness.</p>
