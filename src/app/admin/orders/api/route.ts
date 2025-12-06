@@ -9,11 +9,11 @@ function getAdminApp(): App {
   if (getApps().length) {
     return getApp();
   }
-
+  
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
 
   return initializeApp({
-    credential: cert(serviceAccount),
+    credential: cert(serviceAccount)
   });
 }
 
