@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,6 +74,9 @@ export function Header() {
 
   const [productsOpen, setProductsOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
+  const productsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const storyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -128,6 +131,32 @@ export function Header() {
     'flex h-16 items-center justify-between bg-[hsl(var(--primary-alt))] px-4 sm:px-6 transition-all duration-300 rounded-full shadow-lg';
 
   const navLinkClasses = "relative text-2xl font-bold text-primary-nav-foreground focus:outline-none after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-0.5 after:bg-primary-nav-foreground after:w-0 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 px-8 py-2 flex items-center gap-2";
+  
+  const handleMouseEnter = (menu: 'products' | 'story') => {
+    if (menu === 'products') {
+      if (productsTimeoutRef.current) clearTimeout(productsTimeoutRef.current);
+      setProductsOpen(true);
+    } else {
+      if (storyTimeoutRef.current) clearTimeout(storyTimeoutRef.current);
+      setStoryOpen(true);
+    }
+  };
+
+  const handleMouseLeave = (menu: 'products' | 'story') => {
+    const timeout = setTimeout(() => {
+      if (menu === 'products') {
+        setProductsOpen(false);
+      } else {
+        setStoryOpen(false);
+      }
+    }, 200); // 200ms delay
+
+    if (menu === 'products') {
+      productsTimeoutRef.current = timeout;
+    } else {
+      storyTimeoutRef.current = timeout;
+    }
+  };
 
   return (
     <div className={headerClasses}>
@@ -308,7 +337,7 @@ export function Header() {
             </div>
 
             <nav className="flex items-center justify-center gap-2">
-              <div className="relative group" onMouseEnter={() => setProductsOpen(true)} onMouseLeave={() => setProductsOpen(false)}>
+              <div className="relative" onMouseEnter={() => handleMouseEnter('products')} onMouseLeave={() => handleMouseLeave('products')}>
                 <Link href="/products" className={navLinkClasses}>
                   Products
                   <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", productsOpen && "rotate-180")} />
@@ -330,7 +359,7 @@ export function Header() {
                 </div>
               </div>
 
-              <div className="relative group" onMouseEnter={() => setStoryOpen(true)} onMouseLeave={() => setStoryOpen(false)}>
+              <div className="relative" onMouseEnter={() => handleMouseEnter('story')} onMouseLeave={() => handleMouseLeave('story')}>
                 <Link href="/about" className={navLinkClasses}>
                   Our Story
                   <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", storyOpen && "rotate-180")} />
