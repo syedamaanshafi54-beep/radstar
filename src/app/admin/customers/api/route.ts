@@ -33,6 +33,7 @@ export async function GET() {
     const usersSnapshot = await firestore.collection('users').orderBy('createdAt', 'desc').get();
 
     if (usersSnapshot.empty) {
+        await deleteApp(adminApp);
         return NextResponse.json([]);
     }
 
