@@ -1,7 +1,5 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -14,31 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { User, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile } from '@/lib/types';
-import { WithId } from '@/firebase';
+import { WithId, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 export default function AdminCustomersPage() {
-    const [customers, setCustomers] = useState<WithId<UserProfile>[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        async function fetchCustomers() {
-            try {
-                const response = await fetch('/admin/customers/api');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch customers');
-                }
-                const data = await response.json();
-                setCustomers(data);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        fetchCustomers();
-    }, []);
+    const firestore = useFirestore();
+    const customersQuery = useMemoFirebase(
+        () => query(collection(firestore, 'users'), orderBy('createdAt', 'desc')),
+        [firestore]
+    );
+    const { data: customers, isLoading, error } = useCollection<UserProfile>(customersQuery);
 
   return (
     <div className="space-y-4">
@@ -69,7 +52,7 @@ export default function AdminCustomersPage() {
                 <TableRow>
                     <TableCell colSpan={4} className="text-center text-destructive p-8">
                         <p className="font-semibold">Error loading customers:</p>
-                        <p>{error}</p>
+                        <p>{error.message}</p>
                     </TableCell>
                 </TableRow>
              ) : customers && customers.length > 0 ? (
@@ -87,7 +70,7 @@ export default function AdminCustomersPage() {
                     <TableCell>{user.email || 'No Email'}</TableCell>
                     <TableCell>
                       {user.createdAt
-                        ? new Date(user.createdAt as string).toLocaleDateString()
+                        ? new Date(typeof user.createdAt === 'string' ? user.createdAt : user.createdAt.toDate()).toLocaleDateString()
                         : 'N/A'}
                     </TableCell>
                     <TableCell>{user.providerId || 'N/A'}</TableCell>

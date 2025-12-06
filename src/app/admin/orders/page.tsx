@@ -1,7 +1,5 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -16,6 +14,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collectionGroup, query, orderBy } from 'firebase/firestore';
 
 type EnrichedOrder = Order & {
     id: string;
@@ -24,29 +24,18 @@ type EnrichedOrder = Order & {
 };
 
 export default function AdminOrdersPage() {
-    const [orders, setOrders] = useState<EnrichedOrder[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const firestore = useFirestore();
+    const ordersQuery = useMemoFirebase(
+      () => query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')),
+      [firestore]
+    );
+    const { data, isLoading, error } = useCollection<Order>(ordersQuery);
 
-    useEffect(() => {
-        async function fetchOrders() {
-            try {
-                const response = await fetch('/admin/orders/api');
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.details || 'Failed to fetch orders');
-                }
-                const data = await response.json();
-                setOrders(data);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        fetchOrders();
-    }, []);
+    const orders: EnrichedOrder[] = (data || []).map(order => ({
+      ...order,
+      customerName: order.shippingInfo?.name || 'Unknown User',
+      customerEmail: order.shippingInfo?.email || 'No Email',
+    }));
 
   return (
     <div className="space-y-4">
@@ -78,7 +67,7 @@ export default function AdminOrdersPage() {
                  <TableRow>
                     <TableCell colSpan={5} className="text-center text-destructive p-8">
                       <p className="font-semibold">Error loading orders:</p>
-                      <p>{error}</p>
+                      <p>{error.message}</p>
                     </TableCell>
                   </TableRow>
               ) : orders.length > 0 ? (
@@ -96,7 +85,7 @@ export default function AdminOrdersPage() {
                             </div>
                         </div>
                     </TableCell>
-                    <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{order.createdAt ? new Date(typeof order.createdAt === 'string' ? order.createdAt : order.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell><Badge>{order.status}</Badge></TableCell>
                   </TableRow>
