@@ -30,11 +30,16 @@ export async function GET() {
       const userData = doc.data() as UserProfile;
       
       const toSerializable = (timestamp: any): string | null => {
+        if (!timestamp) return null;
         if (timestamp instanceof Timestamp) {
           return timestamp.toDate().toISOString();
         }
         if (timestamp && typeof timestamp.toDate === 'function') {
            return timestamp.toDate().toISOString();
+        }
+        // Handle cases where it might already be a string or other primitive
+        if (typeof timestamp === 'string') {
+          return timestamp;
         }
         return null;
       };
