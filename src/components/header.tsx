@@ -341,39 +341,45 @@ export function Header() {
             </div>
 
             <nav className="flex items-center justify-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className={cn(navButtonClasses)}>Products</button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
-                >
-                  <DropdownMenuItem asChild>
-                    <Link href="/products" className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">All Products</Link>
-                  </DropdownMenuItem>
-                  {productCategories.map((category) => (
-                    <DropdownMenuItem key={category.href} asChild>
-                      <Link href={category.href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">
-                        {category.label}
-                      </Link>
+              <DropdownMenu open={productsOpen} onOpenChange={setProductsOpen}>
+                <div onMouseEnter={() => setProductsOpen(true)} onMouseLeave={() => setProductsOpen(false)}>
+                  <DropdownMenuTrigger asChild>
+                    <Link href="/products" className={navLinkClasses}>Products</Link>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    onMouseEnter={() => setProductsOpen(true)} onMouseLeave={() => setProductsOpen(false)}
+                    className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
+                  >
+                    <DropdownMenuItem asChild>
+                      <Link href="/products" className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">All Products</Link>
                     </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
+                    {productCategories.map((category) => (
+                      <DropdownMenuItem key={category.href} asChild>
+                        <Link href={category.href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">
+                          {category.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </div>
               </DropdownMenu>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className={cn(navButtonClasses)}>Our Story</button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
-                >
-                  {storyLinks.map(({ href, label }) => (
-                    <DropdownMenuItem key={href} asChild>
-                      <Link href={href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">{label}</Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
+              <DropdownMenu open={storyOpen} onOpenChange={setStoryOpen}>
+                <div onMouseEnter={() => setStoryOpen(true)} onMouseLeave={() => setStoryOpen(false)}>
+                  <DropdownMenuTrigger asChild>
+                     <Link href="/about" className={navLinkClasses}>Our Story</Link>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    onMouseEnter={() => setStoryOpen(true)} onMouseLeave={() => setStoryOpen(false)}
+                    className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
+                  >
+                    {storyLinks.map(({ href, label }) => (
+                      <DropdownMenuItem key={href} asChild>
+                        <Link href={href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">{label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </div>
               </DropdownMenu>
 
               <Link
