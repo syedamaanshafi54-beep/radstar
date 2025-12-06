@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -10,18 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import type { Order } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
-import { getApps, getApp, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { WithId } from '@/firebase';
-
-// Helper function to safely initialize and get the admin app
-function getAdminApp() {
-  if (getApps().length) {
-    return getApp();
-  }
-  // This environment variable is automatically set by App Hosting.
-  return initializeApp({ projectId: process.env.GCLOUD_PROJECT });
-}
+import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 type EnrichedOrder = Order & {
     id: string;
@@ -29,33 +23,29 @@ type EnrichedOrder = Order & {
     customerEmail: string;
 };
 
-async function getOrders() {
-    const firestore = getFirestore(getAdminApp());
-    const ordersSnapshot = await firestore.collectionGroup('orders').orderBy('createdAt', 'desc').get();
+export default function AdminOrdersPage() {
+    const [orders, setOrders] = useState<EnrichedOrder[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    if (ordersSnapshot.empty) {
-        return [];
-    }
-    
-    const enrichedOrders: EnrichedOrder[] = ordersSnapshot.docs.map(doc => {
-        const orderData = doc.data() as Order;
-        return {
-            ...orderData,
-            id: doc.id,
-            // Safely access nested properties
-            customerName: orderData.shippingInfo?.name || 'Unknown User',
-            customerEmail: orderData.shippingInfo?.email || 'No Email',
-            // Convert timestamp to serializable string
-            createdAt: orderData.createdAt?.toDate ? orderData.createdAt.toDate().toISOString() : new Date().toISOString(),
-        };
-    });
+    useEffect(() => {
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/admin/orders/api');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch orders');
+                }
+                const data = await response.json();
+                setOrders(data);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        }
 
-    return enrichedOrders;
-}
-
-
-export default async function AdminOrdersPage() {
-    const orders = await getOrders();
+        fetchOrders();
+    }, []);
 
   return (
     <div className="space-y-4">
@@ -77,7 +67,20 @@ export default async function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.length > 0 ? (
+              {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-48 text-center">
+                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                    </TableCell>
+                  </TableRow>
+              ) : error ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="text-center text-destructive p-8">
+                      <p className="font-semibold">Error loading orders:</p>
+                      <p>{error}</p>
+                    </TableCell>
+                  </TableRow>
+              ) : orders.length > 0 ? (
                 orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.orderNumber}</TableCell>
@@ -92,9 +95,9 @@ export default async function AdminOrdersPage() {
                             </div>
                         </div>
                     </TableCell>
-                    <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(order.createdAt as string).toLocaleDateString()}</TableCell>
                     <TableCell><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</TableCell>
-                    <TableCell>{order.status}</TableCell>
+                    <TableCell><Badge>{order.status}</Badge></TableCell>
                   </TableRow>
                 ))
                ) : (

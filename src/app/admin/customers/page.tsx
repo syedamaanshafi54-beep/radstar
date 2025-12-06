@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   Table,
   TableHeader,
@@ -13,13 +14,31 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { User, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { WithId } from '@/firebase';
 
 export default function AdminCustomersPage() {
-    const firestore = useFirestore();
-    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
-    const { data: customers, isLoading } = useCollection<UserProfile>(usersCollection);
+    const [customers, setCustomers] = useState<WithId<UserProfile>[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function fetchCustomers() {
+            try {
+                const response = await fetch('/admin/customers/api');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch customers');
+                }
+                const data = await response.json();
+                setCustomers(data);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchCustomers();
+    }, []);
 
   return (
     <div className="space-y-4">
@@ -46,6 +65,13 @@ export default function AdminCustomersPage() {
                       <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
                     </TableCell>
                 </TableRow>
+             ) : error ? (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center text-destructive p-8">
+                        <p className="font-semibold">Error loading customers:</p>
+                        <p>{error}</p>
+                    </TableCell>
+                </TableRow>
              ) : customers && customers.length > 0 ? (
                 customers.map((user) => (
                   <TableRow key={user.uid}>
@@ -61,7 +87,7 @@ export default function AdminCustomersPage() {
                     <TableCell>{user.email || 'No Email'}</TableCell>
                     <TableCell>
                       {user.createdAt
-                        ? new Date((user.createdAt as any).seconds * 1000).toLocaleDateString()
+                        ? new Date(user.createdAt as string).toLocaleDateString()
                         : 'N/A'}
                     </TableCell>
                     <TableCell>{user.providerId || 'N/A'}</TableCell>
