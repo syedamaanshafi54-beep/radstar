@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   Table,
   TableHeader,
@@ -7,51 +10,16 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { User } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile } from '@/lib/types';
-import { getApps, getApp, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { WithId } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
-// Helper function to safely initialize and get the admin app
-function getAdminApp() {
-  if (getApps().length) {
-    return getApp();
-  }
-  // This environment variable is automatically set by App Hosting.
-  return initializeApp({ projectId: process.env.GCLOUD_PROJECT });
-}
-
-async function getCustomers() {
-  const firestore = getFirestore(getAdminApp());
-  const usersSnapshot = await firestore.collection('users').get();
-  
-  if (usersSnapshot.empty) {
-    return [];
-  }
-
-  const customers: WithId<UserProfile>[] = usersSnapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      uid: data.uid,
-      displayName: data.displayName || 'No Name',
-      email: data.email || 'No Email',
-      photoURL: data.photoURL,
-      providerId: data.providerId,
-      // Convert Firestore Timestamp to a serializable format (ISO string)
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
-      lastLogin: data.lastLogin?.toDate ? data.lastLogin.toDate().toISOString() : null,
-      role: data.role,
-    } as WithId<UserProfile>;
-  });
-
-  return customers;
-}
-
-export default async function AdminCustomersPage() {
-    const customers = await getCustomers();
+export default function AdminCustomersPage() {
+    const firestore = useFirestore();
+    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    const { data: customers, isLoading } = useCollection<UserProfile>(usersCollection);
 
   return (
     <div className="space-y-4">
@@ -72,7 +40,13 @@ export default async function AdminCustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-             {customers && customers.length > 0 ? (
+             {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-48 text-center">
+                      <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                    </TableCell>
+                </TableRow>
+             ) : customers && customers.length > 0 ? (
                 customers.map((user) => (
                   <TableRow key={user.uid}>
                     <TableCell className="font-medium flex items-center gap-2">
@@ -82,11 +56,15 @@ export default async function AdminCustomersPage() {
                            {user.displayName ? user.displayName.charAt(0).toUpperCase() : <User />}
                          </AvatarFallback>
                        </Avatar>
-                       {user.displayName}
+                       {user.displayName || 'No Name'}
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
-                    <TableCell>{user.providerId}</TableCell>
+                    <TableCell>{user.email || 'No Email'}</TableCell>
+                    <TableCell>
+                      {user.createdAt
+                        ? new Date((user.createdAt as any).seconds * 1000).toLocaleDateString()
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell>{user.providerId || 'N/A'}</TableCell>
                   </TableRow>
                 ))
               ) : (

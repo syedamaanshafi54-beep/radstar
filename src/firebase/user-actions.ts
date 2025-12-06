@@ -50,7 +50,6 @@ export async function handleGoogleSignIn(mode: 'signin' | 'signup'): Promise<Goo
     
     if (!userSnap.exists()) {
       // User does not exist, so we create a new document regardless of mode.
-      // This simplifies the logic: if you sign in with Google and don't have an account, we make one.
       isNewUser = true;
       await runTransaction(firestore, async (transaction) => {
         const counterRef = doc(firestore, 'metadata', 'userCounter');
@@ -115,43 +114,63 @@ export function getFirstName(user: User | null): string {
 }
 
 /**
- * Updates the user's profile in both Firebase Auth and Firestore.
+ * Creates or updates a user's profile in Firestore and optionally Firebase Auth.
  * @param user The current Firebase user object.
  * @param data The profile data to update.
  */
-export async function updateUserProfile(user: User, data: { displayName?: string; email?: string; phone?: string; address?: string }) {
-    const auth = getAuth();
-    const firestore = getFirestore();
-    const userRef = doc(firestore, 'users', user.uid);
+export async function updateUserProfile(
+  user: User,
+  data: {
+    displayName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  }
+) {
+  const auth = getAuth();
+  const firestore = getFirestore();
+  const userRef = doc(firestore, 'users', user.uid);
 
-    // Prepare data for Firestore update
-    const firestoreData: any = { ...data, updatedAt: serverTimestamp() };
-    
-    // On initial creation, set the createdAt field.
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-        firestoreData.createdAt = serverTimestamp();
-        firestoreData.providerId = user.providerData[0]?.providerId || 'password';
+  // Prepare data for Firestore update
+  const firestoreData: { [key: string]: any } = {
+    ...data,
+    updatedAt: serverTimestamp(),
+  };
+
+  // On initial creation, set the createdAt field and other initial values.
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    firestoreData.uid = user.uid;
+    firestoreData.createdAt = serverTimestamp();
+    firestoreData.lastLogin = serverTimestamp();
+    firestoreData.role = 'user';
+    firestoreData.isProfileComplete = false;
+    firestoreData.providerId = user.providerData[0]?.providerId || 'password';
+    // Ensure email is set on creation
+    if (user.email) {
+      firestoreData.email = user.email;
     }
+  }
+  
+  // Update Firebase Auth profile displayName if it's being changed
+  if (
+    auth.currentUser &&
+    data.displayName &&
+    data.displayName !== auth.currentUser.displayName
+  ) {
+    await updateAuthProfile(auth.currentUser, { displayName: data.displayName });
+  }
 
-    // Check if essential fields are being provided to mark profile as complete
-    const existingData = userSnap.data();
-    const hasName = !!(data.displayName || existingData?.displayName);
-    const hasPhone = !!(data.phone || existingData?.phone);
-    const hasAddress = !!(data.address || existingData?.address);
+  // Check if essential fields are being provided to mark profile as complete
+  const existingData = userSnap.data() || {};
+  const hasName = !!(data.displayName || existingData?.displayName);
+  const hasPhone = !!(data.phone || existingData?.phone);
+  const hasAddress = !!(data.address || existingData?.address);
 
-    if (hasName && hasPhone && hasAddress) {
-       firestoreData.isProfileComplete = true;
-    }
-
-
-    // Update Firebase Auth profile if displayName is being changed
-    if (auth.currentUser && data.displayName && data.displayName !== auth.currentUser.displayName) {
-        await updateAuthProfile(auth.currentUser, {
-            displayName: data.displayName,
-        });
-    }
-
-    // Update Firestore document
-    await setDoc(userRef, firestoreData, { merge: true });
+  if (hasName && hasPhone && hasAddress) {
+    firestoreData.isProfileComplete = true;
+  }
+  
+  // Merge the new data into the Firestore document
+  await setDoc(userRef, firestoreData, { merge: true });
 }
