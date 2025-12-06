@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { initializeApp, getApps, getApp, App, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { UserProfile } from '@/lib/types';
 
 // Helper function to safely initialize and get the admin app
@@ -28,17 +28,23 @@ export async function GET() {
 
     const users = usersSnapshot.docs.map(doc => {
       const userData = doc.data() as UserProfile;
-      // Convert Firestore Timestamps to serializable strings
-      const createdAt = (userData.createdAt as any)?.toDate ? (userData.createdAt as any).toDate().toISOString() : new Date().toISOString();
-      const lastLogin = (userData.lastLogin as any)?.toDate ? (userData.lastLogin as any).toDate().toISOString() : new Date().toISOString();
-      const updatedAt = (userData.updatedAt as any)?.toDate ? (userData.updatedAt as any)?.toDate().toISOString() : undefined;
+      
+      const toSerializable = (timestamp: any): string | null => {
+        if (timestamp instanceof Timestamp) {
+          return timestamp.toDate().toISOString();
+        }
+        if (timestamp && typeof timestamp.toDate === 'function') {
+           return timestamp.toDate().toISOString();
+        }
+        return null;
+      };
 
       return {
           ...userData,
-          id: doc.id, // ensure id is present
-          createdAt,
-          lastLogin,
-          updatedAt,
+          id: doc.id,
+          createdAt: toSerializable(userData.createdAt) || new Date().toISOString(),
+          lastLogin: toSerializable(userData.lastLogin) || new Date().toISOString(),
+          updatedAt: toSerializable(userData.updatedAt) || undefined,
       };
     });
 
