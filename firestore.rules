@@ -35,16 +35,12 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // USER DATA ACCESS RULES (for single document reads/writes)
+    // USER-SPECIFIC DATA ACCESS (for single document reads/writes)
+    // Rules for a user accessing their OWN data.
     match /users/{userId} {
-      // Admins can read/write any user's data for management.
-      // Users can only read/write their own data.
       allow get, write: if isOwner(userId) || isAdmin();
-      
-      // Only admins can delete user documents.
       allow delete: if isAdmin();
 
-      // Subcollections
       match /customers/{customerId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
@@ -62,13 +58,14 @@ service cloud.firestore {
       }
     }
      
-    // --- ADMIN LISTING RULES ---
-    // Admins can list all user documents for the admin customer page.
+    // --- ADMIN LISTING RULES (for collection-wide queries) ---
+    
+    // Rule to allow admins to LIST all documents in the 'users' collection.
     match /users/{userId} {
       allow list: if isAdmin();
     }
     
-    // Allow admins to list all orders across all users for the admin panel.
+    // Rule to allow admins to LIST all documents in the 'orders' collection group.
     match /{path=**}/orders/{orderId} {
       allow list: if isAdmin();
     }
