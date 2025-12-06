@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Table,
   TableHeader,
@@ -9,13 +7,21 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { Order, UserProfile } from '@/lib/types';
+import type { Order } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collectionGroup, query, orderBy } from 'firebase/firestore';
-import { useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
+import { getApps, getApp, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { WithId } from '@/firebase';
+
+// Helper function to safely initialize and get the admin app
+function getAdminApp() {
+  if (getApps().length) {
+    return getApp();
+  }
+  // This environment variable is automatically set by App Hosting.
+  return initializeApp({ projectId: process.env.GCLOUD_PROJECT });
+}
 
 type EnrichedOrder = Order & {
     id: string;
@@ -23,23 +29,33 @@ type EnrichedOrder = Order & {
     customerEmail: string;
 };
 
-export default function AdminOrdersPage() {
-    const firestore = useFirestore();
-    const ordersCollectionGroup = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
-    const ordersQuery = useMemoFirebase(() => query(ordersCollectionGroup, orderBy('createdAt', 'desc')), [ordersCollectionGroup]);
+async function getOrders() {
+    const firestore = getFirestore(getAdminApp());
+    const ordersSnapshot = await firestore.collectionGroup('orders').orderBy('createdAt', 'desc').get();
+
+    if (ordersSnapshot.empty) {
+        return [];
+    }
     
-    const { data: orders, isLoading: isOrdersLoading } = useCollection<WithId<Order>>(ordersQuery);
+    const enrichedOrders: EnrichedOrder[] = ordersSnapshot.docs.map(doc => {
+        const orderData = doc.data() as Order;
+        return {
+            ...orderData,
+            id: doc.id,
+            // Safely access nested properties
+            customerName: orderData.shippingInfo?.name || 'Unknown User',
+            customerEmail: orderData.shippingInfo?.email || 'No Email',
+            // Convert timestamp to serializable string
+            createdAt: orderData.createdAt?.toDate ? orderData.createdAt.toDate().toISOString() : new Date().toISOString(),
+        };
+    });
 
-    const enrichedOrders = useMemo(() => {
-        if (!orders) return [];
-        return orders.map(order => ({
-            ...order,
-            id: order.id,
-            customerName: order.shippingInfo?.name || 'Unknown User',
-            customerEmail: order.shippingInfo?.email || 'No Email',
-        }));
-    }, [orders]);
+    return enrichedOrders;
+}
 
+
+export default async function AdminOrdersPage() {
+    const orders = await getOrders();
 
   return (
     <div className="space-y-4">
@@ -61,14 +77,8 @@ export default function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isOrdersLoading ? (
-                 <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center">
-                        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                    </TableCell>
-                </TableRow>
-              ) : enrichedOrders.length > 0 ? (
-                enrichedOrders.map((order) => (
+              {orders.length > 0 ? (
+                orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.orderNumber}</TableCell>
                     <TableCell>
@@ -82,7 +92,7 @@ export default function AdminOrdersPage() {
                             </div>
                         </div>
                     </TableCell>
-                    <TableCell>{order.createdAt ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell>{order.status}</TableCell>
                   </TableRow>

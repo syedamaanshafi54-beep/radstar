@@ -69,14 +69,14 @@ export type Order = {
     totalAmount: number;
     paymentMethod: 'COD' | 'Razorpay';
     status: OrderStatus;
-    createdAt: Timestamp;
-    statusUpdatedAt: Timestamp;
+    createdAt: Timestamp | string; // Allow string for serializable date
+    statusUpdatedAt?: Timestamp | string; // Allow string for serializable date
     trackingId?: string;
     courierName?: string;
-    estDeliveryDate?: Timestamp;
+    estDeliveryDate?: Timestamp | string; // Allow string for serializable date
     statusHistory?: {
       status: OrderStatus;
-      changedAt: Timestamp;
+      changedAt: Timestamp | string; // Allow string for serializable date
     }[];
 }
 
@@ -91,7 +91,7 @@ export type UserProfile = {
   providerId?: string;
   role: 'user' | 'admin';
   isProfileComplete?: boolean;
-  createdAt: Timestamp;
-  updatedAt?: Timestamp;
-  lastLogin: Timestamp;
+  createdAt: Timestamp | string; // Allow string for serializable date
+  updatedAt?: Timestamp | string; // Allow string for serializable date
+  lastLogin: Timestamp | string; // Allow string for serializable date
 }
