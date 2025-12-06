@@ -15,10 +15,10 @@ import {
 import {
   Menu,
   User,
-  ChevronDown,
   LogOut,
   Shield,
   Sprout,
+  ChevronDown,
 } from 'lucide-react';
 import CartIcon from '@/components/cart-icon';
 import { cn } from '@/lib/utils';
@@ -43,9 +43,6 @@ import {
 } from '@/components/ui/dialog';
 import { LoginForm } from '@/components/login-form';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ScrollArea } from './ui/scroll-area';
-
-// ✅ NEW — accordion imports
 import {
   Accordion,
   AccordionItem,
@@ -130,21 +127,13 @@ export function Header() {
   const innerHeaderClasses =
     'flex h-16 items-center justify-between bg-[hsl(var(--primary-alt))] px-4 sm:px-6 transition-all duration-300 rounded-full shadow-lg';
 
-  const navButtonClasses = "relative px-8 py-2 text-2xl font-bold text-primary-nav-foreground focus:outline-none after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-0.5 after:bg-primary-nav-foreground after:w-0 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0";
-  const navLinkClasses = "relative text-2xl font-bold text-primary-nav-foreground focus:outline-none after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-0.5 after:bg-primary-nav-foreground after:w-0 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 px-8 py-2";
-
+  const navLinkClasses = "relative text-2xl font-bold text-primary-nav-foreground focus:outline-none after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-0.5 after:bg-primary-nav-foreground after:w-0 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 px-8 py-2 flex items-center gap-2";
 
   return (
     <div className={headerClasses}>
       <div className="container mx-auto px-0 md:px-4">
         <header className={innerHeaderClasses}>
-
-          {/* -------------------------------------------------- */}
-          {/* 📱 MOBILE HEADER SECTION — CHANGED HERE ONLY ✔✔✔ */}
-          {/* -------------------------------------------------- */}
           <div className="flex md:hidden w-full items-center justify-between gap-2">
-
-            {/* LEFT — MENU BUTTON */}
             <div className={cn(!hasMounted && 'invisible')}>
               <Sheet
                 open={isMobileMenuOpen}
@@ -155,7 +144,6 @@ export function Header() {
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-
                 <SheetContent
                   side="left"
                   className="w-full max-w-sm bg-background text-foreground p-6 rounded-r-2xl shadow-2xl border-l border-border"
@@ -166,10 +154,7 @@ export function Header() {
                       <span>Menu</span>
                     </SheetTitle>
                   </SheetHeader>
-
                   <div className="flex flex-col h-full pt-4 pb-4 overflow-y-auto gap-3">
-
-                    {/* LOGO */}
                     <Link
                       href="/"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -182,11 +167,7 @@ export function Header() {
                         Rad Star Trading
                       </span>
                     </Link>
-
-                    {/* === MOBILE ACCORDIONS START === */}
                     <Accordion type="single" collapsible className="w-full mt-4">
-
-                      {/* PRODUCTS DROPDOWN */}
                       <AccordionItem value="products">
                         <AccordionTrigger className="text-lg font-semibold px-4 py-3 bg-muted/30 rounded-xl">
                           Products
@@ -204,8 +185,6 @@ export function Header() {
                           ))}
                         </AccordionContent>
                       </AccordionItem>
-
-                      {/* OUR STORY DROPDOWN */}
                       <AccordionItem value="our-story">
                         <AccordionTrigger className="text-lg font-semibold px-4 py-3 bg-muted/30 rounded-xl">
                           Our Story
@@ -223,10 +202,7 @@ export function Header() {
                           ))}
                         </AccordionContent>
                       </AccordionItem>
-
                     </Accordion>
-
-                    {/* CONTACT */}
                     <Link
                       href="/contact"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -234,8 +210,6 @@ export function Header() {
                     >
                       Contact
                     </Link>
-
-                    {/* ADMIN */}
                     {isAdmin && (
                       <Link
                         href="/admin"
@@ -246,12 +220,9 @@ export function Header() {
                       </Link>
                     )}
                   </div>
-
                 </SheetContent>
               </Sheet>
             </div>
-
-            {/* CENTER — LOGO */}
             <Link href="/" className="flex items-center gap-1 min-w-0">
               <div className="relative h-10 w-10">
                 <Image src="/logos/2.png" alt="Rad Star Trading Logo" fill className="object-contain" />
@@ -260,15 +231,12 @@ export function Header() {
                 Rad Star Trading
               </span>
             </Link>
-
-            {/* RIGHT — CART + USER */}
             <div className="flex items-center gap-1">
               <Link href="/cart">
                 <Button variant="ghost" className="w-10 h-10 p-0 text-primary-nav-foreground hover:bg-black/10 rounded-full">
                   <CartIcon />
                 </Button>
               </Link>
-
               {!isUserLoading && (user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -314,7 +282,6 @@ export function Header() {
             </div>
           </div>
 
-
           <div
             className={cn(
               'hidden md:flex w-full items-center justify-between',
@@ -341,65 +308,50 @@ export function Header() {
             </div>
 
             <nav className="flex items-center justify-center gap-2">
-              <DropdownMenu open={productsOpen} onOpenChange={setProductsOpen}>
-                <div onMouseEnter={() => setProductsOpen(true)} onMouseLeave={() => setProductsOpen(false)}>
-                  <DropdownMenuTrigger asChild>
-                    <Link href="/products" className={navLinkClasses}>Products</Link>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    onMouseEnter={() => setProductsOpen(true)} onMouseLeave={() => setProductsOpen(false)}
-                    className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
-                  >
-                    <DropdownMenuItem asChild>
-                      <Link href="/products" className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">All Products</Link>
-                    </DropdownMenuItem>
+              <div className="relative group" onMouseEnter={() => setProductsOpen(true)} onMouseLeave={() => setProductsOpen(false)}>
+                <Link href="/products" className={navLinkClasses}>
+                  Products
+                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", productsOpen && "rotate-180")} />
+                </Link>
+                <div
+                  className={cn(
+                    "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
+                    productsOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                  )}
+                >
+                  <div className="p-2">
+                    <Link href="/products" className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">All Products</Link>
                     {productCategories.map((category) => (
-                      <DropdownMenuItem key={category.href} asChild>
-                        <Link href={category.href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">
-                          {category.label}
-                        </Link>
-                      </DropdownMenuItem>
+                      <Link key={category.href} href={category.href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
+                        {category.label}
+                      </Link>
                     ))}
-                  </DropdownMenuContent>
+                  </div>
                 </div>
-              </DropdownMenu>
+              </div>
 
-              <DropdownMenu open={storyOpen} onOpenChange={setStoryOpen}>
-                <div onMouseEnter={() => setStoryOpen(true)} onMouseLeave={() => setStoryOpen(false)}>
-                  <DropdownMenuTrigger asChild>
-                     <Link href="/about" className={navLinkClasses}>Our Story</Link>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    onMouseEnter={() => setStoryOpen(true)} onMouseLeave={() => setStoryOpen(false)}
-                    className="bg-primary/95 text-primary-foreground border-primary-alt shadow-lg backdrop-blur-sm rounded-2xl"
-                  >
+              <div className="relative group" onMouseEnter={() => setStoryOpen(true)} onMouseLeave={() => setStoryOpen(false)}>
+                <Link href="/about" className={navLinkClasses}>
+                  Our Story
+                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", storyOpen && "rotate-180")} />
+                </Link>
+                <div
+                  className={cn(
+                    "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
+                    storyOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                  )}
+                >
+                   <div className="p-2">
                     {storyLinks.map(({ href, label }) => (
-                      <DropdownMenuItem key={href} asChild>
-                        <Link href={href} className="text-xl font-bold cursor-pointer focus:bg-primary-foreground/20 transition-all duration-300 hover:pl-5 px-3 py-2">{label}</Link>
-                      </DropdownMenuItem>
+                       <Link key={href} href={href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">{label}</Link>
                     ))}
-                  </DropdownMenuContent>
+                  </div>
                 </div>
-              </DropdownMenu>
-
-              <Link
-                href="/contact"
-                className={navLinkClasses}
-              >
-                Contact
-              </Link>
+              </div>
               
-              <Link
-                href="/faq"
-                className={navLinkClasses}
-              >
-                FAQ
-            </Link>
+              <Link href="/contact" className={navLinkClasses}>Contact</Link>
+              <Link href="/faq" className={navLinkClasses}>FAQ</Link>
             </nav>
-
-          
-
-
             <div className="flex items-center gap-2">
               <Link href="/cart">
                 <Button
@@ -409,7 +361,6 @@ export function Header() {
                   <CartIcon />
                 </Button>
               </Link>
-
               {!isUserLoading &&
                 (user ? (
                   <DropdownMenu>
