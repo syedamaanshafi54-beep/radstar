@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Table,
   TableHeader,
@@ -8,68 +10,21 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AlertTriangle, User } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import admin from 'firebase-admin';
-import { UserRecord } from 'firebase-admin/auth';
 import type { UserProfile } from '@/lib/types';
-
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-async function getCustomers(): Promise<UserProfile[]> {
-    try {
-        const auth = admin.auth();
-        const firestore = admin.firestore();
-
-        const userRecords: UserRecord[] = (await auth.listUsers()).users;
-        
-        if (userRecords.length === 0) {
-            return [];
-        }
-
-        const userDocs = await firestore.collection('users').get();
-        const usersMap = new Map<string, UserProfile>();
-        userDocs.forEach(doc => {
-            usersMap.set(doc.id, doc.data() as UserProfile);
-        });
-
-        const customers = userRecords.map(record => {
-            const firestoreData = usersMap.get(record.uid);
-            return {
-                uid: record.uid,
-                displayName: record.displayName || firestoreData?.displayName || 'N/A',
-                email: record.email || firestoreData?.email || 'N/A',
-                photoURL: record.photoURL || firestoreData?.photoURL,
-                providerId: record.providerData[0]?.providerId || 'password',
-                createdAt: firestoreData?.createdAt || { seconds: new Date(record.metadata.creationTime).getTime() / 1000 },
-            } as UserProfile;
-        });
-
-        // Sort by creation date descending
-        customers.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-        return customers;
-    } catch (error) {
-        console.error("Error fetching customers with Admin SDK:", error);
-        // We can throw the error to be caught by an error boundary
-        throw new Error('Failed to fetch customer data. This might be a server environment issue.');
-    }
-}
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 
-export default async function AdminCustomersPage() {
-  
-  let customers: UserProfile[] = [];
-  let error: Error | null = null;
-  
-  try {
-      customers = await getCustomers();
-  } catch (e: any) {
-      error = e;
-  }
+export default function AdminCustomersPage() {
+    const firestore = useFirestore();
+    const usersCollection = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'users'), orderBy('createdAt', 'desc'));
+    }, [firestore]);
+
+    const { data: customers, isLoading, error } = useCollection<UserProfile>(usersCollection);
 
   return (
     <div className="space-y-4">
@@ -90,19 +45,20 @@ export default async function AdminCustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {error ? (
+              {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-48 text-center text-destructive bg-destructive/10">
-                    <div className="flex flex-col items-center gap-2">
-                      <AlertTriangle className="h-10 w-10"/>
+                    <TableCell colSpan={4} className="h-48 text-center">
+                        <Loader2 className="h-10 w-10 animate-spin mx-auto" />
+                    </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-48 text-center text-destructive">
                       <h3 className="font-bold text-lg">Error Fetching Customers</h3>
-                      <p className="text-sm max-w-md">
-                        {error.message}
-                      </p>
-                    </div>
+                      <p className="text-sm max-w-md mx-auto">There was a problem loading customer data. This is likely a permissions issue.</p>
                   </TableCell>
                 </TableRow>
-              ) : customers.length > 0 ? (
+              ) : customers && customers.length > 0 ? (
                 customers.map((user) => (
                   <TableRow key={user.uid}>
                     <TableCell className="font-medium flex items-center gap-2">

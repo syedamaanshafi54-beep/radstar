@@ -30,15 +30,14 @@ service cloud.firestore {
     // PARTNER SUBMISSIONS
     match /partners/{partnerId} {
       allow create: if true;
-      allow read, list, update, delete: if isAdmin();
+      allow read, update, delete: if isAdmin();
     }
 
-    // USER-OWNED DATA
+    // USER-OWNED DATA & ADMIN ACCESS
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) || isAdmin();
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
+      allow create, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin(); // Only admins can delete user documents
 
       // Subcollections
       match /customers/{customerId} {
@@ -59,15 +58,14 @@ service cloud.firestore {
     }
      
     // COLLECTION-LEVEL RULES FOR LISTING
+    // Allow admins to list all documents in the 'users' collection.
     match /users/{userId} {
-      // Admins can list users. Note: This rule is intentionally broad for the admin panel.
-      // In a more complex app, you might restrict the fields returned.
       allow list: if isAdmin();
     }
      
-    // COLLECTION GROUP RULES
+    // COLLECTION GROUP RULES FOR LISTING
+    // Allow admins to list all orders across all users for the admin panel.
     match /{path=**}/orders/{orderId} {
-      // Admins can list all orders across all users.
       allow list: if isAdmin();
     }
   }

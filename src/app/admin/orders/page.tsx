@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Table,
   TableHeader,
@@ -11,13 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import type { Order } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
-import admin from 'firebase-admin';
-import { AlertTriangle } from 'lucide-react';
-
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { collectionGroup, query, orderBy } from 'firebase/firestore';
+import { useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 
 type EnrichedOrder = Order & {
     id: string;
@@ -25,49 +24,25 @@ type EnrichedOrder = Order & {
     customerEmail: string;
 };
 
-async function getOrders(): Promise<EnrichedOrder[]> {
-    const firestore = admin.firestore();
-
-    const ordersSnapshot = await firestore.collectionGroup('orders').get();
+export default function AdminOrdersPage() {
+    const firestore = useFirestore();
     
-    const ordersData: EnrichedOrder[] = ordersSnapshot.docs.map(doc => {
-        const order = doc.data() as Order;
-        // Safely access shippingInfo
-        const customerName = order.shippingInfo?.name || 'Unknown User';
-        const customerEmail = order.shippingInfo?.email || 'No email';
+    const ordersCollectionGroup = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+    }, [firestore]);
 
-        return {
+    const { data: ordersData, isLoading, error } = useCollection<Order>(ordersCollectionGroup);
+
+    const orders = useMemo<EnrichedOrder[]>(() => {
+        if (!ordersData) return [];
+        return ordersData.map(order => ({
             ...order,
-            id: doc.id,
-            customerName: customerName,
-            customerEmail: customerEmail,
-        };
-    });
-
-    // Sort orders on the server-side by creation date, descending
-    const sortedOrders = ordersData.sort((a, b) => {
-        if (b.createdAt && a.createdAt) {
-            return b.createdAt.seconds - a.createdAt.seconds;
-        }
-        if (b.createdAt) return 1; // b comes first if a.createdAt is missing
-        if (a.createdAt) return -1; // a comes first if b.createdAt is missing
-        return 0;
-    });
-
-    return sortedOrders;
-}
-
-
-export default async function AdminOrdersPage() {
-    let orders: EnrichedOrder[] = [];
-    let error: Error | null = null;
-    
-    try {
-        orders = await getOrders();
-    } catch (e: any) {
-        error = e;
-        console.error("Error fetching orders with Admin SDK:", e);
-    }
+            id: order.id,
+            customerName: order.shippingInfo?.name || 'Unknown User',
+            customerEmail: order.shippingInfo?.email || 'No email',
+        }));
+    }, [ordersData]);
 
   return (
     <div className="space-y-4">
@@ -89,16 +64,17 @@ export default async function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-               {error ? (
+               {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-48 text-center">
+                        <Loader2 className="h-10 w-10 animate-spin mx-auto" />
+                    </TableCell>
+                  </TableRow>
+               ) : error ? (
                  <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center text-destructive bg-destructive/10">
-                        <div className="flex flex-col items-center gap-2">
-                        <AlertTriangle className="h-10 w-10"/>
+                    <TableCell colSpan={5} className="h-48 text-center text-destructive">
                         <h3 className="font-bold text-lg">Error Fetching Orders</h3>
-                        <p className="text-sm max-w-md">
-                            {error.message}
-                        </p>
-                        </div>
+                        <p className="text-sm max-w-md mx-auto">There was a problem loading orders. This is likely a permissions issue.</p>
                     </TableCell>
                   </TableRow>
                ) : orders.length > 0 ? (
