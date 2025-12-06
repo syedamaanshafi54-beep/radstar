@@ -1,5 +1,4 @@
-
-'use client';
+'use server';
 
 import {
   Table,
@@ -10,13 +9,12 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { Order } from '@/lib/types';
+import type { Order, UserProfile } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collectionGroup, query, orderBy } from 'firebase/firestore';
-import { useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
+import { getAdminApp } from '@/firebase/admin';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 type EnrichedOrder = Order & {
     id: string;
@@ -24,25 +22,50 @@ type EnrichedOrder = Order & {
     customerEmail: string;
 };
 
-export default function AdminOrdersPage() {
-    const firestore = useFirestore();
+async function getOrders(): Promise<EnrichedOrder[]> {
+    const firestore = getFirestore(getAdminApp());
+    const auth = getAuth(getAdminApp());
+
+    const ordersSnapshot = await firestore.collectionGroup('orders').orderBy('createdAt', 'desc').get();
     
-    const ordersCollectionGroup = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
-    }, [firestore]);
+    if (ordersSnapshot.empty) {
+        return [];
+    }
 
-    const { data: ordersData, isLoading, error } = useCollection<Order>(ordersCollectionGroup);
+    const ordersData = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
 
-    const orders = useMemo<EnrichedOrder[]>(() => {
-        if (!ordersData) return [];
-        return ordersData.map(order => ({
+    const userIds = [...new Set(ordersData.map(order => order.userId))];
+    const userRecords = await auth.getUsers(userIds.map(uid => ({ uid })));
+
+    const usersMap = new Map<string, UserProfile>();
+    userRecords.users.forEach(record => {
+        usersMap.set(record.uid, {
+            uid: record.uid,
+            displayName: record.displayName || 'Unknown',
+            email: record.email || 'No email',
+            photoURL: record.photoURL,
+        } as UserProfile);
+    });
+
+    const enrichedOrders: EnrichedOrder[] = ordersData.map(order => {
+        const user = usersMap.get(order.userId);
+        const name = order.shippingInfo?.name || user?.displayName || 'Unknown User';
+        const email = order.shippingInfo?.email || user?.email || 'No email';
+
+        return {
             ...order,
             id: order.id,
-            customerName: order.shippingInfo?.name || 'Unknown User',
-            customerEmail: order.shippingInfo?.email || 'No email',
-        }));
-    }, [ordersData]);
+            customerName: name,
+            customerEmail: email,
+        };
+    });
+
+    return enrichedOrders;
+}
+
+
+export default async function AdminOrdersPage() {
+    const orders = await getOrders();
 
   return (
     <div className="space-y-4">
@@ -64,20 +87,7 @@ export default function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-               {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center">
-                        <Loader2 className="h-10 w-10 animate-spin mx-auto" />
-                    </TableCell>
-                  </TableRow>
-               ) : error ? (
-                 <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center text-destructive">
-                        <h3 className="font-bold text-lg">Error Fetching Orders</h3>
-                        <p className="text-sm max-w-md mx-auto">There was a problem loading orders. This is likely a permissions issue.</p>
-                    </TableCell>
-                  </TableRow>
-               ) : orders.length > 0 ? (
+              {orders.length > 0 ? (
                 orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.orderNumber}</TableCell>
