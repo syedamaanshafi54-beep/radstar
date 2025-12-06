@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { initializeApp, getApps, getApp, App, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { Order } from '@/lib/types';
 
 // Helper function to safely initialize and get the admin app
@@ -17,6 +17,23 @@ function getAdminApp(): App {
   });
 }
 
+const toSerializable = (timestamp: any): string | null => {
+    if (!timestamp) return null;
+    if (timestamp instanceof Timestamp) {
+        return timestamp.toDate().toISOString();
+    }
+    // Handle cases where it might already be a string or other primitive
+    if (typeof timestamp === 'string') {
+        return timestamp;
+    }
+    // Attempt to convert if it has a toDate method (like a server-side SDK Timestamp)
+    if (timestamp && typeof timestamp.toDate === 'function') {
+       return timestamp.toDate().toISOString();
+    }
+    return null;
+};
+
+
 export async function GET() {
   try {
     const firestore = getFirestore(getAdminApp());
@@ -28,17 +45,15 @@ export async function GET() {
 
     const orders = ordersSnapshot.docs.map(doc => {
         const orderData = doc.data() as Order;
-        // Convert Firestore Timestamps to serializable strings
-        const createdAt = (orderData.createdAt as any)?.toDate ? (orderData.createdAt as any).toDate().toISOString() : new Date().toISOString();
-        const statusUpdatedAt = (orderData.statusUpdatedAt as any)?.toDate ? (orderData.statusUpdatedAt as any).toDate().toISOString() : new Date().toISOString();
 
         return {
             ...orderData,
             id: doc.id,
             customerName: orderData.shippingInfo?.name || 'Unknown User',
             customerEmail: orderData.shippingInfo?.email || 'No Email',
-            createdAt,
-            statusUpdatedAt,
+            createdAt: toSerializable(orderData.createdAt) || new Date(0).toISOString(),
+            statusUpdatedAt: toSerializable(orderData.statusUpdatedAt) || new Date(0).toISOString(),
+            estDeliveryDate: toSerializable(orderData.estDeliveryDate) || undefined,
         };
     });
 

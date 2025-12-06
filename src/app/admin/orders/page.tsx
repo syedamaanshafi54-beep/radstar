@@ -33,7 +33,8 @@ export default function AdminOrdersPage() {
             try {
                 const response = await fetch('/admin/orders/api');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch orders');
+                    const errorData = await response.json();
+                    throw new Error(errorData.details || 'Failed to fetch orders');
                 }
                 const data = await response.json();
                 setOrders(data);
@@ -83,7 +84,7 @@ export default function AdminOrdersPage() {
               ) : orders.length > 0 ? (
                 orders.map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.orderNumber}</TableCell>
+                    <TableCell className="font-medium">#{order.orderNumber || order.id.substring(0,6)}</TableCell>
                     <TableCell>
                         <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
@@ -95,7 +96,7 @@ export default function AdminOrdersPage() {
                             </div>
                         </div>
                     </TableCell>
-                    <TableCell>{new Date(order.createdAt as string).toLocaleDateString()}</TableCell>
+                    <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell><Badge>{order.status}</Badge></TableCell>
                   </TableRow>

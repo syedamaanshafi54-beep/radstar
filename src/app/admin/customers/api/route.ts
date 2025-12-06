@@ -26,29 +26,30 @@ export async function GET() {
         return NextResponse.json([]);
     }
 
-    const users = usersSnapshot.docs.map(doc => {
-      const userData = doc.data() as UserProfile;
-      
-      const toSerializable = (timestamp: any): string | null => {
+    const toSerializable = (timestamp: any): string | null => {
         if (!timestamp) return null;
         if (timestamp instanceof Timestamp) {
-          return timestamp.toDate().toISOString();
-        }
-        if (timestamp && typeof timestamp.toDate === 'function') {
-           return timestamp.toDate().toISOString();
+            return timestamp.toDate().toISOString();
         }
         // Handle cases where it might already be a string or other primitive
         if (typeof timestamp === 'string') {
-          return timestamp;
+            return timestamp;
+        }
+        // Attempt to convert if it has a toDate method (like a server-side SDK Timestamp)
+        if (timestamp && typeof timestamp.toDate === 'function') {
+           return timestamp.toDate().toISOString();
         }
         return null;
-      };
+    };
 
+    const users = usersSnapshot.docs.map(doc => {
+      const userData = doc.data() as UserProfile;
+      
       return {
           ...userData,
           id: doc.id,
-          createdAt: toSerializable(userData.createdAt) || new Date().toISOString(),
-          lastLogin: toSerializable(userData.lastLogin) || new Date().toISOString(),
+          createdAt: toSerializable(userData.createdAt) || new Date(0).toISOString(),
+          lastLogin: toSerializable(userData.lastLogin) || new Date(0).toISOString(),
           updatedAt: toSerializable(userData.updatedAt) || undefined,
       };
     });
