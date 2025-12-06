@@ -58,7 +58,7 @@ export default function AdminCustomersPage() {
                 </TableRow>
              ) : customers && customers.length > 0 ? (
                 customers.map((user) => (
-                  <TableRow key={user.uid}>
+                  <TableRow key={user.id}>
                     <TableCell className="font-medium flex items-center gap-2">
                        <Avatar className="h-8 w-8">
                          {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName} />}
