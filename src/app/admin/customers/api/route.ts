@@ -1,46 +1,40 @@
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, getApp, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApp, deleteApp, App, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { UserProfile } from '@/lib/types';
 
-// Helper function to safely initialize and get the admin app
-function getAdminApp(): App {
-  if (getApps().length) {
-    return getApp();
-  }
-  
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+const toSerializable = (timestamp: any): string | null => {
+    if (!timestamp) return null;
+    if (timestamp instanceof Timestamp) {
+        return timestamp.toDate().toISOString();
+    }
+    if (typeof timestamp === 'string') {
+        return timestamp;
+    }
+    if (timestamp && typeof timestamp.toDate === 'function') {
+       return timestamp.toDate().toISOString();
+    }
+    return null;
+};
 
-  return initializeApp({
-    credential: cert(serviceAccount)
-  });
-}
 
 export async function GET() {
+  const appName = `admin-customers-api-${Date.now()}`;
+  let adminApp: App;
+
   try {
-    const firestore = getFirestore(getAdminApp());
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+    adminApp = initializeApp({
+      credential: cert(serviceAccount)
+    }, appName);
+
+    const firestore = getFirestore(adminApp);
     const usersSnapshot = await firestore.collection('users').orderBy('createdAt', 'desc').get();
 
     if (usersSnapshot.empty) {
         return NextResponse.json([]);
     }
-
-    const toSerializable = (timestamp: any): string | null => {
-        if (!timestamp) return null;
-        if (timestamp instanceof Timestamp) {
-            return timestamp.toDate().toISOString();
-        }
-        // Handle cases where it might already be a string or other primitive
-        if (typeof timestamp === 'string') {
-            return timestamp;
-        }
-        // Attempt to convert if it has a toDate method (like a server-side SDK Timestamp)
-        if (timestamp && typeof timestamp.toDate === 'function') {
-           return timestamp.toDate().toISOString();
-        }
-        return null;
-    };
 
     const users = usersSnapshot.docs.map(doc => {
       const userData = doc.data() as UserProfile;
@@ -54,8 +48,13 @@ export async function GET() {
       };
     });
 
+    await deleteApp(adminApp);
     return NextResponse.json(users);
+
   } catch (error: any) {
+     if (adminApp!) {
+        await deleteApp(adminApp);
+    }
     console.error('Error fetching customers:', error);
     return new NextResponse(
       JSON.stringify({ error: 'Failed to fetch customers', details: error.message }),
