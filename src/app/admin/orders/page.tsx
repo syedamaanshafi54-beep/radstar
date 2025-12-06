@@ -85,7 +85,7 @@ export default function AdminOrdersPage() {
                             </div>
                         </div>
                     </TableCell>
-                    <TableCell>{order.createdAt ? new Date(typeof order.createdAt === 'string' ? order.createdAt : order.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{order.createdAt && typeof order.createdAt !== 'string' ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell><Badge>{order.status}</Badge></TableCell>
                   </TableRow>
