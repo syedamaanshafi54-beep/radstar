@@ -41,9 +41,6 @@ service cloud.firestore {
       // Users can only read/write their own data.
       allow get, write: if isOwner(userId) || isAdmin();
       
-      // Admins can list all user documents for the admin customer page.
-      allow list: if isAdmin();
-
       // Only admins can delete user documents.
       allow delete: if isAdmin();
 
@@ -65,7 +62,12 @@ service cloud.firestore {
       }
     }
      
-    // COLLECTION GROUP RULES FOR LISTING
+    // --- ADMIN LISTING RULES ---
+    // Admins can list all user documents for the admin customer page.
+    match /users/{userId} {
+      allow list: if isAdmin();
+    }
+    
     // Allow admins to list all orders across all users for the admin panel.
     match /{path=**}/orders/{orderId} {
       allow list: if isAdmin();
