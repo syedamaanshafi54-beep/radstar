@@ -1,4 +1,4 @@
-'use server';
+'use client';
 
 import {
   Table,
@@ -12,9 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import type { Order, UserProfile } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
-import { getAdminApp } from '@/firebase/admin';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { collectionGroup, query, orderBy } from 'firebase/firestore';
+import { useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 
 type EnrichedOrder = Order & {
     id: string;
@@ -22,50 +23,23 @@ type EnrichedOrder = Order & {
     customerEmail: string;
 };
 
-async function getOrders(): Promise<EnrichedOrder[]> {
-    const firestore = getFirestore(getAdminApp());
-    const auth = getAuth(getAdminApp());
-
-    const ordersSnapshot = await firestore.collectionGroup('orders').orderBy('createdAt', 'desc').get();
+export default function AdminOrdersPage() {
+    const firestore = useFirestore();
+    const ordersCollectionGroup = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
+    const ordersQuery = useMemoFirebase(() => query(ordersCollectionGroup, orderBy('createdAt', 'desc')), [ordersCollectionGroup]);
     
-    if (ordersSnapshot.empty) {
-        return [];
-    }
+    const { data: orders, isLoading: isOrdersLoading } = useCollection<WithId<Order>>(ordersQuery);
 
-    const ordersData = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-
-    const userIds = [...new Set(ordersData.map(order => order.userId))];
-    const userRecords = await auth.getUsers(userIds.map(uid => ({ uid })));
-
-    const usersMap = new Map<string, UserProfile>();
-    userRecords.users.forEach(record => {
-        usersMap.set(record.uid, {
-            uid: record.uid,
-            displayName: record.displayName || 'Unknown',
-            email: record.email || 'No email',
-            photoURL: record.photoURL,
-        } as UserProfile);
-    });
-
-    const enrichedOrders: EnrichedOrder[] = ordersData.map(order => {
-        const user = usersMap.get(order.userId);
-        const name = order.shippingInfo?.name || user?.displayName || 'Unknown User';
-        const email = order.shippingInfo?.email || user?.email || 'No email';
-
-        return {
+    const enrichedOrders = useMemo(() => {
+        if (!orders) return [];
+        return orders.map(order => ({
             ...order,
             id: order.id,
-            customerName: name,
-            customerEmail: email,
-        };
-    });
+            customerName: order.shippingInfo?.name || 'Unknown User',
+            customerEmail: order.shippingInfo?.email || 'No Email',
+        }));
+    }, [orders]);
 
-    return enrichedOrders;
-}
-
-
-export default async function AdminOrdersPage() {
-    const orders = await getOrders();
 
   return (
     <div className="space-y-4">
@@ -87,8 +61,14 @@ export default async function AdminOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.length > 0 ? (
-                orders.map((order) => (
+              {isOrdersLoading ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="h-48 text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                    </TableCell>
+                </TableRow>
+              ) : enrichedOrders.length > 0 ? (
+                enrichedOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.orderNumber}</TableCell>
                     <TableCell>

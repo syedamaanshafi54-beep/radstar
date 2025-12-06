@@ -9,6 +9,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // In a real app, this would check a custom claim: request.auth.token.admin == true;
+      // Using email for demonstration purposes.
       return request.auth != null && request.auth.token.email == 'itsmeabdulk@gmail.com';
     }
 
@@ -34,9 +36,10 @@ service cloud.firestore {
     }
 
     // USER-OWNED DATA & ADMIN ACCESS
+    // Admins can read/write any user's data for management purposes.
+    // Users can only read/write their own data.
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow create, update: if isOwner(userId) || isAdmin();
+      allow get, write: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin(); // Only admins can delete user documents
 
       // Subcollections
@@ -45,10 +48,10 @@ service cloud.firestore {
       }
       
       match /orders/{orderId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) || isAdmin();
           
         match /orderItems/{orderItemId} {
-          allow read, write: if isOwner(userId);
+          allow read, write: if isOwner(userId) || isAdmin();
         }
       }
 
@@ -57,13 +60,13 @@ service cloud.firestore {
       }
     }
      
-    // COLLECTION-LEVEL RULES FOR LISTING
+    // COLLECTION-LEVEL RULES FOR LISTING (CRITICAL FOR ADMIN PANEL)
     // Allow admins to list all documents in the 'users' collection.
     match /users/{userId} {
       allow list: if isAdmin();
     }
      
-    // COLLECTION GROUP RULES FOR LISTING
+    // COLLECTION GROUP RULES FOR LISTING (CRITICAL FOR ADMIN PANEL)
     // Allow admins to list all orders across all users for the admin panel.
     match /{path=**}/orders/{orderId} {
       allow list: if isAdmin();

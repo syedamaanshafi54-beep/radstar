@@ -1,4 +1,4 @@
-'use server';
+'use client';
 
 import {
   Table,
@@ -9,36 +9,16 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { User } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile } from '@/lib/types';
-import { getAdminApp, getAdminAuth } from '@/firebase/admin';
-import { listUsers } from 'firebase/auth/admin';
+import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
-async function getCustomers(): Promise<UserProfile[]> {
-    const auth = getAdminAuth();
-    const result = await listUsers(auth);
-    const users = result.users.map(userRecord => {
-        return {
-            uid: userRecord.uid,
-            displayName: userRecord.displayName || 'No Name',
-            email: userRecord.email || 'No Email',
-            photoURL: userRecord.photoURL,
-            providerId: userRecord.providerData?.[0]?.providerId || 'password',
-            createdAt: userRecord.metadata.creationTime ? new Date(userRecord.metadata.creationTime).toISOString() : new Date().toISOString(),
-            lastLogin: userRecord.metadata.lastSignInTime ? new Date(userRecord.metadata.lastSignInTime).toISOString() : new Date().toISOString(),
-            role: 'user', // Default role
-        } as UserProfile;
-    });
-
-    // We need to return a format that matches the old UserProfile for consistency
-    // Note: Timestamps are now ISO strings. We'll format them in the component.
-    return users;
-}
-
-
-export default async function AdminCustomersPage() {
-    const customers = await getCustomers();
+export default function AdminCustomersPage() {
+    const firestore = useFirestore();
+    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    const { data: customers, isLoading } = useCollection<WithId<UserProfile>>(usersCollection);
 
   return (
     <div className="space-y-4">
@@ -59,7 +39,13 @@ export default async function AdminCustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-             {customers && customers.length > 0 ? (
+             {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-48 text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                    </TableCell>
+                </TableRow>
+             ) : customers && customers.length > 0 ? (
                 customers.map((user) => (
                   <TableRow key={user.uid}>
                     <TableCell className="font-medium flex items-center gap-2">
@@ -72,7 +58,7 @@ export default async function AdminCustomersPage() {
                        {user.displayName}
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>{user.providerId}</TableCell>
                   </TableRow>
                 ))
