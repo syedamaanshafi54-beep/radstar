@@ -18,56 +18,32 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
     
+    // --- ADMIN OVERRIDE: FULL ACCESS ---
+    // The admin has complete read/write access to all data.
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // --- USER-SPECIFIC RULES ---
+    // These rules apply if the user is NOT an admin.
+    
     // PUBLIC COLLECTIONS
     match /products/{productId} {
       allow read: if true;
-      allow write: if isAdmin();
     }
 
     match /site-config/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
     }
     
-    // PARTNER SUBMISSIONS
+    // PARTNER SUBMISSIONS (allow anyone to create)
     match /partners/{partnerId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    // USER-SPECIFIC DATA ACCESS (for single document reads/writes)
-    // Rules for a user accessing their OWN data.
-    match /users/{userId} {
-      allow get, write: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
-
-      match /customers/{customerId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
-      
-      match /orders/{orderId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-          
-        match /orderItems/{orderItemId} {
-          allow read, write: if isOwner(userId) || isAdmin();
-        }
-      }
-
-      match /addresses/{addressId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
-    }
-     
-    // --- ADMIN LISTING RULES (for collection-wide queries) ---
-    
-    // Rule to allow admins to LIST all documents in the 'users' collection.
-    match /users/{userId} {
-      allow list: if isAdmin();
     }
     
-    // Rule to allow admins to LIST all documents in the 'orders' collection group.
-    match /{path=**}/orders/{orderId} {
-      allow list: if isAdmin();
+    // USER-SPECIFIC DATA (only owner can access if not admin)
+    match /users/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
     }
   }
 }
