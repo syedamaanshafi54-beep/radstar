@@ -35,7 +35,7 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // USER DATA ACCESS RULES
+    // USER DATA ACCESS RULES (for single document reads/writes)
     match /users/{userId} {
       // Admins can read/write any user's data for management.
       // Users can only read/write their own data.
