@@ -12,8 +12,8 @@ import { IndianRupee, ShoppingCart, Users, Package, Activity, ArrowUp, ArrowDown
 import { ChartContainer, ChartTooltipContent } from '../ui/chart';
 import { Area, AreaChart, Bar, BarChart, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Pie, PieChart, Cell, Label, ResponsiveContainer, Sector } from 'recharts';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
-import type { Product, Order } from '@/lib/types';
+import { collection, query, orderBy, limit, getDocs, where, collectionGroup } from 'firebase/firestore';
+import type { Product, Order, UserProfile } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -192,12 +192,6 @@ function ProductListModalContent() {
     )
 }
 
-type UserProfile = {
-    displayName: string;
-    email: string;
-    photoURL?: string;
-}
-
 type EnrichedOrder = Order & {
     id: string;
     customerName: string;
@@ -216,54 +210,17 @@ type CustomerData = {
 
 function OrderListModalContent() {
     const firestore = useFirestore();
-    const [orders, setOrders] = useState<EnrichedOrder[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const ordersQuery = useMemoFirebase(
+      () => query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'), limit(50)),
+      [firestore]
+    );
+    const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
 
-    useEffect(() => {
-        const fetchOrdersAndUsers = async () => {
-            if (!firestore) return;
-            setIsLoading(true);
-
-            const ordersQuery = query(collection(firestore, 'orders'), orderBy('orderDate', 'desc'), limit(50));
-            const ordersSnapshot = await getDocs(ordersQuery);
-            const fetchedOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WithId<Order>));
-            
-            if (fetchedOrders.length === 0) {
-                setOrders([]);
-                setIsLoading(false);
-                return;
-            }
-
-            const userIds = [...new Set(fetchedOrders.map(order => order.userId))];
-            if (userIds.length === 0) {
-                 setOrders(fetchedOrders.map(o => ({...o, id: o.id, customerName: o.shippingInfo?.name || 'Unknown', customerEmail: o.shippingInfo?.email || 'N/A'})));
-                 setIsLoading(false);
-                 return;
-            }
-
-            const usersQuery = query(collection(firestore, 'users'), where('__name__', 'in', userIds));
-            const usersSnapshot = await getDocs(usersQuery);
-            const usersMap = new Map<string, UserProfile>();
-            usersSnapshot.forEach(doc => {
-                usersMap.set(doc.id, doc.data() as UserProfile);
-            });
-            
-            const enrichedOrders: EnrichedOrder[] = fetchedOrders.map(order => {
-                const customer = usersMap.get(order.userId);
-                return {
-                    ...order,
-                    id: order.id,
-                    customerName: customer?.displayName || order.shippingInfo.name || 'Unknown User',
-                    customerEmail: customer?.email || order.shippingInfo.email,
-                };
-            });
-
-            setOrders(enrichedOrders);
-            setIsLoading(false);
-        };
-
-        fetchOrdersAndUsers();
-    }, [firestore]);
+    const enrichedOrders: EnrichedOrder[] = (orders || []).map(order => ({
+      ...order,
+      customerName: order.shippingInfo?.name || 'Unknown User',
+      customerEmail: order.shippingInfo?.email || 'No Email',
+    }));
 
     return (
         <DialogContent className="sm:max-w-4xl" data-modal-content="orders">
@@ -289,10 +246,10 @@ function OrderListModalContent() {
                                     <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                                 </TableCell>
                             </TableRow>
-                        ) : orders && orders.length > 0 ? (
-                            orders.map(order => (
+                        ) : enrichedOrders && enrichedOrders.length > 0 ? (
+                            enrichedOrders.map(order => (
                                 <TableRow key={order.id}>
-                                    <TableCell className="font-medium text-xs">#{order.id.substring(0, 7)}</TableCell>
+                                    <TableCell className="font-medium text-xs">#{order.orderNumber || order.id.substring(0, 7)}</TableCell>
                                     <TableCell>
                                          <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
@@ -304,9 +261,9 @@ function OrderListModalContent() {
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
+                                    <TableCell>{order.createdAt && typeof order.createdAt !== 'string' ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={order.status === 'Delivered' ? 'default' : 'secondary'}>{order.status}</Badge>
+                                        <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>{order.status}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right font-medium"><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</TableCell>
                                 </TableRow>
@@ -329,62 +286,68 @@ function CustomerListModalContent() {
     const firestore = useFirestore();
     const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    
+    const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
+    
+    const ordersQuery = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
+    const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersQuery);
+
 
     useEffect(() => {
-        const fetchCustomerData = async () => {
-            if (!firestore) return;
+        if (usersLoading || ordersLoading) {
             setIsLoading(true);
+            return;
+        }
 
-            // 1. Fetch all users
-            const usersSnapshot = await getDocs(collection(firestore, 'users'));
-            const usersMap = new Map<string, UserProfile>();
-            usersSnapshot.forEach(doc => {
-                usersMap.set(doc.id, { ...doc.data() as UserProfile });
-            });
-
-            // 2. Fetch all orders
-            const ordersSnapshot = await getDocs(collection(firestore, 'orders'));
-            const orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WithId<Order>));
-
-            // 3. Aggregate data
-            const customerDataMap = new Map<string, CustomerData>();
-
-            orders.forEach(order => {
-                if (!usersMap.has(order.userId)) return; // Skip orders with no matching user
-
-                const userProfile = usersMap.get(order.userId)!;
-                let customer = customerDataMap.get(order.userId);
-
-                if (!customer) {
-                    customer = {
-                        id: order.userId,
-                        name: userProfile.displayName,
-                        email: userProfile.email,
-                        photoURL: userProfile.photoURL,
-                        totalOrders: 0,
-                        totalSpent: 0,
-                        lastOrderDate: '1970-01-01T00:00:00.000Z',
-                    };
-                }
-
-                customer.totalOrders += 1;
-                customer.totalSpent += order.totalAmount;
-                if (new Date(order.orderDate) > new Date(customer.lastOrderDate)) {
-                    customer.lastOrderDate = order.orderDate;
-                }
-                
-                customerDataMap.set(order.userId, customer);
-            });
-            
-            const aggregatedCustomers = Array.from(customerDataMap.values())
-                                            .sort((a, b) => new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime());
-
-            setCustomers(aggregatedCustomers);
+        if (!users || !orders) {
             setIsLoading(false);
-        };
+            return;
+        }
 
-        fetchCustomerData();
-    }, [firestore]);
+        const usersMap = new Map<string, UserProfile>();
+        users.forEach(user => {
+            usersMap.set(user.id, user);
+        });
+
+        const customerDataMap = new Map<string, CustomerData>();
+
+        orders.forEach(order => {
+            if (!order.userId || !usersMap.has(order.userId)) return;
+
+            const userProfile = usersMap.get(order.userId)!;
+            let customer = customerDataMap.get(order.userId);
+
+            const orderDate = order.createdAt ? (typeof order.createdAt === 'string' ? order.createdAt : order.createdAt.toDate().toISOString()) : new Date(0).toISOString();
+
+            if (!customer) {
+                customer = {
+                    id: order.userId,
+                    name: userProfile.displayName,
+                    email: userProfile.email,
+                    photoURL: userProfile.photoURL,
+                    totalOrders: 0,
+                    totalSpent: 0,
+                    lastOrderDate: '1970-01-01T00:00:00.000Z',
+                };
+            }
+
+            customer.totalOrders += 1;
+            customer.totalSpent += order.totalAmount;
+            
+            if (new Date(orderDate) > new Date(customer.lastOrderDate)) {
+                customer.lastOrderDate = orderDate;
+            }
+            
+            customerDataMap.set(order.userId, customer);
+        });
+        
+        const aggregatedCustomers = Array.from(customerDataMap.values())
+                                        .sort((a, b) => new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime());
+
+        setCustomers(aggregatedCustomers);
+        setIsLoading(false);
+    }, [users, orders, usersLoading, ordersLoading]);
 
     return (
         <DialogContent className="sm:max-w-4xl" data-modal-content="customers">
@@ -443,7 +406,7 @@ function CustomerListModalContent() {
 
 function IncomeModalContent() {
     const firestore = useFirestore();
-    const ordersQuery = useMemoFirebase(() => query(collection(firestore, 'orders'), where('status', '==', 'Delivered')), [firestore]);
+    const ordersQuery = useMemoFirebase(() => query(collectionGroup(firestore, 'orders'), where('status', '==', 'delivered')), [firestore]);
     const { data: orders, isLoading } = useCollection<Order>(ordersQuery, { listen: false });
 
     const incomeData = useMemo(() => {
@@ -467,7 +430,8 @@ function IncomeModalContent() {
         const dailyIncome: { [key: string]: number } = {};
 
         orders.forEach(order => {
-            const orderDate = new Date(order.orderDate);
+            if (!order.createdAt || typeof order.createdAt === 'string') return;
+            const orderDate = order.createdAt.toDate();
             const orderDateStr = orderDate.toISOString().split('T')[0];
 
             if (orderDate >= today) {
@@ -825,3 +789,5 @@ const renderModalContent = (type: ModalType | null) => {
 export function KpiModals({ activeModal }: { activeModal: ModalType | null }) {
     return renderModalContent(activeModal);
 }
+
+    
