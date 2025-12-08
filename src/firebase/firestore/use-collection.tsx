@@ -34,17 +34,25 @@ export interface InternalQuery extends Query<DocumentData> {
       segments: string[];
       canonicalString(): string;
       toString(): string;
-    }
+    };
+    collectionGroup: string | null;
   }
 }
 
 function getPathFromRef(ref: CollectionReference<DocumentData> | Query<DocumentData>): string {
-    if (ref.type === 'collection') {
-        return (ref as CollectionReference).path;
-    }
-    // For queries, access the internal _query property.
     const internalQuery = ref as unknown as InternalQuery;
-    return internalQuery._query.path.canonicalString();
+    
+    // Handle collection group queries
+    if (internalQuery._query.collectionGroup) {
+      return internalQuery._query.collectionGroup;
+    }
+
+    // Handle regular collection and query paths
+    if (internalQuery._query.path) {
+        return internalQuery._query.path.canonicalString();
+    }
+    
+    return ''; // Fallback for safety, though should not be reached with valid refs
 }
 
 /**
@@ -82,22 +90,21 @@ export function useCollection<T = any>(
     // --- SAFETY CHECK ---
     // 1. Get the path from the reference.
     const path = getPathFromRef(memoizedTargetRefOrQuery);
+    const isCollectionGroup = !!(memoizedTargetRefOrQuery as unknown as InternalQuery)._query.collectionGroup;
     
     // 2. Add debug logging to see what path is being subscribed to.
-    console.debug(`[useCollection] Subscribing to path: '${path}'`);
+    console.debug(`[useCollection] Subscribing to path: '${path}' (isCollectionGroup: ${isCollectionGroup})`);
 
     // 3. Validate the path. A valid collection path must have an odd number of segments.
     // An empty path or a path with an even number of segments (like 'users/userId') is invalid for a collection query.
-    const segments = path.split('/').filter(Boolean);
-    if (segments.length % 2 !== 1) {
-      // 4. Throw a clear, developer-facing error instead of calling Firestore.
+    // This check is bypassed for collection group queries, as their path is just the collection ID (1 segment).
+    if (!isCollectionGroup && path.split('/').filter(Boolean).length % 2 !== 1) {
       const devError = new Error(
-        `[useCollection] Invalid path for collection query: '${path}'. A collection path must have an odd number of segments. You may be passing a document path or an uninitialized dynamic value.`
+        `[useCollection] Invalid path for collection query: "${path}". A collection path must have an odd number of segments. You may be passing a document path or an uninitialized dynamic value.`
       );
       setError(devError);
       setData(null);
       setIsLoading(false);
-      // We don't emit this to the global error handler as it's a developer error, not a permissions issue.
       console.error(devError);
       return; // Stop execution
     }
