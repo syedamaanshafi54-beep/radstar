@@ -48,6 +48,7 @@ export function KpiCard({
     icon: Icon,
     change,
     changeType,
+    className
   }: {
     type: ModalType;
     title: string;
@@ -55,6 +56,7 @@ export function KpiCard({
     icon: React.ElementType;
     change?: string;
     changeType?: 'increase' | 'decrease';
+    className?: string;
   }) {
     const iconColor =
       changeType === 'increase'
@@ -65,16 +67,13 @@ export function KpiCard({
   
     return (
       <Card
-        className="
-          cursor-pointer 
-          hover:border-primary 
-          transition-colors
-          h-full
-          px-3 py-4 sm:px-4 sm:py-5   /* reduced left padding */
-        "
+        className={cn(
+          "cursor-pointer hover:border-primary transition-colors h-full",
+          className,
+        )}
         data-modal-type={type}
       >
-        <CardHeader className="pb-2 px-0">
+        <CardHeader className="pb-2">
           <div className="flex items-start justify-between w-full">
             
             {/* LEFT TEXT BLOCK */}
@@ -98,7 +97,7 @@ export function KpiCard({
         </CardHeader>
   
         {change && (
-          <CardContent className="pt-1 px-0">
+          <CardContent className="pt-1">
             <div className="text-xs text-muted-foreground flex items-center">
               {changeType === 'increase' ? (
                 <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
