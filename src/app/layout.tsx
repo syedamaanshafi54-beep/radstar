@@ -21,6 +21,7 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Hide search overlay on admin routes
   const showSearchOverlay = !pathname.startsWith('/admin');
@@ -71,7 +72,7 @@ export default function RootLayout({
         <FirebaseClientProvider>
             <CartProvider>
                 {loading && <GlobalLoader />}
-                {showSearchOverlay && <SearchOverlay />}
+                {showSearchOverlay && <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />}
                 {children}
                 <Toaster />
                 <FirebaseErrorListener />

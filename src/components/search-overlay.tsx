@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment, Dispatch, SetStateAction } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,12 @@ import Link from 'next/link';
 import ProductDetails from './product-details';
 import { InstagramIcon, WhatsAppIcon } from './icons/social-icons';
 
-export function SearchOverlay() {
-  const [isOpen, setIsOpen] = useState(false);
+interface SearchOverlayProps {
+    isOpen: boolean;
+    setIsOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+export function SearchOverlay({ isOpen, setIsOpen }: SearchOverlayProps) {
   const [query, setQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<WithId<Product>[]>([]);
   const [activeProduct, setActiveProduct] = useState<WithId<Product> | null>(null);
@@ -54,7 +58,7 @@ export function SearchOverlay() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setIsOpen]);
 
   return (
     <>
@@ -170,5 +174,3 @@ export function SearchOverlay() {
     </>
   );
 }
-
-    
