@@ -497,7 +497,7 @@ export default function AdminDashboardPage() {
                 <Table>
                     <TableBody>
                     {ordersLoading ? (
-                        <TableRow className="py-1">
+                        <TableRow>
                             <TableCell colSpan={2} className="h-24 text-center">
                                 <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                             </TableCell>
@@ -513,7 +513,7 @@ export default function AdminDashboardPage() {
                          </TableRow>
                        ))
                     ) : (
-                         <TableRow className="py-1">
+                         <TableRow>
                             <TableCell colSpan={2} className="text-center">No recent orders.</TableCell>
                         </TableRow>
                     )}
@@ -579,7 +579,7 @@ export default function AdminDashboardPage() {
                     <Table>
                       <TableBody>
                         {ordersLoading ? (
-                          <TableRow className="py-1">
+                          <TableRow>
                             <TableCell colSpan={2} className="h-24 text-center">
                               <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                             </TableCell>
@@ -600,7 +600,7 @@ export default function AdminDashboardPage() {
                             </TableRow>
                           ))
                         ) : (
-                          <TableRow className="py-1">
+                          <TableRow>
                             <TableCell colSpan={2} className="text-center">
                               No recent orders.
                             </TableCell>
@@ -620,7 +620,7 @@ export default function AdminDashboardPage() {
                   <CardContent>
                     <Table>
                       <TableHeader>
-                        <TableRow className="py-1">
+                        <TableRow>
                           <TableHead>Product</TableHead>
                           <TableHead>Stock</TableHead>
                           <TableHead className="text-right">Total Sales</TableHead>
@@ -628,7 +628,7 @@ export default function AdminDashboardPage() {
                       </TableHeader>
                       <TableBody>
                         {productsLoading ? (
-                          <TableRow className="py-1">
+                          <TableRow>
                             <TableCell colSpan={3} className="h-24 text-center">
                               <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                             </TableCell>
@@ -689,7 +689,7 @@ export default function AdminDashboardPage() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="py-1">
+                <TableRow>
                   <TableHead>Product</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead className="text-right">Total Sales</TableHead>
@@ -697,7 +697,7 @@ export default function AdminDashboardPage() {
               </TableHeader>
               <TableBody>
                 {productsLoading ? (
-                  <TableRow className="py-1">
+                  <TableRow>
                     <TableCell colSpan={3} className="h-24 text-center">
                       <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                     </TableCell>
@@ -797,7 +797,7 @@ export default function AdminDashboardPage() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="py-1">
+              <TableRow>
                 <TableHead className="hidden lg:table-cell">
                     <Button variant="ghost" onClick={() => requestSort('dateAdded')}>
                         Date Added <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -830,7 +830,7 @@ export default function AdminDashboardPage() {
             </TableHeader>
             <TableBody>
               {productsLoading ? (
-                <TableRow className="py-1">
+                <TableRow>
                   <TableCell colSpan={8} className="h-24 text-center">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                   </TableCell>
@@ -930,7 +930,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
-
-    
