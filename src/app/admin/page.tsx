@@ -251,7 +251,7 @@ export default function AdminDashboardPage() {
         setOrdersLoading(true);
         try {
             const ordersRef = collectionGroup(firestore, 'orders');
-            const q = query(ordersRef, limit(5));
+            const q = query(ordersRef, orderBy('createdAt', 'desc'), limit(5));
             const querySnapshot = await getDocs(q);
             const fetchedOrders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EnrichedOrder));
             
@@ -260,17 +260,7 @@ export default function AdminDashboardPage() {
                 order.customerName = order.shippingInfo?.name || 'Unknown';
             });
             
-            // Sort client-side
-            const sorted = fetchedOrders.sort((a, b) => {
-                if (b.createdAt && a.createdAt) {
-                    const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt.toDate();
-                    const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt.toDate();
-                    return dateB.getTime() - dateA.getTime();
-                }
-                return 0;
-            });
-
-            setRecentOrders(sorted);
+            setRecentOrders(fetchedOrders);
         } catch (error) {
             console.error("Error fetching recent orders:", error);
         } finally {
@@ -926,5 +916,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
