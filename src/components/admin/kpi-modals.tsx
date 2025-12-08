@@ -26,7 +26,8 @@ import Image from 'next/image';
 import { Badge } from '../ui/badge';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 
 export type ModalType = 'sales' | 'orders' | 'customers' | 'products' | 'income' | 'expenses' | 'visitors';
@@ -788,5 +789,3 @@ const renderModalContent = (type: ModalType | null) => {
 export function KpiModals({ activeModal }: { activeModal: ModalType | null }) {
     return renderModalContent(activeModal);
 }
-
-    
