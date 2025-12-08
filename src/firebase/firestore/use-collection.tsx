@@ -31,10 +31,20 @@ export interface UseCollectionResult<T> {
 export interface InternalQuery extends Query<DocumentData> {
   _query: {
     path: {
+      segments: string[];
       canonicalString(): string;
       toString(): string;
     }
   }
+}
+
+function getPathFromRef(ref: CollectionReference<DocumentData> | Query<DocumentData>): string {
+    if (ref.type === 'collection') {
+        return (ref as CollectionReference).path;
+    }
+    // For queries, access the internal _query property.
+    const internalQuery = ref as unknown as InternalQuery;
+    return internalQuery._query.path.canonicalString();
 }
 
 /**
@@ -69,6 +79,30 @@ export function useCollection<T = any>(
       return;
     }
 
+    // --- SAFETY CHECK ---
+    // 1. Get the path from the reference.
+    const path = getPathFromRef(memoizedTargetRefOrQuery);
+    
+    // 2. Add debug logging to see what path is being subscribed to.
+    console.debug(`[useCollection] Subscribing to path: '${path}'`);
+
+    // 3. Validate the path. A valid collection path must have an odd number of segments.
+    // An empty path or a path with an even number of segments (like 'users/userId') is invalid for a collection query.
+    const segments = path.split('/').filter(Boolean);
+    if (segments.length % 2 !== 1) {
+      // 4. Throw a clear, developer-facing error instead of calling Firestore.
+      const devError = new Error(
+        `[useCollection] Invalid path for collection query: '${path}'. A collection path must have an odd number of segments. You may be passing a document path or an uninitialized dynamic value.`
+      );
+      setError(devError);
+      setData(null);
+      setIsLoading(false);
+      // We don't emit this to the global error handler as it's a developer error, not a permissions issue.
+      console.error(devError);
+      return; // Stop execution
+    }
+
+
     setIsLoading(true);
     setError(null);
 
@@ -85,12 +119,6 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
@@ -107,6 +135,7 @@ export function useCollection<T = any>(
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
+  
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }

@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -9,32 +8,31 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // In a real app, this would check a custom claim: request.auth.token.admin == true;
-      // Using email for demonstration purposes.
       return request.auth != null && request.auth.token.email == 'itsmeabdulk@gmail.com';
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
+
+    // --- FIX: Allow admins to list root collections ---
+    match /{path=**} {
+      allow list: if isAdmin();
+    }
+
     // --- ADMIN OVERRIDE: FULL ACCESS ---
-    // The admin has complete read/write access to all data.
     match /{document=**} {
       allow read, write: if isAdmin();
     }
-    
-    // Allow admins to list collections for the admin panel.
+
+    // Allow admins to list subcollections explicitly
     match /users/{userId} {
       allow list: if isAdmin();
     }
     match /{path=**}/orders/{orderId} {
       allow list: if isAdmin();
     }
-    
-    // --- USER-SPECIFIC RULES ---
-    // These rules apply if the user is NOT an admin.
-    
+
     // PUBLIC COLLECTIONS
     match /products/{productId} {
       allow read: if true;
@@ -43,13 +41,13 @@ service cloud.firestore {
     match /site-config/{configId} {
       allow read: if true;
     }
-    
-    // PARTNER SUBMISSIONS (allow anyone to create)
+
+    // PUBLIC CREATION
     match /partners/{partnerId} {
       allow create: if true;
     }
-    
-    // USER-SPECIFIC DATA (only owner can access if not admin)
+
+    // USER PRIVATE DATA
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
