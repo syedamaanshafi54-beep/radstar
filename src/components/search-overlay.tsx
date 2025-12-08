@@ -9,7 +9,6 @@ import { Search, X, Loader2, Info } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
-import { staticProducts } from '@/data/static-products';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductDetails from './product-details';
@@ -25,7 +24,7 @@ export function SearchOverlay() {
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: false });
   
-  const allProducts = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
+  const allProducts = firestoreProducts || [];
 
   useEffect(() => {
     if (query.length > 1) {
@@ -133,7 +132,7 @@ export function SearchOverlay() {
                     className="w-full text-left p-3 flex items-center gap-4 rounded-lg hover:bg-secondary transition-colors"
                   >
                     <div className="relative h-16 w-16 rounded-md overflow-hidden flex-shrink-0 border">
-                        <Image src={product.image.url} alt={product.name} fill className="object-contain" sizes="64px"/>
+                        <Image src={product.image.url as string} alt={product.name} fill className="object-contain" sizes="64px"/>
                     </div>
                     <div className="flex-1">
                         <p className="font-semibold text-lg">{product.name}</p>
@@ -171,3 +170,5 @@ export function SearchOverlay() {
     </>
   );
 }
+
+    

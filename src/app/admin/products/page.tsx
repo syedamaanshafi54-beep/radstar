@@ -41,7 +41,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { staticProducts } from '@/data/static-products';
 import { formatPrice } from '@/lib/utils';
 
 export default function AdminProductsPage() {
@@ -53,8 +52,7 @@ export default function AdminProductsPage() {
   const { data: firestoreProducts, isLoading } =
     useCollection<Product>(productsCollection);
 
-  // Use Firestore products if available, otherwise use static products as a fallback.
-  const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
+  const products = firestoreProducts || [];
 
   return (
     <div className="space-y-4">
@@ -178,3 +176,5 @@ function ProductRow({ product }: { product: WithId<Product> }) {
     </TableRow>
   );
 }
+
+    

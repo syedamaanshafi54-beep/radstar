@@ -26,7 +26,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { DealPopup } from '@/components/deal-popup';
-import { staticProducts } from '@/data/static-products';
 import { DealBanner } from '@/components/deal-banner';
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
@@ -142,8 +141,7 @@ export default function Home() {
   const { data: heroSlidesData, isLoading: heroSlidesLoading } = useDoc<HeroSlidesData>(heroSlidesDocRef);
 
 
-  // Use Firestore products if available, otherwise use static products as a fallback.
-  const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
+  const products = firestoreProducts || [];
 
   const productsByCategory = products.reduce((acc, product) => {
     const category = product.category;
@@ -168,7 +166,7 @@ export default function Home() {
   }, [products, dealsData, dealsLoading, productsLoading]);
 
   const heroSlides = React.useMemo(() => {
-    if (heroSlidesLoading || productsLoading) {
+    if (heroSlidesLoading || productsLoading || !products || products.length === 0) {
       return staticHeroSlides;
     }
     if (!heroSlidesData || !heroSlidesData.productIds || heroSlidesData.productIds.length === 0) {
@@ -572,3 +570,6 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   );
 }
 
+
+
+    

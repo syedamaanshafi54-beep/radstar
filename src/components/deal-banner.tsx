@@ -9,7 +9,6 @@ import type { Product } from '@/lib/types';
 import { Button } from './ui/button';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { staticProducts } from '@/data/static-products';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import ProductDetails from './product-details';
@@ -85,16 +84,6 @@ export const DealBanner = () => {
       
       let productId: string | undefined = dealInfo?.productId;
       
-      // Fallback to the first item with a sale price in static products if no deal is set in Firestore
-      if (!productId) {
-        const staticDeal = staticProducts.find(p => p.salePrice);
-        if (staticDeal) {
-            setDealProduct(staticDeal as WithId<Product>);
-            setIsLoading(false);
-            return;
-        }
-      }
-      
       if (!productId) {
          setIsLoading(false);
          return;
@@ -107,13 +96,7 @@ export const DealBanner = () => {
         if (productSnap.exists()) {
           setDealProduct({ id: productSnap.id, ...productSnap.data() } as WithId<Product>);
         } else {
-           // If Firestore product not found, check static products
-          const staticFallback = staticProducts.find(p => p.id === productId);
-          if (staticFallback) {
-             setDealProduct(staticFallback as WithId<Product>);
-          } else {
-             setDealProduct(null);
-          }
+           setDealProduct(null);
         }
       } catch (error) {
         console.error("Error fetching deal product:", error);
@@ -209,3 +192,5 @@ export const DealBanner = () => {
     </Dialog>
   );
 };
+
+    

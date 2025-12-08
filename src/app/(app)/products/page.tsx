@@ -29,7 +29,6 @@ import { collection, query, where, doc } from 'firebase/firestore';
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { staticProducts } from "@/data/static-products";
 import { ToastAction } from "@/components/ui/toast";
 import { formatPrice } from "@/lib/utils";
 
@@ -60,7 +59,7 @@ function ProductsGrid() {
     return new Set(dealsData.productIds);
   }, [dealsData]);
   
-  const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
+  const products = firestoreProducts || [];
 
   if (productsLoading || dealsLoading) {
      return (
@@ -240,3 +239,5 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     </Dialog>
   );
 }
+
+    

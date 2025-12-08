@@ -16,7 +16,6 @@ import type { Product } from '@/lib/types';
 import { Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { staticProducts } from '@/data/static-products';
 import { formatPrice } from '@/lib/utils';
 
 type DealsData = {
@@ -34,12 +33,9 @@ export function DealPopup() {
   const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsCollection);
   
   const dealProducts = useMemo(() => {
-    // Use static products as a fallback if firestore is loading or empty
-    const sourceProducts = (productsData && productsData.length > 0) ? productsData : staticProducts;
-
-    // If no specific deals are configured in Firestore, find deals from the static list
+    const sourceProducts = productsData || [];
     if (!dealsData || !dealsData.productIds || dealsData.productIds.length === 0) {
-      return staticProducts.filter(p => p.salePrice || (p.variants && p.variants.some(v => v.salePrice)));
+      return sourceProducts.filter(p => p.salePrice || (p.variants && p.variants.some(v => v.salePrice)));
     }
     
     const dealIdSet = new Set(dealsData.productIds);
@@ -110,3 +106,5 @@ export function DealPopup() {
     </Dialog>
   );
 }
+
+    

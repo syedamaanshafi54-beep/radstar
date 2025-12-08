@@ -15,7 +15,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, CartesianGrid, Legend, ComposedChart, Bar, Line, YAxis, Defs, Stop, LinearGradient } from "recharts";
 import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 import { AiReviewAnalysis } from '@/components/admin/ai-review-analysis';
-import { staticProducts } from '@/data/static-products';
 import {
   Table,
   TableBody,
@@ -174,7 +173,7 @@ export default function AdminDashboardPage() {
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
 
   
-  const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : [];
+  const products = firestoreProducts || [];
 
   // Add mock sales/revenue data for sorting
   const productsWithSales = useMemo(() => {
@@ -229,101 +228,11 @@ export default function AdminDashboardPage() {
   };
 
   const seedDatabase = async () => {
-    setIsSeeding(true);
-    const batch = writeBatch(firestore);
-
-    // 1. Seed Products
-    staticProducts.forEach((product) => {
-        const docRef = doc(firestore, 'products', product.id);
-        batch.set(docRef, product);
+    toast({
+      variant: 'destructive',
+      title: 'Seeding Disabled',
+      description: 'This functionality is not available in this environment.',
     });
-
-    // 2. Seed Mock Users
-    const mockUsers = [
-        { id: 'user-001', displayName: 'Aisha Khan', email: 'aisha.khan@example.com', createdAt: new Date(2024, 0, 15), providerId: 'password', photoURL: `https://i.pravatar.cc/150?u=aisha.khan@example.com` },
-        { id: 'user-002', displayName: 'Rohan Sharma', email: 'rohan.sharma@example.com', createdAt: new Date(2024, 1, 20), providerId: 'google.com', photoURL: `https://i.pravatar.cc/150?u=rohan.sharma@example.com` },
-        { id: 'user-003', displayName: 'Priya Patel', email: 'priya.patel@example.com', createdAt: new Date(2024, 2, 10), providerId: 'password', photoURL: `https://i.pravatar.cc/150?u=priya.patel@example.com` },
-        { id: 'user-004', displayName: 'Vikram Singh', email: 'vikram.singh@example.com', createdAt: new Date(2024, 3, 5), providerId: 'google.com', photoURL: `https://i.pravatar.cc/150?u=vikram.singh@example.com` },
-        { id: 'user-005', displayName: 'Anjali Menon', email: 'anjali.menon@example.com', createdAt: new Date(2024, 4, 25), providerId: 'password', photoURL: `https://i.pravatar.cc/150?u=anjali.menon@example.com` },
-        { id: 'user-006', displayName: 'Sameer Verma', email: 'sameer.verma@example.com', createdAt: new Date(2024, 5, 1), providerId: 'google.com', photoURL: `https://i.pravatar.cc/150?u=sameer.verma@example.com` },
-        { id: 'user-007', displayName: 'Neha Reddy', email: 'neha.reddy@example.com', createdAt: new Date(2024, 5, 12), providerId: 'password', photoURL: `https://i.pravatar.cc/150?u=neha.reddy@example.com` },
-        { id: 'user-008', displayName: 'Arjun Gupta', email: 'arjun.gupta@example.com', createdAt: new Date(2024, 6, 2), providerId: 'google.com', photoURL: `https://i.pravatar.cc/150?u=arjun.gupta@example.com` },
-        { id: 'user-009', displayName: 'Sana Fatima', email: 'sana.fatima@example.com', createdAt: new Date(2024, 6, 18), providerId: 'password', photoURL: `https://i.pravatar.cc/150?u=sana.fatima@example.com` },
-        { id: 'user-010', displayName: 'Karan Kumar', email: 'karan.kumar@example.com', createdAt: new Date(2024, 6, 22), providerId: 'google.com', photoURL: `https://i.pravatar.cc/150?u=karan.kumar@example.com` },
-    ];
-    mockUsers.forEach(user => {
-        const userRef = doc(firestore, 'users', user.id);
-        batch.set(userRef, user);
-    });
-
-    // 3. Seed Realistic Mock Orders
-    const today = new Date();
-    const mockOrders: any[] = [];
-    const statuses = ['Delivered', 'Shipped', 'Processing', 'Pending'];
-    
-    for (let i = 0; i < 25; i++) {
-        const user = mockUsers[i % mockUsers.length];
-        const numItems = Math.floor(Math.random() * 3) + 1;
-        const items = [];
-        let totalAmount = 0;
-        const orderDate = new Date(today);
-        orderDate.setDate(today.getDate() - Math.floor(Math.random() * 60));
-
-        for (let j = 0; j < numItems; j++) {
-            const product = staticProducts[Math.floor(Math.random() * staticProducts.length)];
-            const quantity = Math.floor(Math.random() * 2) + 1;
-            const price = product.salePrice ?? product.defaultPrice;
-            totalAmount += price * quantity;
-            items.push({
-                productId: product.id,
-                name: product.name,
-                variantName: product.variants?.[0]?.name || null,
-                qty: quantity,
-                price: price,
-            });
-        }
-        
-        const orderRef = doc(collection(firestore, 'users', user.id, 'orders'));
-        batch.set(orderRef, {
-            orderNumber: `RS-${orderDate.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(100000 + Math.random() * 900000)}`,
-            userId: user.id,
-            items: items,
-            shippingInfo: { 
-                name: user?.displayName || 'Test User', 
-                address: '123 Test St, Jubilee Hills', 
-                city: 'Hyderabad', 
-                state: 'Telangana', 
-                zip: '500033', 
-                phone: '9876543210',
-                email: user?.email || 'test@example.com'
-            },
-            subtotal: totalAmount,
-            shipping: 0,
-            totalAmount: totalAmount,
-            paymentMethod: Math.random() > 0.5 ? 'COD' : 'Razorpay',
-            status: statuses[Math.floor(Math.random() * (orderDate < today ? 2 : 4))], // Only Delivered/Shipped for past orders
-            createdAt: orderDate
-        });
-    }
-
-    batch.commit()
-      .then(() => {
-        toast({
-          title: 'Database Seeded!',
-          description: 'Test products, users, and orders have been added to Firestore.',
-        });
-      })
-      .catch((error) => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'write',
-          path: 'batch operation',
-          requestResourceData: { note: 'This was a batch write for seeding data.' },
-        });
-        errorEmitter.emit('permission-error', contextualError);
-      })
-      .finally(() => {
-        setIsSeeding(false);
-      });
   };
 
 
@@ -354,7 +263,9 @@ export default function AdminDashboardPage() {
             // Sort client-side
             const sorted = fetchedOrders.sort((a, b) => {
                 if (b.createdAt && a.createdAt) {
-                    return b.createdAt.seconds - a.createdAt.seconds;
+                    const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt.toDate();
+                    const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt.toDate();
+                    return dateB.getTime() - dateA.getTime();
                 }
                 return 0;
             });
@@ -423,7 +334,7 @@ export default function AdminDashboardPage() {
     }));
 
     allOrders.forEach(order => {
-      if (order.createdAt && typeof order.createdAt.seconds === 'number') {
+      if (order.createdAt && typeof order.createdAt !== 'string' && order.createdAt.seconds) {
         const monthIndex = new Date(order.createdAt.seconds * 1000).getMonth();
         if (monthlyData[monthIndex]) {
           monthlyData[monthIndex].sales += order.totalAmount;
@@ -488,37 +399,6 @@ export default function AdminDashboardPage() {
                 </Button>
             </div>
         </div>
-
-        <Card className="bg-blue-50 border-blue-200 text-blue-800">
-            <CardHeader>
-                <CardTitle>Seed Your Database</CardTitle>
-                <CardDescription className="text-blue-700">
-                    Click the button below to populate your application with a full set of realistic test data. This will add sample products, users, and orders to make your app feel alive.
-                </CardDescription>
-            </CardHeader>
-            <CardFooter>
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                         <Button disabled={isSeeding}>
-                            {isSeeding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Seed All Test Data
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will overwrite any existing test data in the 'products', 'users', and 'orders' collections. This action cannot be undone.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={seedDatabase}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </CardFooter>
-        </Card>
 
         <Dialog open={!!activeModal} onOpenChange={(isOpen) => !isOpen && setActiveModal(null)}>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:gap-4">
@@ -1050,5 +930,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     
