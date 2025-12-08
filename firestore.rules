@@ -15,39 +15,42 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- FIX: Allow admins to list root collections ---
-    match /{path=**} {
-      allow list: if isAdmin();
-    }
-
     // --- ADMIN OVERRIDE: FULL ACCESS ---
     match /{document=**} {
       allow read, write: if isAdmin();
     }
 
-    // Allow admins to list subcollections explicitly
+    // --- ADMIN LIST PERMISSIONS ---
+    // Allow admins to list specific top-level collections
     match /users/{userId} {
       allow list: if isAdmin();
     }
+    match /products/{productId} {
+      allow list: if isAdmin();
+    }
+    match /orders/{orderId} {
+        allow list: if isAdmin();
+    }
+    
+    // Allow admins to list subcollections (collection group query)
     match /{path=**}/orders/{orderId} {
       allow list: if isAdmin();
     }
 
-    // PUBLIC COLLECTIONS
+    // --- PUBLIC COLLECTIONS ---
     match /products/{productId} {
       allow read: if true;
     }
-
     match /site-config/{configId} {
       allow read: if true;
     }
 
-    // PUBLIC CREATION
+    // --- PUBLIC CREATION ---
     match /partners/{partnerId} {
       allow create: if true;
     }
 
-    // USER PRIVATE DATA
+    // --- USER-OWNED DATA ---
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
