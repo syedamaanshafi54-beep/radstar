@@ -24,6 +24,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
     
+    // Allow admins to list orders across all users for the admin panel.
+    match /{path=**}/orders/{orderId} {
+      allow list: if isAdmin();
+    }
+    
     // --- USER-SPECIFIC RULES ---
     // These rules apply if the user is NOT an admin.
     
