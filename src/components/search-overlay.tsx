@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, Fragment, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useCallback, Fragment, Dispatch, SetStateAction, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export function SearchOverlay({ isOpen, setIsOpen }: SearchOverlayProps) {
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: false });
   
-  const allProducts = firestoreProducts || [];
+  const allProducts = useMemo(() => firestoreProducts || [], [firestoreProducts]);
 
   useEffect(() => {
     if (query.length > 1) {
