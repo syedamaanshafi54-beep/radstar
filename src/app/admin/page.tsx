@@ -383,49 +383,45 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 px-3 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Rad Star Dashboard</h1>
-             <div className="flex items-center gap-4">
-                <div className="text-sm font-medium text-muted-foreground hidden sm:block">
-                    <Link href="/admin" className="text-primary hover:underline">Home</Link>
-                    <span className="mx-2">/</span>
-                    <span>Dashboard</span>
-                </div>
-                <Button asChild className="hidden md:flex">
-                    <Link href="/admin/products/new">
-                        <PlusCircle />
-                        <span>Add Product</span>
-                    </Link>
-                </Button>
-            </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Rad Star Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <div className="text-sm font-medium text-muted-foreground hidden sm:block">
+            <Link href="/admin" className="text-primary hover:underline">Home</Link>
+            <span className="mx-2">/</span>
+            <span>Dashboard</span>
+          </div>
+          <Button asChild className="hidden md:flex">
+            <Link href="/admin/products/new">
+              <PlusCircle />
+              <span>Add Product</span>
+            </Link>
+          </Button>
         </div>
-
-        <Dialog open={!!activeModal} onOpenChange={(isOpen) => !isOpen && setActiveModal(null)}>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:gap-4">
-                <div onClick={() => setActiveModal('sales')} className="p-2 sm:p-0">
-                    <KpiCard type="sales" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Sales" value={<><span className="font-currency">₹</span>{formatPrice(totalRevenue)}</>} icon={IndianRupee} change="+15.2%" changeType="increase" />
-                </div>
-                <div onClick={() => setActiveModal('orders')} className="p-2 sm:p-0">
-                    <KpiCard type="orders" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Orders" value={totalOrders.toLocaleString()} icon={ShoppingCart} change="+18.7%" changeType="increase" />
-                </div>
-                <div onClick={() => setActiveModal('customers')} className="p-2 sm:p-0">
-                    <KpiCard type="customers" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Customers" value={totalCustomers} icon={Users} change="+8.0%" changeType="increase" />
-                </div>
-                <div onClick={() => setActiveModal('products')} className="p-2 sm:p-0">
-                    <KpiCard type="products" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Products" value={totalProducts} icon={Package} />
-                </div>
-            </div>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:gap-4">
-              <div onClick={() => setActiveModal('income')} className="p-2 sm:p-0">
-                <KpiCard type="income" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Income" value={<><span className="font-currency">₹</span>{formatPrice(totalIncome)}</>} icon={TrendingUp} change="+20.1%" changeType="increase" />
-              </div>
-              <div onClick={() => setActiveModal('visitors')} className="p-2 sm:p-0">
-                <KpiCard type="visitors" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Visitors" value={totalVisitors.toLocaleString()} icon={Users} change="+12.4%" changeType="increase" />
-              </div>
-            </div>
-            <KpiModals activeModal={activeModal} />
-        </Dialog>
-
+      </div>
+      <Dialog open={!!activeModal} onOpenChange={(isOpen) => !isOpen && setActiveModal(null)}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:grid-cols-2 xl:grid-cols-4 gap-1 sm:gap-4">
+          <div onClick={() => setActiveModal('sales')} className="p-2 sm:p-0">
+            <KpiCard type="sales" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Sales" value={<><span className="font-currency">₹</span>{formatPrice(totalRevenue)}</>} icon={IndianRupee} change="+15.2%" changeType="increase" />
+          </div>
+          <div onClick={() => setActiveModal('orders')} className="p-2 sm:p-0">
+            <KpiCard type="orders" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Orders" value={totalOrders.toLocaleString()} icon={ShoppingCart} change="+18.7%" changeType="increase" />
+          </div>
+          <div onClick={() => setActiveModal('customers')} className="p-2 sm:p-0">
+            <KpiCard type="customers" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Customers" value={totalCustomers} icon={Users} change="+8.0%" changeType="increase" />
+          </div>
+          <div onClick={() => setActiveModal('products')} className="p-2 sm:p-0">
+            <KpiCard type="products" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Products" value={totalProducts} icon={Package} />
+          </div>
+          <div onClick={() => setActiveModal('income')} className="p-2 sm:p-0">
+            <KpiCard type="income" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Income" value={<><span className="font-currency">₹</span>{formatPrice(totalIncome)}</>} icon={TrendingUp} change="+20.1%" changeType="increase" />
+          </div>
+          <div onClick={() => setActiveModal('visitors')} className="p-2 sm:p-0">
+            <KpiCard type="visitors" className="h-[70px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Visitors" value={totalVisitors.toLocaleString()} icon={Users} change="+12.4%" changeType="increase" />
+          </div>
+        </div>
+        <KpiModals activeModal={activeModal} />
+      </Dialog>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <Card className="lg:col-span-3">
             <CardHeader>
@@ -930,3 +926,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

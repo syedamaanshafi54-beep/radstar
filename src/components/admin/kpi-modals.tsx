@@ -788,3 +788,5 @@ const renderModalContent = (type: ModalType | null) => {
 export function KpiModals({ activeModal }: { activeModal: ModalType | null }) {
     return renderModalContent(activeModal);
 }
+
+    

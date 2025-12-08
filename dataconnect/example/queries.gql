@@ -1,0 +1,30 @@
+mutation CreateCategory($name: String!, $description: String) @auth(level: USER) {
+  category_insert(data: {name: $name, description: $description})
+}
+
+query ListProductsByCategory($categoryId: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  products(where: {categoryId: {eq: $categoryId}}) {
+    id
+    name
+    description
+    price
+    imageUrl
+  }
+}
+
+mutation AddProductToCart($userId: UUID!, $productId: UUID!, $quantity: Int!) @auth(level: USER) {
+  shoppingCartItem_insert(data: {userId: $userId, productId: $productId, quantity: $quantity})
+}
+
+query GetShoppingCart(@auth(level: USER)
+  shoppingCartItems(where: {userId: {eq_expr: "auth.uid"}}) {
+    product {
+      id
+      name
+      description
+      price
+      imageUrl
+    }
+    quantity
+  }
+}
