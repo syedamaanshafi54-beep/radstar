@@ -216,7 +216,7 @@ export default function CheckoutPage() {
       } else {
         const orderNumber = await placeOrder(shippingInfo, 'pending_payment');
         const payeeName = "Rad Star Trading";
-        const upiIdValue = "6300912295@ybl";
+        const upiIdValue = "radstartrading@okaxis";
         setUpiId(upiIdValue);
         
         const params = new URLSearchParams({
