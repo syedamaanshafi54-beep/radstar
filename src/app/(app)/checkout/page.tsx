@@ -34,8 +34,15 @@ import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { formatPrice } from "@/lib/utils";
 import type { UserProfile } from "@/lib/types";
 import { AnimatedCheck } from "@/components/ui/animated-check";
-import { Loader2 } from "lucide-react";
-import { GoogleIcon, WhatsAppIcon } from "@/components/icons/social-icons";
+import { Loader2, Copy } from "lucide-react";
+import QRCode from "react-qr-code";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 const formSchema = z.object({
@@ -60,6 +67,9 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [upiUrl, setUpiUrl] = useState("");
+  const [upiId, setUpiId] = useState("");
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -202,16 +212,15 @@ export default function CheckoutPage() {
         await placeOrder(shippingInfo, 'placed');
         setOrderPlaced(true);
         clearCart();
-        setTimeout(() => {
-          router.push(`/account`);
-        }, 2500);
+        // No redirect for COD, the success message shows inline
       } else {
         const orderNumber = await placeOrder(shippingInfo, 'pending_payment');
         const payeeName = "Rad Star Trading";
-        const upiId = "9032561974@ybl"; // Your UPI ID
+        const upiIdValue = "6300912295@ybl";
+        setUpiId(upiIdValue);
         
         const params = new URLSearchParams({
-          pa: upiId,
+          pa: upiIdValue,
           pn: payeeName,
           tr: orderNumber!,
           am: cartTotal.toFixed(2),
@@ -219,27 +228,25 @@ export default function CheckoutPage() {
           tn: `Payment for Order #${orderNumber}`,
         });
 
-        const upiUrl = `upi://pay?${params.toString()}`;
-        
-        // Redirect to UPI app
-        window.location.href = upiUrl;
-
-        // Since we can't get a callback, we assume the user will complete the payment
-        // and show a confirmation message.
-        setOrderPlaced(true);
-        clearCart();
-        setTimeout(() => {
-          router.push(`/account`);
-        }, 4000); // Longer delay to allow for app switching
+        const upiUrlValue = `upi://pay?${params.toString()}`;
+        setUpiUrl(upiUrlValue);
+        setShowQrModal(true); // Show QR modal instead of redirecting
       }
     } catch (error) {
       // Error is already toasted in placeOrder
     } finally {
-        // For UPI, processing might "end" on the client-side as we redirect
-        if (shippingInfo.paymentMethod === 'cod') {
-          setIsProcessing(false);
-        }
+        setIsProcessing(false);
     }
+  }
+  
+  const handlePaymentComplete = () => {
+    setShowQrModal(false);
+    setOrderPlaced(true);
+    clearCart();
+    toast({
+        title: "Awaiting Payment Confirmation",
+        description: "Your order is placed. We'll confirm it once payment is received."
+    });
   }
 
   if (cartItems.length === 0 && !orderPlaced) {
@@ -265,18 +272,18 @@ export default function CheckoutPage() {
                 <CardTitle>Shipping Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>ZIP Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>ZIP Code</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="+91" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="+91" {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
               </CardContent>
             </Card>
 
@@ -296,6 +303,7 @@ export default function CheckoutPage() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           className="grid grid-cols-1 gap-4"
+                          disabled={orderPlaced}
                         >
                           <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:border-primary">
                             <RadioGroupItem value="cod" id="cod" />
@@ -339,67 +347,96 @@ export default function CheckoutPage() {
                     <CardTitle>Order Summary</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                    {cartItems.map(({ product, quantity, variant }) => {
-                       const price = variant?.price ?? product.defaultPrice;
-                       const salePrice = variant?.salePrice ?? product.salePrice;
-                       const displayPrice = salePrice ?? price;
-
-                      return (
-                      <div key={getCartItemId(product.id, variant?.id)} className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="relative h-16 w-16 rounded-md overflow-hidden border">
-                            <Image
-                              src={product.image.url}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                            />
-                            <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{quantity}</span>
-                          </div>
-                          <div>
-                            <p className="font-semibold">{product.name}</p>
-                            {variant && <p className="text-sm text-muted-foreground">{variant.name}</p>}
-                            <p className="font-semibold text-muted-foreground"><span className="font-currency">₹</span>{formatPrice(displayPrice)} &times; {quantity}</p>
-                          </div>
-                        </div>
-                        <p className="font-semibold"><span className="font-currency">₹</span>{formatPrice(displayPrice * quantity)}</p>
-                      </div>
-                    )})}
-                    <Separator />
-                     <div className="flex justify-between text-muted-foreground">
-                          <span>Subtotal</span>
-                          <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
-                      </div>
-                       <div className="flex justify-between text-muted-foreground">
-                          <span>Shipping</span>
-                          <span>Free</span>
-                      </div>
-                      <Separator />
-                       <div className="flex justify-between text-lg font-bold">
-                          <span>Total</span>
-                          <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardContent>
-                     {orderPlaced ? (
+                    {orderPlaced ? (
                         <div className="flex flex-col items-center justify-center text-center py-4">
                             <AnimatedCheck />
                             <h2 className="text-xl font-semibold mt-4">Order Placed Successfully!</h2>
-                            <p className="text-muted-foreground">You will be redirected shortly.</p>
+                            <p className="text-muted-foreground mb-4">You can view your order details in your account.</p>
+                            <Button asChild><a href="/account">Go to My Account</a></Button>
                         </div>
-                     ) : (
-                        <Button type="submit" size="lg" className="w-full mt-4 text-lg" disabled={isProcessing}>
-                            {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : 'Place Order'}
-                        </Button>
-                     )}
+                    ) : (
+                    <div className="space-y-4">
+                      {cartItems.map(({ product, quantity, variant }) => {
+                        const price = variant?.price ?? product.defaultPrice;
+                        const salePrice = variant?.salePrice ?? product.salePrice;
+                        const displayPrice = salePrice ?? price;
+
+                        return (
+                        <div key={getCartItemId(product.id, variant?.id)} className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="relative h-16 w-16 rounded-md overflow-hidden border">
+                              <Image
+                                src={product.image.url}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                                sizes="64px"
+                              />
+                              <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{quantity}</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold">{product.name}</p>
+                              {variant && <p className="text-sm text-muted-foreground">{variant.name}</p>}
+                              <p className="font-semibold text-muted-foreground"><span className="font-currency">₹</span>{formatPrice(displayPrice)} &times; {quantity}</p>
+                            </div>
+                          </div>
+                          <p className="font-semibold"><span className="font-currency">₹</span>{formatPrice(displayPrice * quantity)}</p>
+                        </div>
+                      )})}
+                      <Separator />
+                      <div className="flex justify-between text-muted-foreground">
+                            <span>Subtotal</span>
+                            <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
+                            <span>Shipping</span>
+                            <span>Free</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between text-lg font-bold">
+                            <span>Total</span>
+                            <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                        </div>
+                    </div>
+                    )}
                   </CardContent>
+                  {!orderPlaced && (
+                  <CardContent>
+                    <Button type="submit" size="lg" className="w-full mt-4 text-lg" disabled={isProcessing}>
+                        {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : 'Place Order'}
+                    </Button>
+                  </CardContent>
+                  )}
               </Card>
           </div>
         </form>
       </Form>
+      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle className="text-center text-2xl">Scan to Pay</DialogTitle>
+                <DialogDescription className="text-center">
+                    Use any UPI app to scan the QR code below.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="p-4 bg-white rounded-lg flex flex-col items-center justify-center">
+                {upiUrl && <QRCode value={upiUrl} size={256} />}
+            </div>
+            <div className="text-center space-y-2">
+                <p className="font-semibold">Amount: <span className="font-currency">₹</span>{formatPrice(cartTotal)}</p>
+                 <div className="flex items-center justify-center gap-2">
+                    <p className="text-muted-foreground">UPI ID: {upiId}</p>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                        navigator.clipboard.writeText(upiId);
+                        toast({ title: "UPI ID Copied!" });
+                    }}>
+                        <Copy className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+             <Button onClick={handlePaymentComplete} className="w-full">I have completed the payment</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -407,5 +444,3 @@ export default function CheckoutPage() {
 function getCartItemId(productId: string, variantId?: string) {
     return variantId ? `${productId}-${variantId}` : productId;
 }
-
-    
