@@ -35,6 +35,7 @@ import { formatPrice } from "@/lib/utils";
 import type { UserProfile } from "@/lib/types";
 import { AnimatedCheck } from "@/components/ui/animated-check";
 import { Loader2 } from "lucide-react";
+import { GoogleIcon, WhatsAppIcon } from "@/components/icons/social-icons";
 
 
 const formSchema = z.object({
@@ -46,7 +47,7 @@ const formSchema = z.object({
   state: z.string().min(1, "State is required"),
   zip: z.string().min(5, "ZIP code is required"),
   phone: z.string().min(10, "Phone number is required"),
-  paymentMethod: z.enum(["cod"], {
+  paymentMethod: z.enum(["cod", "phonepe", "googlepay"], {
     required_error: "You need to select a payment method.",
   }),
 });
@@ -120,9 +121,7 @@ export default function CheckoutPage() {
   }, [user, userProfile, form]);
 
 
-  const placeOrder = async (shippingInfo: ShippingInfo) => {
-    setIsProcessing(true);
-
+  const placeOrder = async (shippingInfo: ShippingInfo, status: 'placed' | 'pending_payment' = 'placed') => {
     if (!user) {
         toast({
             variant: "destructive",
@@ -170,19 +169,15 @@ export default function CheckoutPage() {
       subtotal: cartTotal,
       shipping: 0, 
       totalAmount: cartTotal,
-      paymentMethod: 'COD',
-      status: 'placed',
+      paymentMethod: shippingInfo.paymentMethod,
+      status: status,
       createdAt: serverTimestamp(),
     };
 
     try {
       const ordersCollection = collection(firestore, `users/${user.uid}/orders`);
       await addDoc(ordersCollection, orderPayload);
-      setOrderPlaced(true);
-      clearCart();
-      setTimeout(() => {
-        router.push(`/account`);
-      }, 2500); // Wait for animation to play
+      return orderNumber; // Return order number for UPI link
     } catch (error) {
       console.error("Order placement error:", error);
       const contextualError = new FirestorePermissionError({
@@ -196,12 +191,55 @@ export default function CheckoutPage() {
           title: "Could not place order",
           description: "Please try again or contact support.",
       });
-      setIsProcessing(false);
+      throw error; // Re-throw to stop processing
     }
   }
 
-  const handleFormSubmit = (shippingInfo: ShippingInfo) => {
-    placeOrder(shippingInfo);
+  const handleFormSubmit = async (shippingInfo: ShippingInfo) => {
+    setIsProcessing(true);
+    try {
+      if (shippingInfo.paymentMethod === 'cod') {
+        await placeOrder(shippingInfo, 'placed');
+        setOrderPlaced(true);
+        clearCart();
+        setTimeout(() => {
+          router.push(`/account`);
+        }, 2500);
+      } else {
+        const orderNumber = await placeOrder(shippingInfo, 'pending_payment');
+        const payeeName = "Rad Star Trading";
+        const upiId = "9032561974@ybl"; // Your UPI ID
+        
+        const params = new URLSearchParams({
+          pa: upiId,
+          pn: payeeName,
+          tr: orderNumber!,
+          am: cartTotal.toFixed(2),
+          cu: 'INR',
+          tn: `Payment for Order #${orderNumber}`,
+        });
+
+        const upiUrl = `upi://pay?${params.toString()}`;
+        
+        // Redirect to UPI app
+        window.location.href = upiUrl;
+
+        // Since we can't get a callback, we assume the user will complete the payment
+        // and show a confirmation message.
+        setOrderPlaced(true);
+        clearCart();
+        setTimeout(() => {
+          router.push(`/account`);
+        }, 4000); // Longer delay to allow for app switching
+      }
+    } catch (error) {
+      // Error is already toasted in placeOrder
+    } finally {
+        // For UPI, processing might "end" on the client-side as we redirect
+        if (shippingInfo.paymentMethod === 'cod') {
+          setIsProcessing(false);
+        }
+    }
   }
 
   if (cartItems.length === 0 && !orderPlaced) {
@@ -257,13 +295,33 @@ export default function CheckoutPage() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-1"
+                          className="grid grid-cols-1 gap-4"
                         >
                           <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:border-primary">
                             <RadioGroupItem value="cod" id="cod" />
                              <div>
                                 <span className="font-semibold">Cash on Delivery</span>
-                                <p className="text-sm text-muted-foreground">Pay upon arrival (default for now)</p>
+                                <p className="text-sm text-muted-foreground">Pay with cash upon delivery.</p>
+                            </div>
+                          </Label>
+                          <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:border-primary">
+                            <RadioGroupItem value="phonepe" id="phonepe" />
+                             <div className="flex items-center gap-2">
+                                <Image src="/phonepe-logo.svg" alt="PhonePe" width={24} height={24} />
+                                <div>
+                                    <span className="font-semibold">PhonePe</span>
+                                    <p className="text-sm text-muted-foreground">Pay with your PhonePe UPI.</p>
+                                </div>
+                            </div>
+                          </Label>
+                           <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:border-primary">
+                            <RadioGroupItem value="googlepay" id="googlepay" />
+                            <div className="flex items-center gap-2">
+                               <Image src="/gpay-logo.svg" alt="Google Pay" width={24} height={24} />
+                                <div>
+                                    <span className="font-semibold">Google Pay / UPI</span>
+                                    <p className="text-sm text-muted-foreground">Pay with any UPI app.</p>
+                                </div>
                             </div>
                           </Label>
                         </RadioGroup>
@@ -330,7 +388,7 @@ export default function CheckoutPage() {
                         <div className="flex flex-col items-center justify-center text-center py-4">
                             <AnimatedCheck />
                             <h2 className="text-xl font-semibold mt-4">Order Placed Successfully!</h2>
-                            <p className="text-muted-foreground">Redirecting you to your account...</p>
+                            <p className="text-muted-foreground">You will be redirected shortly.</p>
                         </div>
                      ) : (
                         <Button type="submit" size="lg" className="w-full mt-4 text-lg" disabled={isProcessing}>

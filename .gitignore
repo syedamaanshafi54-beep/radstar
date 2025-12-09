@@ -3,8 +3,6 @@
 data/RAD STAR NEW CATALOG.pdf
 *.pdf
 
-# Ignore the entire data directory as a fallback
-data/
 
 # Default Next.js ignores
 /node_modules
