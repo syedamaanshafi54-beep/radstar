@@ -21,4 +21,16 @@ const nextConfig: NextConfig = {
   },
 };
 
+module.exports = {
+  async rewrites() {
+    return [
+      {
+        source: "/policies",
+        destination: "/policies.html",
+      },
+    ];
+  },
+};
+
+
 export default nextConfig;
