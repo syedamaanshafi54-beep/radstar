@@ -52,16 +52,16 @@ const staticHeroSlides = [
     link: "#King's-Asli-Honey",
     slug: "kings-asli-honey"
   },
-  {
-    id: 'hero-shilajit',
-    imageUrl: '/images/aslitalbina/sjr.png',
-    imageHint: 'shilajit product lifestyle',
-    headline: 'Kashmiri Gold Shilajit',
-    tagline: 'The Peak of Natural Purity',
-    cta: 'Learn About Shilajit',
-    link: '#Shilajit',
-    slug: 'shilajit'
-  },
+  // {
+  //   id: 'hero-shilajit',
+  //   imageUrl: '/images/aslitalbina/sjr.png',
+  //   imageHint: 'shilajit product lifestyle',
+  //   headline: 'Kashmiri Gold Shilajit',
+  //   tagline: 'The Peak of Natural Purity',
+  //   cta: 'Learn About Shilajit',
+  //   link: '#Shilajit',
+  //   slug: 'shilajit'
+  // },
 ];
 
 const hadithPlacards = [
