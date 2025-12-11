@@ -43,6 +43,10 @@ const faqs = [
   {
     question: "Where can I buy Asli Talbina?",
     answer: "You can purchase our products from over 150 outlets across Hyderabad & Secunderabad, through our official sales partners, via direct orders on WhatsApp and Instagram, and soon on major e-commerce platforms. For direct inquiries, call +91 90325 61974."
+  },
+  {
+    question: "What are your store policies?",
+    answer: 'You can find detailed information about our Return, Refund, Shipping, and Privacy Policies on our policies page. <a href="/policies.html" target="_blank" rel="noopener noreferrer" class="text-primary underline">Click here to view our store policies.</a>',
   }
 ];
 
@@ -65,7 +69,7 @@ export default function FAQPage() {
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className="text-lg font-medium text-muted-foreground">
-                {faq.answer}
+                <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
               </AccordionContent>
             </AccordionItem>
           ))}
