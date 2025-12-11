@@ -283,7 +283,35 @@ export default function CheckoutPage() {
                   <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>ZIP Code</FormLabel><FormControl><Input {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="+91" {...field} disabled={orderPlaced} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-background">
+                          <span className="px-3 text-muted-foreground">+91</span>
+                          <Input
+                            {...field}
+                            type="tel"
+                            disabled={orderPlaced}
+                            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            placeholder="98765 43210"
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Allow only numbers and ensure it stays after +91
+                                const numericValue = value.replace(/[^0-9]/g, '');
+                                field.onChange(`+91${numericValue}`);
+                            }}
+                            value={field.value.startsWith('+91') ? field.value.substring(3) : field.value}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 
