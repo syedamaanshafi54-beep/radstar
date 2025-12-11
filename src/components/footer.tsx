@@ -41,8 +41,6 @@ export function Footer() {
               <h3 className="font-semibold mb-4">Shop</h3>
               <ul className="space-y-2">
                 <li><Link href="/products" className="text-muted-foreground hover:text-primary transition-colors">All Products</Link></li>
-                <li><Link href="/products/talbina-regular" className="text-muted-foreground hover:text-primary transition-colors">Regular</Link></li>
-                <li><Link href="/products/talbina-dry-fruits" className="text-muted-foreground hover:text-primary transition-colors">Dry Fruits</Link></li>
               </ul>
             </div>
             <div>
