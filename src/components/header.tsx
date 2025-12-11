@@ -365,7 +365,7 @@ export function Header() {
                     <div className="p-2">
                         <Link href="/products" className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">All Products</Link>
                         {productCategories.map((category) => (
-                        <Link key={category.href} href={category.href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
+                        <Link key={category.href} href={`/${category.href}`} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
                             {category.label}
                         </Link>
                         ))}
