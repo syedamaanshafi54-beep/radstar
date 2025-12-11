@@ -3,27 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Policies - Asli Talbina</title>
+    <title>Store Policies - Rad Star Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1, h2 { color: #5D4037; }
-        .container { background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
-        .home-button { display: inline-block; margin-bottom: 20px; padding: 10px 20px; background-color: #517e3f; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+        }
+        .container {
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem;
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800">
+
     <div class="container">
-        <a href="/" class="home-button">← Back to Home</a>
-        <h1>Store Policies</h1>
-        
-        <h2>Return and Refund Policy</h2>
-        <p>No Return, No Refund, No Cancellation. Please review your order carefully before confirming your purchase. We do not accept returns or offer refunds once an order has been placed.</p>
+        <a href="/" style="background-color: #51B353; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-bottom: 2rem; font-weight: 600;">← Back to Home</a>
+        <h1 class="text-4xl font-bold mb-8 text-center text-[#1B3518]">Store Policies</h1>
 
-        <h2>Privacy Policy</h2>
-        <p>Rad Star Trading is committed to protecting your privacy. We only collect essential information to process your order and will not share your data with third parties.</p>
+        <div class="space-y-8">
+            <div id="shipping">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Shipping Policy</h2>
+                <p>We are committed to delivering your order accurately, in good condition, and always on time. Please note our shipping policy as follows:</p>
+                <ul class="list-disc list-inside mt-4 space-y-2">
+                    <li>We currently ship only within Hyderabad & Secunderabad for most orders. For bulk orders or distribution inquiries outside this region, please contact us directly.</li>
+                    <li>We make our best efforts to ship each item in your order within 2-3 working days of the order. However, in some cases, we may take longer, up to 5 working days, to ship the order.</li>
+                    <li>We ship on all week days (Monday to Saturday), excluding public holidays.</li>
+                    <li>To ensure that your order reaches you in the fastest time and in good condition, we only ship through reputed courier agencies.</li>
+                    <li>While we shall endeavor to ship all items in your order together, this may not always be possible due to product characteristics or availability.</li>
+                </ul>
+            </div>
 
-        <h2>Shipping Policy</h2>
-        <p>We deliver our products exclusively within Hyderabad & Secunderabad. We do not offer shipping outside of this service area.</p>
+            <div id="returns">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Return & Refund Policy</h2>
+                <p>Our products are food items, and as such, we adhere to a strict policy regarding returns and refunds to ensure the safety and quality of our products for all customers.</p>
+                <ul class="list-disc list-inside mt-4 space-y-2">
+                    <li><strong>No Returns:</strong> Due to the perishable nature of our products, we do not accept returns. All sales are final. We urge you to be certain of your purchase before placing an order.</li>
+                    <li><strong>Damaged or Incorrect Products:</strong> In the unlikely event that you receive a product that is damaged during transit or incorrect, please contact us within 24 hours of delivery at <a href="mailto:radstartrading@gmail.com" class="text-green-700 hover:underline">radstartrading@gmail.com</a> with your order number and a clear photo of the product. We will review the case and, if approved, we may offer a replacement or a refund at our sole discretion.</li>
+                    <li><strong>No Refunds:</strong> We do not offer refunds once an order is placed and confirmed. If a refund is processed for a damaged/incorrect product case, it will be credited to your original method of payment within 7-10 business days.</li>
+                </ul>
+            </div>
+
+            <div id="privacy">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Privacy Policy</h2>
+                <p>We value the trust you place in us. That's why we insist upon the highest standards for secure transactions and customer information privacy. Please read the following statement to learn about our information gathering and dissemination practices.</p>
+                <ul class="list-disc list-inside mt-4 space-y-2">
+                    <li><strong>Information We Collect:</strong> We collect personal information (such as name, email address, delivery address, phone number) from you when you set up an account or place an order with us. We use this information to process your orders and to communicate with you about them.</li>
+                    <li><strong>Use of Information:</strong> We use your personal information to provide the services you request, to resolve disputes, troubleshoot problems, and inform you about offers, products, and updates. We do not share your personal information with third parties for their marketing purposes without your explicit consent.</li>
+                    <li><strong>Security:</strong> Our website has stringent security measures in place to protect the loss, misuse, and alteration of the information under our control. All payment processing is handled by secure, PCI-compliant payment gateways.</li>
+                </ul>
+            </div>
+            
+             <div id="cancellation">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Cancellation Policy</h2>
+                <p>You can cancel your order online before the product has been shipped. Your entire order amount will be refunded. Unfortunately, an order cannot be cancelled once the item has been shipped out to you.</p>
+            </div>
+        </div>
     </div>
 </body>
 </html>
