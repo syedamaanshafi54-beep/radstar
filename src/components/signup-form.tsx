@@ -27,7 +27,7 @@ import {
   updateUserProfile,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/social-icons';
 import { handleGoogleSignIn, getFirstName } from '@/firebase/user-actions';
 import { useRouter } from 'next/navigation';
@@ -49,6 +49,7 @@ interface SignupFormProps {
 
 export function SignupForm({ onSuccess }: SignupFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -250,12 +251,26 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="••••••••"
-                          {...field}
-                          type="password"
-                          disabled={isSubmitting}
-                        />
+                        <div className="relative">
+                          <Input
+                            placeholder="••••••••"
+                            {...field}
+                            type={showPassword ? 'text' : 'password'}
+                            disabled={isSubmitting}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

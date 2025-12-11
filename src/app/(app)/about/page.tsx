@@ -49,7 +49,7 @@ const aboutSlides = [
   PlaceHolderImages.find((p) => p.id === "about-1"),
   PlaceHolderImages.find((p) => p.id === "about-2"),
   PlaceHolderImages.find((p) => p.id === "about-3"),
-  PlaceHolderImages.find((p) => p.id === "about-4"),
+  // PlaceHolderImages.find((p) => p.id === "about-4"),
 ].filter(Boolean);
 
 const growthData = [

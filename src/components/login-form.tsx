@@ -28,7 +28,7 @@ import {
 } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/social-icons';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -64,6 +64,7 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -263,12 +264,26 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       </div>
 
                       <FormControl>
-                        <Input
-                          placeholder="••••••••"
-                          {...field}
-                          type="password"
-                          disabled={isSubmitting}
-                        />
+                        <div className="relative">
+                          <Input
+                            placeholder="••••••••"
+                            {...field}
+                            type={showPassword ? 'text' : 'password'}
+                            disabled={isSubmitting}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </FormControl>
 
                       <FormMessage />
@@ -368,5 +383,3 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     </div>
   );
 }
-
-    

@@ -358,7 +358,7 @@ export function Header() {
                     </Link>
                     <div
                     className={cn(
-                        "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
+                        "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-[#51B353] text-white shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
                         productsOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
                     )}
                     >
@@ -380,7 +380,7 @@ export function Header() {
                     </Link>
                     <div
                     className={cn(
-                        "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
+                        "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-[#51B353] text-white shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
                         storyOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
                     )}
                     >
