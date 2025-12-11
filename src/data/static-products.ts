@@ -274,27 +274,5 @@ export const staticProducts: Product[] = [
         hint: "honey jar"
     },
     ingredients: ["100% Raw Wild Honey"],
-  },
-  {
-    id: "10",
-    slug: 'kashmiri-gold-shilajit',
-    name: "Kashmiri Gold Shilajit",
-    tagline: 'The Peak of Natural Rejuvenation',
-    description: "Harvested from the high-altitude rocks of the Himalayas, our Kashmiri Gold Shilajit is a potent resin rich in fulvic acid and over 84 minerals. A legendary rejuvenator for stamina, vitality, and overall wellness.",
-    benefits: [
-        "Enhances testosterone and physical performance",
-        "Boosts cognitive function and memory",
-        "Supports cellular energy production",
-        "Powerful antioxidant and anti-inflammatory",
-        "Promotes graceful aging"
-    ],
-    defaultPrice: 1499,
-    category: "Shilajit",
-    image: {
-        id: 'product-shilajit',
-        url: '/images/aslitalbina/shilajeet/sj.jpg',
-        hint: "shilajit resin"
-    },
-    ingredients: ["100% Pure Himalayan Shilajit Resin"]
   }
 ];

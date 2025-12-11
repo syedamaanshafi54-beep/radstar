@@ -59,7 +59,6 @@ const productCategories = [
   { href: '/#Asli-Talbina', label: 'Asli Talbina' },
   { href: '/#Toast', label: 'Toast' },
   { href: "/#King's-Asli-Honey", label: "King's Asli Honey" },
-  { href: '/#Shilajit', label: 'Shilajit' },
 ];
 
 export function Header() {
@@ -163,7 +162,8 @@ export function Header() {
       <div className="container mx-auto px-0 md:px-4">
         <header className={innerHeaderClasses}>
           <div className="flex md:hidden w-full items-center justify-between gap-2">
-            <div className={cn(!hasMounted && 'invisible')}>
+             {hasMounted && isMobile ? (
+              <>
               <Sheet
                 open={isMobileMenuOpen}
                 onOpenChange={setIsMobileMenuOpen}
@@ -251,16 +251,15 @@ export function Header() {
                   </div>
                 </SheetContent>
               </Sheet>
-            </div>
-            <Link href="/" className="flex items-center gap-1 min-w-0">
-              <div className="relative h-10 w-10">
-                <Image src="/logos/2.png" alt="Rad Star Trading Logo" fill className="object-contain" />
-              </div>
-              <span className="font-headline text-lg font-bold text-primary-nav-foreground truncate">
-                Rad Star Trading
-              </span>
-            </Link>
-            <div className="flex items-center gap-1">
+              <Link href="/" className="flex items-center gap-1 min-w-0">
+                <div className="relative h-10 w-10">
+                  <Image src="/logos/2.png" alt="Rad Star Trading Logo" fill className="object-contain" />
+                </div>
+                <span className="font-headline text-lg font-bold text-primary-nav-foreground truncate">
+                  Rad Star Trading
+                </span>
+              </Link>
+              <div className="flex items-center gap-1">
               <Link href="/cart">
                 <Button variant="ghost" className="w-10 h-10 p-0 text-primary-nav-foreground hover:bg-black/10 rounded-full">
                   <CartIcon />
@@ -309,150 +308,164 @@ export function Header() {
                 </Dialog>
               ))}
             </div>
-          </div>
-
-          <div
-            className={cn(
-              'hidden md:flex w-full items-center justify-between',
-              !hasMounted && 'invisible'
+            </>
+            ) : (
+                 <div className="w-full flex items-center justify-between">
+                    <div className="h-10 w-10"></div>
+                     <Link href="/" className="flex items-center gap-1 min-w-0">
+                        <div className="relative h-10 w-10">
+                        <Image src="/logos/2.png" alt="Rad Star Trading Logo" fill className="object-contain" />
+                        </div>
+                        <span className="font-headline text-lg font-bold text-primary-nav-foreground truncate">
+                        Rad Star Trading
+                        </span>
+                    </Link>
+                    <div className="h-10 w-20"></div>
+                 </div>
             )}
-          >
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="flex items-center gap-2 md:gap-3"
-              >
-                <div className="relative h-16 w-16">
-                  <Image
-                    src="/logos/2.png"
-                    alt="Rad Star Trading Logo"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <span className="font-headline text-3xl font-bold text-primary-nav-foreground">
-                  Rad Star Trading
-                </span>
-              </Link>
-            </div>
-
-            <nav className="flex items-center justify-center gap-2">
-              <div className="relative" onMouseEnter={() => handleMouseEnter('products')} onMouseLeave={() => handleMouseLeave('products')}>
-                <Link href="/products" className={navLinkClasses}>
-                  Products
-                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", productsOpen && "rotate-180")} />
-                </Link>
-                <div
-                  className={cn(
-                    "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
-                    productsOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-                  )}
-                >
-                  <div className="p-2">
-                    <Link href="/products" className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">All Products</Link>
-                    {productCategories.map((category) => (
-                      <Link key={category.href} href={category.href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
-                        {category.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative" onMouseEnter={() => handleMouseEnter('story')} onMouseLeave={() => handleMouseLeave('story')}>
-                <Link href="/about" className={navLinkClasses}>
-                  Our Story
-                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", storyOpen && "rotate-180")} />
-                </Link>
-                <div
-                  className={cn(
-                    "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
-                    storyOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-                  )}
-                >
-                   <div className="p-2">
-                    {storyLinks.map(({ href, label }) => (
-                       <Link key={href} href={href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">{label}</Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <Link href="/contact" className={navLinkClasses}>Contact</Link>
-              <Link href="/faq" className={navLinkClasses}>FAQ</Link>
-            </nav>
-            <div className="flex items-center gap-2">
-              <Link href="/cart">
-                <Button
-                  variant="ghost"
-                  className="w-12 h-12 p-0 rounded-full text-primary-nav-foreground hover:bg-black/10"
-                >
-                  <CartIcon />
-                </Button>
-              </Link>
-              {!isUserLoading &&
-                (user ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-12 h-12 p-0 rounded-full text-primary-nav-foreground hover:bg-black/10"
-                      >
-                        <User className="h-6 w-6" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href="/account">My Account</Link>
-                      </DropdownMenuItem>
-                      {isAdmin && (
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin">
-                            <Shield className="mr-2 h-4 w-4" />
-                            Admin Dashboard
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleSignOut}
-                        className="text-destructive"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Dialog
-                    open={isLoginOpen}
-                    onOpenChange={setIsLoginOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-12 h-12 p-0 rounded-full text-primary-nav-foreground hover:bg-black/10"
-                      >
-                        <User className="h-6 w-6" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
-                      <DialogHeader className="p-0 mb-3 text-left">
-                        <DialogTitle>Login</DialogTitle>
-                        <DialogDescription>Log in to your account to continue.</DialogDescription>
-                      </DialogHeader>
-                      <LoginForm
-                        onSuccess={() => setIsLoginOpen(false)}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                ))}
-            </div>
           </div>
+
+          {hasMounted && !isMobile && (
+            <div
+                className={cn(
+                'flex w-full items-center justify-between',
+                )}
+            >
+                <div className="flex items-center gap-3">
+                <Link
+                    href="/"
+                    className="flex items-center gap-2 md:gap-3"
+                >
+                    <div className="relative h-16 w-16">
+                    <Image
+                        src="/logos/2.png"
+                        alt="Rad Star Trading Logo"
+                        fill
+                        className="object-contain"
+                    />
+                    </div>
+                    <span className="font-headline text-3xl font-bold text-primary-nav-foreground">
+                    Rad Star Trading
+                    </span>
+                </Link>
+                </div>
+
+                <nav className="flex items-center justify-center gap-2">
+                <div className="relative" onMouseEnter={() => handleMouseEnter('products')} onMouseLeave={() => handleMouseLeave('products')}>
+                    <Link href="/products" className={navLinkClasses}>
+                    Products
+                    <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", productsOpen && "rotate-180")} />
+                    </Link>
+                    <div
+                    className={cn(
+                        "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
+                        productsOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                    )}
+                    >
+                    <div className="p-2">
+                        <Link href="/products" className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">All Products</Link>
+                        {productCategories.map((category) => (
+                        <Link key={category.href} href={category.href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
+                            {category.label}
+                        </Link>
+                        ))}
+                    </div>
+                    </div>
+                </div>
+
+                <div className="relative" onMouseEnter={() => handleMouseEnter('story')} onMouseLeave={() => handleMouseLeave('story')}>
+                    <Link href="/about" className={navLinkClasses}>
+                    Our Story
+                    <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", storyOpen && "rotate-180")} />
+                    </Link>
+                    <div
+                    className={cn(
+                        "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 origin-top rounded-2xl bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out",
+                        storyOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                    )}
+                    >
+                    <div className="p-2">
+                        {storyLinks.map(({ href, label }) => (
+                        <Link key={href} href={href} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">{label}</Link>
+                        ))}
+                    </div>
+                    </div>
+                </div>
+                
+                <Link href="/contact" className={navLinkClasses}>Contact</Link>
+                <Link href="/faq" className={navLinkClasses}>FAQ</Link>
+                </nav>
+                <div className="flex items-center gap-2">
+                <Link href="/cart">
+                    <Button
+                    variant="ghost"
+                    className="w-12 h-12 p-0 rounded-full text-primary-nav-foreground hover:bg-black/10"
+                    >
+                    <CartIcon />
+                    </Button>
+                </Link>
+                {!isUserLoading &&
+                    (user ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className="w-12 h-12 p-0 rounded-full text-primary-nav-foreground hover:bg-black/10"
+                        >
+                            <User className="h-6 w-6" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <Link href="/account">My Account</Link>
+                        </DropdownMenuItem>
+                        {isAdmin && (
+                            <DropdownMenuItem asChild>
+                            <Link href="/admin">
+                                <Shield className="mr-2 h-4 w-4" />
+                                Admin Dashboard
+                            </Link>
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={handleSignOut}
+                            className="text-destructive"
+                        >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sign Out
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    ) : (
+                    <Dialog
+                        open={isLoginOpen}
+                        onOpenChange={setIsLoginOpen}
+                    >
+                        <DialogTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className="w-12 h-12 p-0 rounded-full text-primary-nav-foreground hover:bg-black/10"
+                        >
+                            <User className="h-6 w-6" />
+                        </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md p-4 sm:p-5 rounded-xl">
+                        <DialogHeader className="p-0 mb-3 text-left">
+                            <DialogTitle>Login</DialogTitle>
+                            <DialogDescription>Log in to your account to continue.</DialogDescription>
+                        </DialogHeader>
+                        <LoginForm
+                            onSuccess={() => setIsLoginOpen(false)}
+                        />
+                        </DialogContent>
+                    </Dialog>
+                    ))}
+                </div>
+            </div>
+          )}
         </header>
       </div>
     </div>
   );
 }
-
-    
