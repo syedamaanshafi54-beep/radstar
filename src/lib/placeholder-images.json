@@ -72,12 +72,7 @@
       "imageUrl": "/images/aslitalbina/TDR.jpg",
       "imageHint": "dry fruits"
     },
-    {
-      "id": "product-shilajit",
-      "description": "Product shot of shilajit",
-      "imageUrl": "/images/aslitalbina/shilajeet/sj.jpg",
-      "imageHint": "shilajit"
-    },
+ 
     {
       "id": "about-1",
       "description": "Hero image for the about page.",

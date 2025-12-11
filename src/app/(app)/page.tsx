@@ -302,7 +302,7 @@ export default function Home() {
               className="container mx-auto text-center mb-8 md:mb-10"
             >
                 <motion.h2 variants={fadeInUp} className="font-headline text-4xl md:text-6xl font-bold">Discover Our Collection</motion.h2>
-                <motion.p variants={fadeInUp} className="mt-4 text-lg md:text-xl font-bold text-muted-foreground max-w-2xl mx-auto">From the nourishing tradition of Talbina to the purity of Wild Honey and Shilajit.</motion.p>
+                <motion.p variants={fadeInUp} className="mt-4 text-lg md:text-xl font-bold text-muted-foreground max-w-2xl mx-auto">From the nourishing tradition of Talbina to the purity of Wild Honey.</motion.p>
             </motion.div>
             <div className="container mx-auto space-y-12 md:space-y-16">
               {productsLoading && (
