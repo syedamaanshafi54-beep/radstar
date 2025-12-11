@@ -56,7 +56,6 @@ export function Footer() {
               <ul className="space-y-2">
                 <li><Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors">FAQ</Link></li>
                 <li><a href="/policies.html" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">Store Policies</a></li>
-                <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Shipping & Returns</Link></li>
                 <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Get in Touch</Link></li>
               </ul>
             </div>

@@ -275,7 +275,7 @@ export default function AboutPage() {
               <p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-2xl font-medium text-muted-foreground text-center max-w-4xl mx-auto leading-relaxed">
                 Headquartered in Hyderabad, our flagship offerings, including{" "}
                 <strong>
-                  Asli Talbina, Wild Natural Honey, and Kashmiri Gold Shilajit,
+                  Asli Talbina, Wild Natural Honey, and Talbina Toast,
                 </strong>{" "}
                 are gaining recognition for their uncompromising quality. We are
                 the authorized sole distributor of Asli Talbina for the
