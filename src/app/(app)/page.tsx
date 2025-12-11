@@ -52,7 +52,6 @@ const staticHeroSlides = [
     link: "#King's-Asli-Honey",
     slug: "kings-asli-honey"
   },
-<<<<<<< HEAD
   // {
   //   id: 'hero-shilajit',
   //   imageUrl: '/images/aslitalbina/sjr.png',
@@ -63,9 +62,6 @@ const staticHeroSlides = [
   //   link: '#Shilajit',
   //   slug: 'shilajit'
   // },
-=======
-  
->>>>>>> 8bb5934 (Try fixing this error: `Console Error: A tree hydrated but some attribut)
 ];
 
 const hadithPlacards = [
