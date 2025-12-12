@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProductForm } from '@/components/admin/product-form';
-import { useFirestore } from '@/firebase';
+import { useFirestore, WithId } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -13,7 +13,7 @@ export default function EditProductPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<WithId<Product> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,14 @@ export default function EditProductPage() {
       return;
     }
 
+    if (!firestore) {
+        setError('Firestore not available');
+        setLoading(false);
+        return;
+    }
+
     const fetchProduct = async () => {
+      setLoading(true);
       try {
         const productRef = doc(firestore, 'products', productId);
         const snapshot = await getDoc(productRef);
@@ -35,7 +42,7 @@ export default function EditProductPage() {
           setError('Product not found');
           setProduct(null);
         } else {
-          setProduct({ id: snapshot.id, ...snapshot.data() } as Product);
+          setProduct({ id: snapshot.id, ...snapshot.data() } as WithId<Product>);
         }
       } catch (err) {
         console.error('Error fetching product:', err);
@@ -67,7 +74,7 @@ export default function EditProductPage() {
   if (!product) {
     return (
       <div className="flex h-full items-center justify-center text-gray-500">
-        Product not found.
+        Product data could not be loaded.
       </div>
     );
   }
