@@ -16,16 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirestore, WithId } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import type { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import {
-  setDocumentNonBlocking,
-  addDocumentNonBlocking,
-} from '@/firebase/non-blocking-updates';
-import { Trash2, PlusCircle, Upload } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { Trash2, PlusCircle, Upload, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -57,6 +53,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const defaultValues = product
     ? {
@@ -93,15 +90,15 @@ export function ProductForm({ product }: ProductFormProps) {
     name: "variants",
   });
 
-  const onSubmit = (values: ProductFormValues) => {
-    // In a real app, you would handle the image file upload here.
-    // For now, we'll continue to use the imageUrl field.
+  const onSubmit = async (values: ProductFormValues) => {
+    setIsSubmitting(true);
     if (!values.imageUrl) {
         toast({
             variant: "destructive",
             title: "Image required",
             description: "Please upload an image for the product.",
         });
+        setIsSubmitting(false);
         return;
     }
 
@@ -111,7 +108,7 @@ export function ProductForm({ product }: ProductFormProps) {
       description: values.description,
       defaultPrice: values.defaultPrice,
       salePrice: values.salePrice,
-      variants: values.variants,
+      variants: values.variants?.map(v=> ({...v})) || [],
       category: values.category as Product['category'],
       benefits: values.benefits.split(',').map((s) => s.trim()),
       ingredients: values.ingredients?.split(',').map((s) => s.trim()),
@@ -123,25 +120,36 @@ export function ProductForm({ product }: ProductFormProps) {
       },
     };
 
-    if (product) {
-      // Update existing product
-      const productRef = doc(firestore, 'products', product.id);
-      setDocumentNonBlocking(productRef, productData, { merge: true });
-      toast({
-        title: 'Product Updated',
-        description: `${values.name} has been successfully updated.`,
-      });
-      router.push('/admin/products');
-    } else {
-      // Create new product
-      const productsCollection = collection(firestore, 'products');
-      const slug = values.name.toLowerCase().replace(/\s+/g, '-');
-      addDocumentNonBlocking(productsCollection, { ...productData, slug });
-      toast({
-        title: 'Product Created',
-        description: `${values.name} has been successfully created.`,
-      });
-      router.push('/admin/products');
+    try {
+        if (product?.id) {
+          // Update existing product
+          const productRef = doc(firestore, 'products', product.id);
+          await setDoc(productRef, productData, { merge: true });
+          toast({
+            title: 'Product Updated',
+            description: `${values.name} has been successfully updated.`,
+          });
+          router.push('/admin/products');
+        } else {
+          // Create new product
+          const productsCollection = collection(firestore, 'products');
+          const slug = values.name.toLowerCase().replace(/\s+/g, '-');
+          await addDoc(productsCollection, {...productData, slug });
+          toast({
+            title: 'Product Created',
+            description: `${values.name} has been successfully created.`,
+          });
+          router.push('/admin/products');
+        }
+    } catch (error) {
+        console.error('Error saving product:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'An error occurred while saving the product. Please try again.',
+        });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -407,7 +415,8 @@ export function ProductForm({ product }: ProductFormProps) {
         </div>
 
 
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
+           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {product ? 'Update Product' : 'Create Product'}
         </Button>
       </form>

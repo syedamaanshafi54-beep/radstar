@@ -1,25 +1,54 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { ProductForm } from '@/components/admin/product-form';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { notFound, useParams } from 'next/navigation';
+import { useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
 export default function EditProductPage() {
   const { id } = useParams();
   const firestore = useFirestore();
-  
+  const router = useRouter();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const productId = Array.isArray(id) ? id[0] : id;
 
-  const productRef = useMemoFirebase(
-    () => doc(firestore, 'products', productId),
-    [firestore, productId]
-  );
-  const { data: product, isLoading } = useDoc<Product>(productRef);
+  useEffect(() => {
+    if (!productId) {
+      setError('Invalid product ID');
+      setLoading(false);
+      return;
+    }
 
-  if (isLoading) {
+    const fetchProduct = async () => {
+      try {
+        const productRef = doc(firestore, 'products', productId);
+        const snapshot = await getDoc(productRef);
+
+        if (!snapshot.exists()) {
+          setError('Product not found');
+          setProduct(null);
+        } else {
+          setProduct({ id: snapshot.id, ...snapshot.data() } as Product);
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError('Failed to fetch product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [firestore, productId]);
+
+  if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -27,8 +56,20 @@ export default function EditProductPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
   if (!product) {
-    return notFound();
+    return (
+      <div className="flex h-full items-center justify-center text-gray-500">
+        Product not found.
+      </div>
+    );
   }
 
   return (
