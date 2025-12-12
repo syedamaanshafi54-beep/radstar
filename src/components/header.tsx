@@ -309,20 +309,7 @@ export function Header() {
               ))}
             </div>
             </>
-            ) : (
-                 <div className="w-full flex items-center justify-between">
-                    <div className="h-10 w-10"></div>
-                     <Link href="/" className="flex items-center gap-1 min-w-0">
-                        <div className="relative h-10 w-10">
-                        <Image src="/logos/2.png" alt="Rad Star Trading Logo" fill className="object-contain" />
-                        </div>
-                        <span className="font-headline text-lg font-bold text-primary-nav-foreground truncate">
-                        Rad Star Trading
-                        </span>
-                    </Link>
-                    <div className="h-10 w-20"></div>
-                 </div>
-            )}
+            ) : null}
           </div>
 
           {hasMounted && !isMobile && (
@@ -363,9 +350,9 @@ export function Header() {
                     )}
                     >
                     <div className="p-2">
-                        <Link href="/products" className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">All Products</Link>
+                        <Link href="/products" scroll={true} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">All Products</Link>
                         {productCategories.map((category) => (
-                        <Link key={category.href} href={`/${category.href}`} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
+                        <Link key={category.href} href={category.href} scroll={true} className="block text-xl font-bold cursor-pointer rounded-lg transition-all duration-200 hover:pl-5 px-3 py-2 hover:bg-primary-foreground/20">
                             {category.label}
                         </Link>
                         ))}
