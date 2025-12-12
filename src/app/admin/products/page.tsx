@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -176,5 +175,3 @@ function ProductRow({ product }: { product: WithId<Product> }) {
     </TableRow>
   );
 }
-
-    
