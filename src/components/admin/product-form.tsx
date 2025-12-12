@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -17,11 +18,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirestore, WithId } from '@/firebase';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import type { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, PlusCircle, Upload, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import Image from 'next/image';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -33,7 +36,7 @@ const formSchema = z.object({
   benefits: z.string().min(3, 'Please list at least one benefit.'),
   ingredients: z.string().optional(),
   nutritionFacts: z.string().optional(),
-  imageUrl: z.string().url('Please enter a valid image URL.'),
+  image: z.any().optional(), // Allow file or URL string
   imageHint: z.string().optional(),
   variants: z.array(
     z.object({
@@ -56,6 +59,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(product?.image.url as string || null);
 
   const defaultValues = product
     ? {
@@ -63,7 +67,7 @@ export function ProductForm({ product }: ProductFormProps) {
         benefits: Array.isArray(product.benefits) ? product.benefits.join(', ') : '',
         ingredients: Array.isArray(product.ingredients) ? product.ingredients.join(', ') : '',
         nutritionFacts: product.nutritionFacts || '',
-        imageUrl: product.image.url as string,
+        image: product.image.url as string,
         imageHint: product.image.hint || '',
         salePrice: product.salePrice,
       }
@@ -77,7 +81,7 @@ export function ProductForm({ product }: ProductFormProps) {
         benefits: '',
         ingredients: '',
         nutritionFacts: '',
-        imageUrl: '',
+        image: undefined,
         imageHint: '',
         variants: [],
       };
@@ -94,8 +98,31 @@ export function ProductForm({ product }: ProductFormProps) {
 
   const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
-    
-    // Create a slug from the name. If updating, use the existing slug.
+    let imageUrl = product?.image.url as string || '';
+
+    // Handle image upload if a new file is selected
+    if (values.image && typeof values.image !== 'string') {
+      const file = values.image[0];
+      if (file) {
+        try {
+          const storage = getStorage();
+          const imageRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(imageRef, file);
+          imageUrl = await getDownloadURL(snapshot.ref);
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          toast({
+            variant: "destructive",
+            title: "Image Upload Failed",
+            description: "Could not upload the new image. Please try again.",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
+
     const slug = product?.slug || values.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     const productData: Omit<Product, 'id'> = {
@@ -111,15 +138,14 @@ export function ProductForm({ product }: ProductFormProps) {
       ingredients: values.ingredients?.split(',').map(s => s.trim()) || [],
       nutritionFacts: values.nutritionFacts || '',
       image: {
-        id: product?.image.id || values.name.toLowerCase().replace(/\s+/g, '-'),
-        url: values.imageUrl,
+        id: product?.image.id || slug,
+        url: imageUrl,
         hint: values.imageHint || '',
       },
     };
 
     try {
       if (product?.id) {
-        // Update existing product
         const productRef = doc(firestore, 'products', product.id);
         await setDoc(productRef, productData, { merge: true });
         toast({
@@ -127,7 +153,6 @@ export function ProductForm({ product }: ProductFormProps) {
           description: `${values.name} has been successfully updated.`,
         });
       } else {
-        // Create new product
         const productsCollection = collection(firestore, 'products');
         await addDoc(productsCollection, productData);
         toast({
@@ -135,10 +160,8 @@ export function ProductForm({ product }: ProductFormProps) {
           description: `${values.name} has been successfully created.`,
         });
       }
-      // Using router.push() might be too fast, replace to ensure user sees toast.
-      // A small delay or a more robust navigation flow might be better.
       router.push('/admin/products');
-      router.refresh(); // Forces a refresh of the products page to show new data
+      router.refresh();
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
@@ -151,24 +174,20 @@ export function ProductForm({ product }: ProductFormProps) {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // NOTE: In a real app, you'd upload this to Firebase Storage and get a URL.
-      // For this prototype, we'll use a temporary blob URL. This will not persist.
-      const tempUrl = URL.createObjectURL(file);
-      form.setValue('imageUrl', tempUrl);
-      toast({
-        title: 'Image selected',
-        description: `Using temporary URL for ${file.name}. In a real app, upload this to storage.`,
-      });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* Product Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-8">
             <FormField
@@ -236,7 +255,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 name="defaultPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price (<span className="font-currency">₹</span>)</FormLabel>
+                    <FormLabel>Price (&lt;span className="font-currency"&gt;₹&lt;/span&gt;)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" {...field} />
                     </FormControl>
@@ -249,7 +268,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 name="salePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sale Price (<span className="font-currency">₹</span>)</FormLabel>
+                    <FormLabel>Sale Price (&lt;span className="font-currency"&gt;₹&lt;/span&gt;)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''} />
                     </FormControl>
@@ -259,28 +278,42 @@ export function ProductForm({ product }: ProductFormProps) {
               />
             </div>
 
-            <div>
-              <FormLabel>Product Image URL</FormLabel>
-               <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="https://example.com/image.jpg" {...field} />
-                    </FormControl>
-                     <FormDescription className="mt-2">
-                       Enter a direct URL for the product image.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+             <div>
+                <FormLabel>Product Image</FormLabel>
+                {imagePreview && (
+                  <div className="mt-2 mb-4 relative w-full aspect-square max-w-xs mx-auto">
+                    <Image
+                      src={imagePreview}
+                      alt="Image Preview"
+                      fill
+                      className="rounded-md object-contain border p-2"
+                    />
+                  </div>
                 )}
-              />
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            field.onChange(e.target.files);
+                            handleImageChange(e);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>Upload an image from your computer.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
           </div>
         </div>
 
-        {/* Additional Fields */}
         <FormField
           control={form.control}
           name="imageHint"
@@ -342,7 +375,6 @@ export function ProductForm({ product }: ProductFormProps) {
           )}
         />
 
-        {/* Variants */}
         <div className="space-y-4">
           <FormLabel>Product Variants</FormLabel>
           {fields.map((field, index) => (
@@ -400,7 +432,6 @@ export function ProductForm({ product }: ProductFormProps) {
           </Button>
         </div>
 
-        {/* Submit */}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
