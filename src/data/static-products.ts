@@ -15,7 +15,7 @@ export const staticProducts: Product[] = [
       'Supports mental fitness and clarity',
       'Strengthens bones with natural calcium'
     ],
-    defaultPrice: 399,
+    defaultPrice: 190,
     image: {
       id: 'product-regular',
       url: '/images/aslitalbina/TR.jpg',

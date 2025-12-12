@@ -58,7 +58,7 @@ const storyLinks = [
 const productCategories = [
   { href: '/#Asli-Talbina', label: 'Asli Talbina' },
   { href: '/#Toast', label: 'Toast' },
-  { href: "/#King's-Asli-Honey", label: "King's Asli Honey" },
+  { href: "/#Kings-Asli-Honey", label: "King's Asli Honey" },
 ];
 
 export function Header() {

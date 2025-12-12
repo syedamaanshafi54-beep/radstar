@@ -39,7 +39,7 @@ const staticHeroSlides = [
     headline: 'Asli Talbina',
     tagline: 'The Original Taste of Wellness',
     cta: 'Discover Talbina',
-    link: '#Asli-Talbina',
+    link: '/#Asli-Talbina',
     slug: 'talbina-regular'
   },
   {
@@ -49,7 +49,7 @@ const staticHeroSlides = [
     headline: 'Wild Natural Honey',
     tagline: 'Pure, Raw, and Unprocessed',
     cta: 'Explore Honey',
-    link: "#King's-Asli-Honey",
+    link: "/#Kings-Asli-Honey",
     slug: "kings-asli-honey"
   },
   // {
@@ -201,6 +201,20 @@ export default function Home() {
       setCurrent(api.selectedScrollSnap())
     })
   }, [api])
+
+  React.useEffect(()=> {
+    if(productsLoading) return;
+    const hash = window.location.hash;
+    if(!hash) return;
+
+    setTimeout(() => {
+      const e1 = document.querySelector(hash);
+      if(e1){
+        e1.scrollIntoView({
+          behavior: 'smooth'});
+      }
+    },300);
+},[productsLoading]);
 
 
   return (
