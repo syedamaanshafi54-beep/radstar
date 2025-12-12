@@ -31,7 +31,18 @@ import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { formatPrice } from '@/lib/utils';
 
-const staticHeroSlides = [
+type HeroSlide = {
+  id: string;
+  imageUrl: string;
+  imageHint: string;
+  headline: string;
+  tagline: string;
+  cta: string;
+  link: string;
+  slug?: string;
+};
+
+const staticHeroSlides: HeroSlide[] = [
   {
     id: 'hero-talbina',
     imageUrl: '/images/aslitalbina/r2.jpg',
@@ -52,17 +63,12 @@ const staticHeroSlides = [
     link: "/#Kings-Asli-Honey",
     slug: "kings-asli-honey"
   },
-  // {
-  //   id: 'hero-shilajit',
-  //   imageUrl: '/images/aslitalbina/sjr.png',
-  //   imageHint: 'shilajit product lifestyle',
-  //   headline: 'Kashmiri Gold Shilajit',
-  //   tagline: 'The Peak of Natural Purity',
-  //   cta: 'Learn About Shilajit',
-  //   link: '#Shilajit',
-  //   slug: 'shilajit'
-  // },
 ];
+
+type HeroSlidesData = {
+  slides: HeroSlide[];
+};
+
 
 const hadithPlacards = [
   {
@@ -114,9 +120,7 @@ const staggerContainer = {
 type DealsData = {
   productIds: string[];
 }
-type HeroSlidesData = {
-  productIds: string[];
-}
+
 
 export default function Home() {
   const plugin = React.useRef(
@@ -164,31 +168,14 @@ export default function Home() {
     return products.filter(p => dealIdSet.has(p.id) && (p.salePrice || (p.variants && p.variants.some(v => v.salePrice))));
   
   }, [products, dealsData, dealsLoading, productsLoading]);
-
+  
   const heroSlides = React.useMemo(() => {
-    if (heroSlidesLoading || productsLoading || !products || products.length === 0) {
+    if (heroSlidesLoading) return staticHeroSlides;
+    if (!heroSlidesData || !heroSlidesData.slides || heroSlidesData.slides.length === 0) {
       return staticHeroSlides;
     }
-    if (!heroSlidesData || !heroSlidesData.productIds || heroSlidesData.productIds.length === 0) {
-      return staticHeroSlides;
-    }
-
-    const slideIdSet = new Set(heroSlidesData.productIds);
-    const slides = products
-      .filter(p => slideIdSet.has(p.id))
-      .map(p => ({
-        id: p.id,
-        imageUrl: p.image.url as string,
-        imageHint: p.image.hint,
-        headline: p.name,
-        tagline: p.tagline,
-        cta: `Shop ${p.name}`,
-        link: `/products/${p.slug}`,
-        slug: p.slug,
-      }));
-    
-    return slides.length > 0 ? slides : staticHeroSlides;
-  }, [products, heroSlidesData, heroSlidesLoading, productsLoading]);
+    return heroSlidesData.slides;
+  }, [heroSlidesData, heroSlidesLoading]);
  
   React.useEffect(() => {
     if (!api) {
@@ -518,7 +505,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                     {product.name}
                 </h3>
             </DialogTrigger>
-            <p className="mt-2 text-muted-foreground text-base flex-1">{product.tagline}</p>
+            <p className="mt-2 text-muted-foreground text-base flex-1 text-justify">{product.tagline}</p>
             
             {product.variants && product.variants.length > 0 ? (
                 <div className="mt-4" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -585,5 +572,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
 }
 
 
+
+    
 
     

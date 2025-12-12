@@ -56,7 +56,8 @@ export type ShippingInfo = {
     zip: string;
 };
 
-export type OrderStatus = "placed" | "confirmed" | "packed" | "shipped" | "out_for_delivery" | "delivered" | "cancelled";
+export type OrderStatus = 'placed' | 'pending_payment' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'cancelled';
+
 
 export type Order = {
     id: string;
@@ -67,16 +68,16 @@ export type Order = {
     subtotal: number;
     shipping: number;
     totalAmount: number;
-    paymentMethod: 'COD' | 'Razorpay';
+    paymentMethod: 'cod' | 'phonepe' | 'googlepay';
     status: OrderStatus;
-    createdAt: Timestamp | string;
-    statusUpdatedAt: Timestamp | string;
+    createdAt: Timestamp;
+    statusUpdatedAt?: Timestamp;
     trackingId?: string;
     courierName?: string;
-    estDeliveryDate?: Timestamp | string;
+    estDeliveryDate?: Timestamp;
     statusHistory?: {
       status: OrderStatus;
-      changedAt: Timestamp | string;
+      changedAt: Timestamp;
     }[];
 }
 
@@ -95,3 +96,5 @@ export type UserProfile = {
   updatedAt?: Timestamp | string;
   lastLogin: Timestamp | string;
 }
+
+    

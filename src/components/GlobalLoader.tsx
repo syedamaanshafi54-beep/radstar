@@ -9,13 +9,15 @@ export default function GlobalLoader() {
       <Image
         src="/Preloader-Lite.gif"
         alt="Loading..."
-        width={128}
-        height={128}
-        className="w-32 h-32"
+        width={256}
+        height={256}
+        className="w-64 h-64"
         unoptimized
       />
     </div>
   );
 }
+
+    
 
     

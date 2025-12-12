@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { useCollection, useFirestore, useMemoFirebase, WithId, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { Product, Order } from '@/lib/types';
 import { collection, doc, setDoc, query, orderBy, limit, getDocs, where, deleteDoc, writeBatch, collectionGroup } from 'firebase/firestore';
-import { Loader2, Package, Sparkles, Users, IndianRupee, ShoppingCart, PlusCircle, ArrowUp, Activity, ArrowDown, BarChart, FileText, Heart, ChevronDown, ArrowUpDown, Edit, Trash2, Eye, MoreVertical, Star, TrendingUp, TrendingDown, CircleDollarSign } from 'lucide-react';
+import { Loader2, Package, Sparkles, Users, IndianRupee, ShoppingCart, PlusCircle, ArrowUp, Activity, ArrowDown, BarChart, FileText, Heart, ChevronDown, ArrowUpDown, Edit, Trash2, Eye, MoreVertical, Star, TrendingUp, TrendingDown, CircleDollarSign, Upload } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -50,14 +50,28 @@ import { Progress } from '@/components/ui/progress';
 import { KpiCard, KpiModals, ModalType } from '@/components/admin/kpi-modals';
 import { formatPrice } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Input } from '@/components/ui/input';
 
 
 type DealsData = {
   productIds: string[];
 }
+
+type HeroSlide = {
+  id: string;
+  imageUrl: string;
+  imageHint: string;
+  headline: string;
+  tagline: string;
+  cta: string;
+  link: string;
+  slug?: string;
+};
 type HeroSlidesData = {
-  productIds: string[];
-}
+  slides: HeroSlide[];
+};
+
 
 type EnrichedOrder = Order & {
     id: string;
@@ -162,10 +176,10 @@ export default function AdminDashboardPage() {
   
   const [recentOrders, setRecentOrders] = useState<EnrichedOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
-
+  
   const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
-  const [selectedHeroIds, setSelectedHeroIds] = useState<string[]>([]);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'ascending' });
@@ -226,21 +240,12 @@ export default function AdminDashboardPage() {
     });
   };
 
-  const seedDatabase = async () => {
-    toast({
-      variant: 'destructive',
-      title: 'Seeding Disabled',
-      description: 'This functionality is not available in this environment.',
-    });
-  };
-
-
   useEffect(() => {
     if (dealsData) {
       setSelectedDealIds(dealsData.productIds || []);
     }
     if (heroSlidesData) {
-      setSelectedHeroIds(heroSlidesData.productIds || []);
+      setHeroSlides(heroSlidesData.slides || []);
     }
   }, [dealsData, heroSlidesData]);
   
@@ -254,7 +259,6 @@ export default function AdminDashboardPage() {
             const querySnapshot = await getDocs(q);
             const fetchedOrders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EnrichedOrder));
             
-            // Enrich orders with customer name from shippingInfo
             fetchedOrders.forEach(order => {
                 order.customerName = order.shippingInfo?.name || 'Unknown';
             });
@@ -277,21 +281,57 @@ export default function AdminDashboardPage() {
         : [...prev, productId]
     );
   };
-
-  const handleHeroSelection = (productId: string) => {
-    setSelectedHeroIds(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
-        : [...prev, productId]
-    );
+  
+  const handleHeroSlideChange = (index: number, field: keyof HeroSlide, value: string) => {
+    const newSlides = [...heroSlides];
+    newSlides[index] = { ...newSlides[index], [field]: value };
+    setHeroSlides(newSlides);
   };
+
+  const handleHeroImageUpload = async (index: number, file: File) => {
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const storage = getStorage();
+      const imageRef = storageRef(storage, `hero-slides/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(imageRef, file);
+      const imageUrl = await getDownloadURL(snapshot.ref);
+      handleHeroSlideChange(index, 'imageUrl', imageUrl);
+    } catch (error) {
+      console.error("Error uploading hero image:", error);
+      toast({
+        variant: "destructive",
+        title: "Image Upload Failed",
+        description: "Could not upload the new hero image. Please try again.",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const addHeroSlide = () => {
+    setHeroSlides([...heroSlides, {
+      id: `slide-${Date.now()}`,
+      imageUrl: '',
+      imageHint: '',
+      headline: '',
+      tagline: '',
+      cta: '',
+      link: ''
+    }]);
+  };
+
+  const removeHeroSlide = (index: number) => {
+    setHeroSlides(heroSlides.filter((_, i) => i !== index));
+  };
+
 
   const handleSaveChanges = () => {
     if (selectedDealIds) {
         setDocumentNonBlocking(dealsDocRef, { productIds: selectedDealIds }, { merge: true });
     }
-    if (selectedHeroIds) {
-        setDocumentNonBlocking(heroSlidesDocRef, { productIds: selectedHeroIds }, { merge: true });
+    if (heroSlides) {
+        setDocumentNonBlocking(heroSlidesDocRef, { slides: heroSlides }, { merge: true });
     }
     toast({
         title: 'Site Configuration Updated',
@@ -722,55 +762,121 @@ export default function AdminDashboardPage() {
         <CustomerReviews />
       </div>
 
-       <Card>
+      <Card>
         <CardHeader>
-            <CardTitle>Site Content Management</CardTitle>
-            <CardDescription>Select products to feature on the homepage hero and deals section.</CardDescription>
+          <CardTitle>Site Content Management</CardTitle>
         </CardHeader>
-        <CardContent>
-             {isLoading ? (
-                <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <CardContent className="space-y-8">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              {/* Hero Slides Management */}
+              <div>
+                <h3 className="font-semibold mb-4 text-lg">Hero Slides</h3>
+                <div className="space-y-4">
+                  {heroSlides.map((slide, index) => (
+                    <div key={slide.id} className="p-4 border rounded-lg space-y-4 relative">
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7"
+                        onClick={() => removeHeroSlide(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Image</Label>
+                          {slide.imageUrl && (
+                            <Image
+                              src={slide.imageUrl}
+                              alt="Hero Slide"
+                              width={150}
+                              height={150}
+                              className="rounded-md object-cover"
+                            />
+                          )}
+                          <Input
+                            type="file"
+                            onChange={(e) => e.target.files && handleHeroImageUpload(index, e.target.files[0])}
+                            disabled={isUploading}
+                          />
+                        </div>
+                        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                            <Label>Headline</Label>
+                            <Input
+                              value={slide.headline}
+                              onChange={(e) => handleHeroSlideChange(index, 'headline', e.target.value)}
+                              placeholder="Hero Headline"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Tagline</Label>
+                            <Input
+                              value={slide.tagline}
+                              onChange={(e) => handleHeroSlideChange(index, 'tagline', e.target.value)}
+                              placeholder="Catchy Tagline"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>CTA Button Text</Label>
+                            <Input
+                              value={slide.cta}
+                              onChange={(e) => handleHeroSlideChange(index, 'cta', e.target.value)}
+                              placeholder="e.g., Shop Now"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>CTA Link</Label>
+                            <Input
+                              value={slide.link}
+                              onChange={(e) => handleHeroSlideChange(index, 'link', e.target.value)}
+                              placeholder="e.g., /products/my-product"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-             ) : (
-                 <div className="grid md:grid-cols-2 gap-8">
-                     <div>
-                        <h3 className="font-semibold mb-4">Hero Slides</h3>
-                         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                             {products.map((product) => (
-                                <div key={`hero-${product.id}`} className="flex items-center gap-3 rounded-md border p-2">
-                                     <Checkbox
-                                        id={`hero-${product.id}`}
-                                        checked={selectedHeroIds.includes(product.id)}
-                                        onCheckedChange={() => handleHeroSelection(product.id)}
-                                    />
-                                    <Label htmlFor={`hero-${product.id}`} className="flex-1 cursor-pointer">{product.name}</Label>
-                                </div>
-                            ))}
-                        </div>
-                     </div>
-                      <div>
-                        <h3 className="font-semibold mb-4">"Deal of the Day" Products</h3>
-                        <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                            {products.map((product) => (
-                                <div key={`deal-${product.id}`} className="flex items-center gap-3 rounded-md border p-2">
-                                    <Checkbox
-                                        id={`deal-${product.id}`}
-                                        checked={selectedDealIds.includes(product.id)}
-                                        onCheckedChange={() => handleDealSelection(product.id)}
-                                    />
-                                    <Label htmlFor={`deal-${product.id}`} className="flex-1 cursor-pointer">{product.name}</Label>
-                                </div>
-                            ))}
-                        </div>
-                     </div>
-                 </div>
-             )}
+                <Button onClick={addHeroSlide} variant="outline" className="mt-4">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Hero Slide
+                </Button>
+              </div>
+
+              {/* Deals of the Day Management */}
+              <div>
+                <h3 className="font-semibold mb-4 text-lg">"Deal of the Day" Products</h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {products.map((product) => (
+                    <div key={`deal-${product.id}`} className="flex items-center gap-3 rounded-md border p-2">
+                      <Checkbox
+                        id={`deal-${product.id}`}
+                        checked={selectedDealIds.includes(product.id)}
+                        onCheckedChange={() => handleDealSelection(product.id)}
+                      />
+                      <Label htmlFor={`deal-${product.id}`} className="flex-1 cursor-pointer text-sm">
+                        {product.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
         <CardFooter>
-            <Button onClick={handleSaveChanges} disabled={isLoading}>Save Changes</Button>
+            <Button onClick={handleSaveChanges} disabled={isLoading || isUploading}>
+              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+              Save Changes
+            </Button>
         </CardFooter>
-       </Card>
+      </Card>
+
 
        <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -915,3 +1021,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

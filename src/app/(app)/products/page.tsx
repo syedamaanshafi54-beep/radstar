@@ -174,7 +174,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                   {product.name}
                 </h3>
             </DialogTrigger>
-            <p className="mt-2 text-muted-foreground text-lg flex-1">{product.tagline}</p>
+            <p className="mt-2 text-muted-foreground text-lg flex-1 text-justify">{product.tagline}</p>
             
             {product.variants && product.variants.length > 0 ? (
                 <div className="mt-4" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -239,5 +239,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     </Dialog>
   );
 }
+
+    
 
     
