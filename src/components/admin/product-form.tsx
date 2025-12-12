@@ -102,8 +102,10 @@ export function ProductForm({ product }: ProductFormProps) {
         return;
     }
 
-    const productData: Omit<Product, 'id' | 'slug' | 'image'> & { image: { url: string, hint: string, id: string } } = {
+    const slug = values.name.toLowerCase().replace(/\s+/g, '-');
+    const productData: Omit<Product, 'id'> = {
       name: values.name,
+      slug: slug,
       tagline: values.tagline,
       description: values.description,
       defaultPrice: values.defaultPrice,
@@ -124,7 +126,7 @@ export function ProductForm({ product }: ProductFormProps) {
         if (product?.id) {
           // Update existing product
           const productRef = doc(firestore, 'products', product.id);
-          await setDoc(productRef, productData, { merge: true });
+          await setDoc(productRef, productData); // Use setDoc to overwrite with new data including slug
           toast({
             title: 'Product Updated',
             description: `${values.name} has been successfully updated.`,
@@ -133,8 +135,7 @@ export function ProductForm({ product }: ProductFormProps) {
         } else {
           // Create new product
           const productsCollection = collection(firestore, 'products');
-          const slug = values.name.toLowerCase().replace(/\s+/g, '-');
-          await addDoc(productsCollection, {...productData, slug });
+          await addDoc(productsCollection, productData);
           toast({
             title: 'Product Created',
             description: `${values.name} has been successfully created.`,
@@ -423,3 +424,5 @@ export function ProductForm({ product }: ProductFormProps) {
     </Form>
   );
 }
+
+    
