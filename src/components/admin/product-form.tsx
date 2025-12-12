@@ -126,7 +126,7 @@ export function ProductForm({ product }: ProductFormProps) {
         if (product?.id) {
           // Update existing product
           const productRef = doc(firestore, 'products', product.id);
-          await setDoc(productRef, productData); // Use setDoc to overwrite with new data including slug
+          await setDoc(productRef, productData);
           toast({
             title: 'Product Updated',
             description: `${values.name} has been successfully updated.`,
@@ -424,5 +424,3 @@ export function ProductForm({ product }: ProductFormProps) {
     </Form>
   );
 }
-
-    
