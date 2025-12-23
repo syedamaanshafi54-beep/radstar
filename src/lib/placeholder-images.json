@@ -1,0 +1,119 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-main",
+      "description": "A pyramid of all the Asli Talbina product variants.",
+      "imageUrl": "/images/aslitalbina/r2.jpg",
+      "imageHint": "product display"
+    },
+    {
+      "id": "about-section",
+      "description": "An image showing fields of barley, representing the natural origins of the product.",
+      "imageUrl": "/images/aslitalbina/lc.jpg",
+      "imageHint": "barley field"
+    },
+    {
+      "id": "prepare-section",
+      "description": "A person stirring a pot on a stove, preparing Talbina.",
+      "imageUrl": "https://images.unsplash.com/photo-1728881708686-a6f7cefcc3ed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBjb29raW5nfGVufDB8fHx8MTc2MTUzMDMzNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person cooking"
+    },
+    {
+      "id": "quality-banner",
+      "description": "A close-up of barley grains, highlighting quality and texture.",
+      "imageUrl": "/images/aslitalbina/h2.jpg",
+      "imageHint": "barley grains"
+    },
+    {
+      "id": "product-regular",
+      "description": "Product shot of Asli Talbina Regular.",
+      "imageUrl": "/images/aslitalbina/TR.jpg",
+      "imageHint": "product package"
+    },
+    {
+      "id": "product-safed-musli",
+      "description": "Product shot of Asli Talbina Safed Musli.",
+      "imageUrl": "/images/aslitalbina/TSM2.jpg",
+      "imageHint": "product package"
+    },
+    {
+      "id": "product-chocolate-almond",
+      "description": "Product shot of Asli Talbina Chocolate Almond.",
+      "imageUrl": "/images/aslitalbina/TCA.jpg",
+      "imageHint": "chocolate almond"
+    },
+    {
+      "id": "product-mango",
+      "description": "Product shot of Asli Talbina Mango.",
+      "imageUrl": "/images/aslitalbina/TM.jpg",
+      "imageHint": "mango product"
+    },
+    {
+      "id": "product-pista-elichi",
+      "description": "Product shot of Asli Talbina Pista Elichi.",
+      "imageUrl": "/images/aslitalbina/TPE.jpg",
+      "imageHint": "pistachio cardamom"
+    },
+    {
+      "id": "product-apple-cherry",
+      "description": "Product shot of Asli Talbina Apple Cherry.",
+      "imageUrl": "/images/aslitalbina/TAC.jpg",
+      "imageHint": "apple cherry"
+    },
+    {
+      "id": "product-strawberry",
+      "description": "Product shot of Asli Talbina Strawberry.",
+      "imageUrl": "/images/aslitalbina/TS.jpg",
+      "imageHint": "strawberry product"
+    },
+    {
+      "id": "product-dry-fruits",
+      "description": "Product shot of Asli Talbina Dry Fruits.",
+      "imageUrl": "/images/aslitalbina/TDR.jpg",
+      "imageHint": "dry fruits"
+    },
+ 
+    {
+      "id": "about-1",
+      "description": "Hero image for the about page.",
+      "imageUrl": "/images/aslitalbina/rooted_2.png",
+      "imageHint": "barley grains closeup"
+    },
+    {
+      "id": "about-2",
+      "description": "Hero image for the about page.",
+      "imageUrl": "/images/aslitalbina/h3.jpg",
+      "imageHint": "natural ingredients"
+    },
+    {
+      "id": "about-3",
+      "description": "Hero image for the about page.",
+      "imageUrl": "/images/aslitalbina/h4.jpg",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "about-4",
+      "description": "Hero image for the about page.",
+      "imageUrl": "/images/aslitalbina/h5.jpg",
+      "imageHint": "product innovation"
+    },
+    {
+      "id": "founder",
+      "description": "A professional portrait of the founder.",
+      "imageUrl": "/images/aslitalbina/rss.png",
+      "imageHint": "founder portrait"
+    },
+    {
+      "id": "vision",
+      "description": "A person looking out at a sunrise over mountains, representing vision.",
+      "imageUrl": "/images/aslitalbina/vision.png",
+      "imageHint": "mountain sunrise"
+    },
+    {
+      "id": "mission",
+      "description": "A modern, clean factory interior, representing the mission of quality production.",
+      "imageUrl": "/images/aslitalbina/mission.png",
+      "imageHint": "clean factory"
+    }
+  ]
+}

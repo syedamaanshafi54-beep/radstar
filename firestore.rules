@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'itsmeabdulk@gmail.com' ||
+        request.auth.token.role == 'admin'
+      );
+    }
+
+    // --- USER PROFILE & OWNED DATA ---
+    match /users/{userId} {
+      // Allow user and admin to see the profile document itself
+      allow read, write: if isOwner(userId) || isAdmin();
+
+      // Allow listing and reading orders inside the user's document
+      match /orders/{orderId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // --- ADMIN DASHBOARD (Collection Group) ---
+    // Specifically for the Admin Dashboard query across all users
+    match /{path=**}/orders/{orderId} {
+      allow read: if isAdmin();
+    }
+
+    // --- PUBLIC DATA ---
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /site-config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /partners/{partnerId} {
+      allow create: if true;
+      allow read: if isAdmin();
+    }
+  }
+}

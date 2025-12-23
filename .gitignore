@@ -1,0 +1,22 @@
+
+# Ignore the large catalog file specifically
+data/RAD STAR NEW CATALOG.pdf
+*.pdf
+
+
+# Default Next.js ignores
+/node_modules
+/.next/
+/out/
+/.env.local
+/.env.development.local
+/.env.test.local
+/.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+.vscode
+firebase-debug.log
+"node_modules/" 
+"*.json" 
