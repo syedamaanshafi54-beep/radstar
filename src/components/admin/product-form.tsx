@@ -21,7 +21,7 @@ import { getFirestore, collection, doc, setDoc, addDoc } from 'firebase/firestor
 import { useRouter } from 'next/navigation';
 import type { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, PlusCircle, Upload, Loader2, ImageIcon, Plus } from 'lucide-react';
+import { Trash2, PlusCircle, Upload, Loader2, ImageIcon, Plus, X } from 'lucide-react';
 import { CldUploadWidget } from 'next-cloudinary';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -262,6 +262,21 @@ export function ProductForm({ product }: ProductFormProps) {
                       fill
                       className="rounded-md object-contain border bg-white"
                     />
+                    {/* Remove Image Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImagePreview(null);
+                        form.setValue('image', null);
+                        toast({ title: "Image Removed", description: "Product image has been deselected." });
+                      }}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-lg hover:bg-destructive/90 transition-colors z-10"
+                      title="Remove Image"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                       <CldUploadWidget
                         uploadPreset="products"

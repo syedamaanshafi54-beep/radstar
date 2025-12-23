@@ -24,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -71,7 +71,7 @@ export default function CheckoutPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const userDocRef = user ? doc(firestore, "users", user.uid) : null;
+  const userDocRef = useMemo(() => user ? doc(firestore, "users", user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
   useEffect(() => {
@@ -244,7 +244,7 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
           amount: cartTotal,
@@ -253,38 +253,32 @@ export default function CheckoutPage() {
         }),
       });
 
-      console.log('API reached, returning JSON');
       if (!createOrderResponse.ok) {
-        let errorText = "Failed to create payment order.";
-        try {
-          const errorJson = await createOrderResponse.json();
-          errorText = errorJson.error || `Server responded with status ${createOrderResponse.status}`;
-        } catch {
-          errorText = await createOrderResponse.text();
-        }
-        throw new Error(errorText);
+        throw new Error("Failed to initialize payment.");
       }
 
       const razorpayOrder = await createOrderResponse.json();
+      const firestoreOrderId = razorpayOrder.firestoreOrderId;
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
         name: "Rad Star Trading",
-        description: `Order #${razorpayOrder.receipt}`,
+        description: `Order #${firestoreOrderId}`,
         order_id: razorpayOrder.id,
         handler: async (paymentResponse: any) => {
           setIsProcessing(true);
           try {
-            // No need to construct orderPayload here anymore
-
+            // VERIFY ON SERVER
             const verifyResponse = await fetch(`/api/razorpay/verify-payment`, {
               method: 'POST',
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
               },
               body: JSON.stringify({
+                firestoreOrderId: firestoreOrderId,
                 razorpay_order_id: paymentResponse.razorpay_order_id,
                 razorpay_payment_id: paymentResponse.razorpay_payment_id,
                 razorpay_signature: paymentResponse.razorpay_signature
@@ -292,11 +286,13 @@ export default function CheckoutPage() {
             });
 
             if (!verifyResponse.ok) {
-              let errorText = await verifyResponse.text();
+              let errorText = "Payment verification failed.";
               try {
-                const errorJson = JSON.parse(errorText);
-                errorText = errorJson.error || errorText;
-              } catch { }
+                const errorJson = await verifyResponse.json();
+                errorText = errorJson.error || errorJson.message || errorText;
+              } catch {
+                errorText = await verifyResponse.text() || errorText;
+              }
               throw new Error(errorText);
             }
 
@@ -305,7 +301,7 @@ export default function CheckoutPage() {
             if (verifyResult.success) {
               clearCart();
               toast({ title: "Payment Successful!", description: "Your order has been placed." });
-              router.push(`/order-success?orderId=${verifyResult.orderId}`);
+              router.push(`/order-success?orderId=${firestoreOrderId}`);
             } else {
               throw new Error(verifyResult.message || "Payment verification failed.");
             }
