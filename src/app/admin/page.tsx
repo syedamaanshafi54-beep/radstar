@@ -2,19 +2,26 @@
 import { onSnapshot } from 'firebase/firestore';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { useCollection, useFirestore, useMemoFirebase, WithId, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { Product, Order } from '@/lib/types';
 import { collection, doc, setDoc, query, orderBy, limit, getDocs, where, deleteDoc, writeBatch, collectionGroup } from 'firebase/firestore';
-import { Loader2, Package, Sparkles, Users, IndianRupee, ShoppingCart, PlusCircle, ArrowUp, Activity, ArrowDown, BarChart, FileText, Heart, ChevronDown, ArrowUpDown, Edit, Trash2, Eye, MoreVertical, Star, TrendingUp, TrendingDown, CircleDollarSign, Upload } from 'lucide-react';
+import {
+  Loader2, Package, Sparkles, Users, IndianRupee, ShoppingCart, PlusCircle,
+  ArrowUp, Activity, ArrowDown, BarChart, FileText, Heart, ChevronDown,
+  ArrowUpDown, Edit, Trash2, Eye, MoreVertical, Star, TrendingUp, TrendingDown,
+  CircleDollarSign, Upload, Save, RotateCcw, Image as ImageIcon
+} from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Review } from '@/lib/types/reviews';
 import { useState, useEffect, useMemo } from 'react';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, CartesianGrid, Legend, ComposedChart, Bar, Line, YAxis, Defs, Stop, LinearGradient } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, CartesianGrid, Legend, ComposedChart, Bar, Line, YAxis } from "recharts";
 import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 import { AiReviewAnalysis } from '@/components/admin/ai-review-analysis';
+import { CldUploadWidget } from 'next-cloudinary';
 import {
   Table,
   TableBody,
@@ -53,6 +60,7 @@ import { formatPrice } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Input } from '@/components/ui/input';
+import SiteContentManagement from '@/components/admin/site-content-management.tsx';
 
 
 type DealsData = {
@@ -73,31 +81,39 @@ type HeroSlidesData = {
   slides: HeroSlide[];
 };
 
+const staticHeroSlides: HeroSlide[] = [
+  {
+    id: 'hero-talbina',
+    imageUrl: '/images/aslitalbina/r2.jpg',
+    imageHint: 'talbina product lifestyle',
+    headline: 'Asli Talbina',
+    tagline: 'The Original Taste of Wellness',
+    cta: 'Discover Talbina',
+    link: '/#Asli-Talbina',
+    slug: 'talbina-regular'
+  },
+  {
+    id: 'hero-honey',
+    imageUrl: "/images/aslitalbina/asli honey/AH.jpg",
+    imageHint: 'honey product lifestyle',
+    headline: 'Wild Natural Honey',
+    tagline: 'Pure, Raw, and Unprocessed',
+    cta: 'Explore Honey',
+    link: "/#King's-Asli-Honey",
+    slug: "kings-asli-honey"
+  },
+];
+
 
 type EnrichedOrder = Order & {
-    id: string;
-    customerName?: string;
+  id: string;
+  customerName?: string;
 };
 
 type SortConfig = {
-  key: keyof Product | 'sales' | 'revenue';
+  key: keyof Product | 'sales' | 'revenue' | 'dateAdded';
   direction: 'ascending' | 'descending';
 };
-
-const chartData = [
-    { month: "Jan", orders: 12, sales: 18600, income: 12000, visitors: 1200 },
-    { month: "Feb", orders: 35, sales: 30500, income: 22000, expenses: 10000, visitors: 2800 },
-    { month: "Mar", orders: 22, sales: 23700, income: 15000, expenses: 9500, visitors: 1800 },
-    { month: "Apr", orders: 41, sales: 27300, income: 20000, expenses: 11000, visitors: 3200 },
-    { month: "May", orders: 52, sales: 40900, income: 28000, expenses: 12000, visitors: 4100 },
-    { month: "Jun", orders: 60, sales: 41400, income: 30000, expenses: 13000, visitors: 4500 },
-    { month: "Jul", orders: 55, sales: 58400, income: 40000, expenses: 15000, visitors: 5100 },
-    { month: "Aug", orders: 78, sales: 61200, income: 45000, expenses: 16000, visitors: 6200 },
-    { month: "Sep", orders: 65, sales: 71500, income: 50000, expenses: 18000, visitors: 5800 },
-    { month: "Oct", orders: 89, sales: 85300, income: 60000, expenses: 20000, visitors: 7100 },
-    { month: "Nov", orders: 95, sales: 92100, income: 65000, expenses: 22000, visitors: 7500 },
-    { month: "Dec", orders: 112, sales: 125430, income: 85000, expenses: 25000, visitors: 8200 },
-];
 
 const chartConfig = {
   sales: {
@@ -110,50 +126,83 @@ const chartConfig = {
   }
 } satisfies import("@/components/ui/chart").ChartConfig;
 
-const reviewData = {
-  average: 4.6,
-  total: 2139,
-  distribution: [
-    { star: 5, percentage: 75 },
-    { star: 4, percentage: 12 },
-    { star: 3, percentage: 5 },
-    { star: 2, percentage: 3 },
-    { star: 1, percentage: 5 },
-  ]
-}
 
-function CustomerReviews() {
+function CustomerReviews({ reviews }: { reviews: Review[] }) {
+  const { average, total, distribution } = useMemo(() => {
+    if (!reviews || reviews.length === 0) {
+      return {
+        average: 0,
+        total: 0,
+        distribution: [5, 4, 3, 2, 1].map(star => ({ star, percentage: 0, count: 0 }))
+      };
+    }
+
+    const totalCount = reviews.length;
+    const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+    const avg = Number((sum / totalCount).toFixed(1));
+
+    const counts = reviews.reduce((acc: Record<number, number>, r) => {
+      acc[r.rating] = (acc[r.rating] || 0) + 1;
+      return acc;
+    }, {});
+
+    const distribution = [5, 4, 3, 2, 1].map(star => ({
+      star,
+      count: counts[star] || 0,
+      percentage: Math.round(((counts[star] || 0) / totalCount) * 100)
+    }));
+
+    return { average: avg, total: totalCount, distribution };
+  }, [reviews]);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Customer Reviews</CardTitle>
-        <Button variant="outline" size="sm">View All</Button>
+        <span className="text-sm text-muted-foreground">{total} total</span>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2 mb-4">
-          <p className="text-4xl font-bold">{reviewData.average.toFixed(1)}</p>
+          <p className="text-4xl font-bold">{average.toFixed(1)}</p>
           <div className="flex flex-col">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${i < Math.floor(reviewData.average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                  className={`h-5 w-5 ${i < Math.floor(average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                 />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">({reviewData.average.toFixed(1)} out of 5)</p>
+            <p className="text-sm text-muted-foreground">({average.toFixed(1)} out of 5)</p>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">{reviewData.total.toLocaleString()} Reviews</p>
 
-        <div className="space-y-2">
-          {reviewData.distribution.map(item => (
+        <div className="space-y-2 mb-6">
+          {distribution.map(item => (
             <div key={item.star} className="flex items-center gap-4 text-sm">
               <span className="w-12 text-muted-foreground">{item.star} Star</span>
               <Progress value={item.percentage} className="h-2 flex-1" />
+              <span className="w-12 text-right font-medium text-xs text-muted-foreground">{item.count} revs</span>
               <span className="w-8 text-right font-medium">{item.percentage}%</span>
             </div>
           ))}
+        </div>
+
+        <div className="max-h-[300px] overflow-y-auto space-y-4">
+          {reviews.slice(0, 10).map((review, i) => (
+            <div key={review.id || i} className="border-t pt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-sm">{review.userName}</span>
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground italic line-clamp-2">"{review.comment}"</p>
+            </div>
+          ))}
+          {reviews.length === 0 && <p className="text-center text-sm text-muted-foreground p-4">No reviews yet.</p>}
         </div>
       </CardContent>
     </Card>
@@ -162,67 +211,42 @@ function CustomerReviews() {
 
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
-  
-  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const { user, isUserLoading } = useUser();
+  const isAdminUser = user?.email === 'itsmeabdulk@gmail.com' || user?.email === 'radstar.in@gmail.com';
+
+  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore, isAdminUser]);
   const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: false });
-  
-  const ordersCollectionGroup = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
+
+  const ordersCollectionGroup = useMemoFirebase(() => {
+    if (!isAdminUser) return null;
+    return collectionGroup(firestore, 'orders');
+  }, [firestore, isAdminUser]);
   const { data: allOrders, isLoading: allOrdersLoading } = useCollection<Order>(ordersCollectionGroup, { listen: false });
 
-  const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore]);
+  const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore, isAdminUser]);
   const { data: dealsData, isLoading: dealInfoLoading } = useDoc<DealsData>(dealsDocRef);
 
-  const heroSlidesDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'heroSlides'), [firestore]);
+  const reviewsCollection = useMemoFirebase(() => collection(firestore, 'reviews'), [firestore, isAdminUser]);
+  const { data: allReviews, isLoading: reviewsLoading } = useCollection<Review>(reviewsCollection, { listen: true });
+
+  const heroSlidesDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'heroSlides'), [firestore, isAdminUser]);
   const { data: heroSlidesData, isLoading: heroSlidesLoading } = useDoc<HeroSlidesData>(heroSlidesDocRef);
-  
+
   const [recentOrders, setRecentOrders] = useState<EnrichedOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  
+
   const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  
+
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'ascending' });
   const [activeModal, setActiveModal] = useState<ModalType | null>(null);
 
-  
+
   const products = firestoreProducts || [];
 
-  // Add mock sales/revenue data for sorting
-  const productsWithSales = useMemo(() => {
-    return products.map((p, index) => ({
-      ...p,
-      stock: Math.floor(Math.random() * 200),
-      dateAdded: new Date(2024, 0, index + 1).toISOString(), // Mock date
-      sales: Math.floor(Math.random() * (200 - index * 5) + 50),
-      revenue: Math.floor(Math.random() * (200 - index * 5) + 50) * p.defaultPrice * 0.7,
-    }));
-  }, [products]);
 
-
-  const sortedProducts = useMemo(() => {
-    let sortableItems = [...productsWithSales];
-    if (sortConfig.key) {
-      sortableItems.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof typeof a];
-        const bValue = b[sortConfig.key as keyof typeof b];
-
-        if (aValue < bValue) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [productsWithSales, sortConfig]);
-
-  const topSellingProducts = useMemo(() => {
-    return [...productsWithSales].sort((a, b) => b.sales - a.sales).slice(0, 5);
-  }, [productsWithSales]);
 
   const requestSort = (key: SortConfig['key']) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -232,7 +256,7 @@ export default function AdminDashboardPage() {
     setSortConfig({ key, direction });
   };
 
-  const handleDelete = (product: WithId<Product>) => {
+  const handleDelete = (product: Product & { id: string }) => {
     const productRef = doc(firestore, 'products', product.id);
     deleteDocumentNonBlocking(productRef);
     toast({
@@ -249,32 +273,32 @@ export default function AdminDashboardPage() {
       setHeroSlides(heroSlidesData.slides || []);
     }
   }, [dealsData, heroSlidesData]);
-  
+
   useEffect(() => {
-    if (!firestore) return;
-  
+    if (!firestore || !isAdminUser) return;
+
     setOrdersLoading(true);
-  
-    const ordersRef = collection(firestore, 'orders');
-  
+
+    const ordersRef = collectionGroup(firestore, 'orders');
+
     const q = query(
       ordersRef,
-      orderBy('orderDate', 'desc'), // TEMP (see step 3)
+      orderBy('createdAt', 'desc'),
       limit(5)
     );
-  
+
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const orders = snapshot.docs.map((doc) => {
           const data = doc.data() as EnrichedOrder;
           return {
-            id: doc.id,
             ...data,
+            id: doc.id,
             customerName: data.shippingInfo?.name || 'Unknown',
           };
         });
-  
+
         setRecentOrders(orders);
         setOrdersLoading(false);
       },
@@ -283,44 +307,29 @@ export default function AdminDashboardPage() {
         setOrdersLoading(false);
       }
     );
-  
+
     return () => unsubscribe();
-  }, [firestore]);
-  
+  }, [firestore, isAdminUser]);
+
 
 
   const handleDealSelection = (productId: string) => {
-    setSelectedDealIds(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
+    setSelectedDealIds(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
   };
-  
+
   const handleHeroSlideChange = (index: number, field: keyof HeroSlide, value: string) => {
     const newSlides = [...heroSlides];
     newSlides[index] = { ...newSlides[index], [field]: value };
     setHeroSlides(newSlides);
   };
 
-  const handleHeroImageUpload = async (index: number, file: File) => {
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      const storage = getStorage();
-      const imageRef = storageRef(storage, `hero-slides/${Date.now()}_${file.name}`);
-      const snapshot = await uploadBytes(imageRef, file);
-      const imageUrl = await getDownloadURL(snapshot.ref);
-      handleHeroSlideChange(index, 'imageUrl', imageUrl);
-    } catch (error) {
-      console.error("Error uploading hero image:", error);
-      toast({
-        variant: "destructive",
-        title: "Image Upload Failed",
-        description: "Could not upload the new hero image. Please try again.",
-      });
-    } finally {
-      setIsUploading(false);
+  const handleHeroImageUpload = async (index: number, result: any) => {
+    if (result.event === 'success') {
+      handleHeroSlideChange(index, 'imageUrl', result.info.secure_url);
     }
   };
 
@@ -340,70 +349,165 @@ export default function AdminDashboardPage() {
     setHeroSlides(heroSlides.filter((_, i) => i !== index));
   };
 
+  const restoreHeroDefaults = () => {
+    setHeroSlides(staticHeroSlides);
+    toast({
+      title: 'Restored to Defaults',
+      description: 'The original Rad Star branded slides have been loaded into the editor. Click "Save Changes" to apply.',
+    });
+  };
+
 
   const handleSaveChanges = () => {
-    if (selectedDealIds) {
-        setDocumentNonBlocking(dealsDocRef, { productIds: selectedDealIds }, { merge: true });
+    if (dealsData) {
+      setDocumentNonBlocking(dealsDocRef, { productIds: selectedDealIds }, { merge: true });
     }
     if (heroSlides) {
-        setDocumentNonBlocking(heroSlidesDocRef, { slides: heroSlides }, { merge: true });
+      setDocumentNonBlocking(heroSlidesDocRef, { slides: heroSlides }, { merge: true });
     }
     toast({
-        title: 'Site Configuration Updated',
-        description: 'Your changes to hero slides and deals have been saved.',
+      title: 'Site Configuration Updated',
+      description: 'Your changes to hero slides and deals have been saved.',
     });
   }
 
-  const isLoading = productsLoading || dealInfoLoading || allOrdersLoading || heroSlidesLoading;
+  const isLoading = productsLoading || dealInfoLoading || allOrdersLoading || heroSlidesLoading || isUserLoading;
 
-  const { totalRevenue, totalOrders, totalCustomers } = useMemo(() => {
-    if (!allOrders) return { totalRevenue: 0, totalOrders: 0, totalCustomers: 0 };
-    const revenue = allOrders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
-    const customerIds = new Set(allOrders.map(o => o.userId));
-    return { totalRevenue: revenue, totalOrders: allOrders.length, totalCustomers: customerIds.size };
-  }, [allOrders]);
-  
-  const totalProducts = products.length;
-  
-  const { totalIncome, totalVisitors, monthlyChartData } = useMemo(() => {
-    if (!allOrders) {
-      return { totalIncome: 0, totalVisitors: 0, monthlyChartData: chartData };
-    }
-    let monthlyData = new Array(12).fill(0).map((_, i) => ({
-      month: new Date(0, i).toLocaleString('default', { month: 'short' }),
-      sales: 0,
-      orders: 0,
-      income: 0,
-      visitors: 0,
-    }));
+  // Comprehensive Metric Calculations
+  const stats = useMemo(() => {
+    const defaultData = {
+      totalRevenue: 0, revenueChange: 0,
+      totalOrders: 0, ordersChange: 0,
+      totalCustomers: 0, customersChange: 0,
+      totalIncome: 0, incomeChange: 0,
+      totalVisitors: 0, visitorsChange: 0,
+      monthlyChartData: new Array(12).fill(0).map((_, i) => ({
+        month: new Date(0, i).toLocaleString('default', { month: 'short' }),
+        sales: 0, orders: 0, income: 0, visitors: 0,
+      }))
+    };
+
+    if (!allOrders || allOrders.length === 0) return defaultData;
+
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    const thisYear = now.getFullYear();
+    const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+    let revenueCurrent = 0, revenuePrev = 0;
+    let ordersCurrent = 0, ordersPrev = 0;
+    let customersSet = new Set(), customersSetPrev = new Set();
+    let incomeCurrent = 0, incomePrev = 0;
 
     allOrders.forEach(order => {
-      if (order.createdAt && typeof order.createdAt !== 'string' && order.createdAt.seconds) {
-        const monthIndex = new Date(order.createdAt.seconds * 1000).getMonth();
-        if (monthlyData[monthIndex]) {
-          monthlyData[monthIndex].sales += order.totalAmount;
-          monthlyData[monthIndex].orders += 1;
+      if (!order.createdAt || typeof order.createdAt === 'string' || !order.createdAt.seconds) return;
+
+      const d = new Date(order.createdAt.seconds * 1000);
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      const isSuccessful = order.status !== 'cancelled' && order.status !== 'pending_payment';
+
+      // Statistics
+      if (isSuccessful) {
+        defaultData.monthlyChartData[m].sales += order.totalAmount;
+        defaultData.monthlyChartData[m].income += order.totalAmount; // Using 100% of revenue for income
+        defaultData.monthlyChartData[m].orders += 1;
+        defaultData.monthlyChartData[m].visitors += 2; // Simulated
+
+        if (y === thisYear && m === thisMonth) {
+          revenueCurrent += order.totalAmount;
+          ordersCurrent += 1;
+          incomeCurrent += order.totalAmount;
+        } else if (y === lastMonthYear && m === lastMonth) {
+          revenuePrev += order.totalAmount;
+          ordersPrev += 1;
+          incomePrev += order.totalAmount;
         }
+      }
+
+      if (y === thisYear && m === thisMonth) {
+        customersSet.add(order.userId);
+      } else if (y === lastMonthYear && m === lastMonth) {
+        customersSetPrev.add(order.userId);
       }
     });
 
-    let cumulativeVisitors = 0;
-    monthlyData = monthlyData.map((data, index) => {
-        const income = data.sales * 0.7; // 70% profit margin
-        const visitors = data.orders * (Math.floor(Math.random() * 6) + 5); // 5-10 visitors per order
-        cumulativeVisitors += visitors;
-        return {
-            ...data,
-            income: Math.round(income),
-            visitors
-        };
+    const getPct = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0;
+      return ((curr - prev) / prev) * 100;
+    };
+
+    const totalRevenue = allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'pending_payment').reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+    const totalCustomers = new Set(allOrders.map(o => o.userId)).size;
+
+    return {
+      totalRevenue,
+      revenueChange: getPct(revenueCurrent, revenuePrev),
+      totalOrders: allOrders.length,
+      ordersChange: getPct(ordersCurrent, ordersPrev),
+      totalCustomers,
+      customersChange: getPct(customersSet.size, customersSetPrev.size),
+      totalIncome: totalRevenue, // Synced with revenue to avoid arbitrary profit assumptions
+      incomeChange: getPct(incomeCurrent, incomePrev),
+      totalVisitors: allOrders.length * 2,
+      visitorsChange: getPct(ordersCurrent, ordersPrev),
+      monthlyChartData: defaultData.monthlyChartData
+    };
+  }, [allOrders, isAdminUser]);
+
+  const { totalRevenue, revenueChange, totalOrders, ordersChange, totalCustomers, customersChange, totalIncome, incomeChange, totalVisitors, visitorsChange, monthlyChartData } = stats;
+
+  // Refactor products with real sales stats
+  const productsWithActualStats = useMemo(() => {
+    return products.map(p => {
+      const productOrders = (allOrders || []).filter(o =>
+        o.status !== 'cancelled' &&
+        o.items?.some(item => item.productId === p.id)
+      );
+
+      const sales = productOrders.reduce((sum, o) => {
+        const item = o.items.find(i => i.productId === p.id);
+        return sum + (item?.qty || 0);
+      }, 0);
+
+      const revenue = productOrders.reduce((sum, o) => {
+        const item = o.items.find(i => i.productId === p.id);
+        return sum + ((item?.price || 0) * (item?.qty || 0));
+      }, 0);
+
+      return {
+        ...p,
+        stock: 0, // Placeholder as stock management isn't implemented in DB yet
+        dateAdded: p.id, // Fallback
+        sales,
+        revenue
+      };
     });
+  }, [products, allOrders, isAdminUser]);
 
-    const totalIncome = monthlyData.reduce((acc, data) => acc + data.income, 0);
-    
-    return { totalIncome, totalVisitors: cumulativeVisitors, monthlyChartData: monthlyData };
+  const sortedProducts = useMemo(() => {
+    let sortableItems = [...productsWithActualStats];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        const aValue = (a as any)[sortConfig.key];
+        const bValue = (b as any)[sortConfig.key];
 
-  }, [allOrders]);
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [productsWithActualStats, sortConfig, isAdminUser]);
+
+  const topSellingProducts = useMemo(() => {
+    return [...productsWithActualStats].sort((a, b) => b.sales - a.sales).slice(0, 5);
+  }, [productsWithActualStats, isAdminUser]);
 
   const [activeMobileTab, setActiveMobileTab] = useState<'recent' | 'topSelling' | 'reviews'>('recent');
   const [swipeDirection, setSwipeDirection] = useState<1 | -1>(1);
@@ -446,158 +550,158 @@ export default function AdminDashboardPage() {
       <Dialog open={!!activeModal} onOpenChange={(isOpen) => !isOpen && setActiveModal(null)}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
           <div onClick={() => setActiveModal('sales')} className="p-0">
-            <KpiCard type="sales" className="h-[140px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Sales" value={<><span className="font-currency">₹</span>{formatPrice(totalRevenue)}</>} icon={IndianRupee} change="+15.2%" changeType="increase" />
+            <KpiCard type="sales" title="Total Sales" value={<><span className="font-currency">₹</span>{formatPrice(totalRevenue)}</>} icon={IndianRupee} change={`${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}%`} changeType={revenueChange >= 0 ? 'increase' : 'decrease'} />
           </div>
           <div onClick={() => setActiveModal('orders')} className="p-0">
-            <KpiCard type="orders" className="h-[140px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Orders" value={totalOrders.toLocaleString()} icon={ShoppingCart} change="+18.7%" changeType="increase" />
+            <KpiCard type="orders" title="Total Orders" value={totalOrders.toLocaleString()} icon={ShoppingCart} change={`${ordersChange >= 0 ? '+' : ''}${ordersChange.toFixed(1)}%`} changeType={ordersChange >= 0 ? 'increase' : 'decrease'} />
           </div>
           <div onClick={() => setActiveModal('customers')} className="p-0">
-            <KpiCard type="customers" className="h-[140px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Customers" value={totalCustomers} icon={Users} change="+8.0%" changeType="increase" />
+            <KpiCard type="customers" title="Total Customers" value={totalCustomers} icon={Users} change={`${customersChange >= 0 ? '+' : ''}${customersChange.toFixed(1)}%`} changeType={customersChange >= 0 ? 'increase' : 'decrease'} />
           </div>
           <div onClick={() => setActiveModal('products')} className="p-0">
-            <KpiCard type="products" className="h-[140px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Products" value={totalProducts} icon={Package} change=" "/>
+            <KpiCard type="products" title="Total Products" value={products.length} icon={Package} change=" " />
           </div>
           <div onClick={() => setActiveModal('income')} className="p-0">
-            <KpiCard type="income" className="h-[140px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Income" value={<><span className="font-currency">₹</span>{formatPrice(totalIncome)}</>} icon={TrendingUp} change="+20.1%" changeType="increase" />
+            <KpiCard type="income" title="Total Income" value={<><span className="font-currency">₹</span>{formatPrice(totalIncome)}</>} icon={TrendingUp} change={`${incomeChange >= 0 ? '+' : ''}${incomeChange.toFixed(1)}%`} changeType={incomeChange >= 0 ? 'increase' : 'decrease'} />
           </div>
           <div onClick={() => setActiveModal('visitors')} className="p-0">
-            <KpiCard type="visitors" className="h-[140px] sm:h-auto p-3 sm:p-5 text-xs sm:text-base" title="Total Visitors" value={totalVisitors.toLocaleString()} icon={Users} change="+12.4%" changeType="increase" />
+            <KpiCard type="visitors" title="Total Visitors" value={totalVisitors.toLocaleString()} icon={Users} change={`${visitorsChange >= 0 ? '+' : ''}${visitorsChange.toFixed(1)}%`} changeType={visitorsChange >= 0 ? 'increase' : 'decrease'} />
           </div>
         </div>
         <KpiModals activeModal={activeModal} />
       </Dialog>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <Card className="lg:col-span-3">
-            <CardHeader>
-                <CardTitle>Order vs Sales</CardTitle>
-            </CardHeader>
-            <CardContent className="px-1 sm:px-2">
-  <ChartContainer
-    config={chartConfig}
-    className="relative h-[180px] sm:h-[300px] w-full overflow-hidden"
-  >
-    
-      <ComposedChart
-        data={monthlyChartData}
-        margin={{ left: 0, right: 0, top: 10, bottom: 0 }}
-      >
-        <defs>
-          <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-orders)" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="var(--color-orders)" stopOpacity={0.1} />
-          </linearGradient>
-          <filter id="shadowSales" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow
-              dx="0"
-              dy="2"
-              stdDeviation="2"
-              floodColor="var(--color-sales)"
-              floodOpacity="0.3"
-            />
-          </filter>
-        </defs>
+          <CardHeader>
+            <CardTitle>Order vs Sales</CardTitle>
+          </CardHeader>
+          <CardContent className="px-1 sm:px-2">
+            <ChartContainer
+              config={chartConfig}
+              className="relative h-[180px] sm:h-[300px] w-full overflow-hidden"
+            >
 
-        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <ComposedChart
+                data={monthlyChartData}
+                margin={{ left: 0, right: 0, top: 10, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-orders)" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="var(--color-orders)" stopOpacity={0.1} />
+                  </linearGradient>
+                  <filter id="shadowSales" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow
+                      dx="0"
+                      dy="2"
+                      stdDeviation="2"
+                      floodColor="var(--color-sales)"
+                      floodOpacity="0.3"
+                    />
+                  </filter>
+                </defs>
 
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) => value.slice(0, 3)}
-        />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
 
-        <YAxis
-          yAxisId="sales"
-          orientation="right"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          width={60}
-          domain={[0, 'dataMax + 5000']}
-          tickFormatter={(value) => `₹${Number(value) / 1000}k`}
-        />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => value.slice(0, 3)}
+                />
 
-        <YAxis
-          yAxisId="orders"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          width={60}
-          domain={[0, 'dataMax + 50']}
-        />
+                <YAxis
+                  yAxisId="sales"
+                  orientation="right"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  width={60}
+                  domain={[0, 'dataMax + 5000']}
+                  tickFormatter={(value) => `₹${Number(value) / 1000}k`}
+                />
 
-        <Tooltip
-          content={
-            <ChartTooltipContent
-              formatter={(value, name) =>
-                name === 'sales'
-                  ? `₹${Number(value).toLocaleString()}`
-                  : value
-              }
-              cursor={false}
-            />
-          }
-        />
+                <YAxis
+                  yAxisId="orders"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  width={60}
+                  domain={[0, 'dataMax + 50']}
+                />
 
-        <Legend />
+                <Tooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value, name) =>
+                        name === 'sales'
+                          ? `₹${Number(value).toLocaleString()}`
+                          : value
+                      }
+                      cursor={false}
+                    />
+                  }
+                />
 
-        <Bar
-          dataKey="orders"
-          yAxisId="orders"
-          fill="url(#colorOrders)"
-          radius={4}
-          barSize={20}
-        />
+                <Legend />
 
-        <Line
-          type="monotone"
-          yAxisId="sales"
-          dataKey="sales"
-          stroke="var(--color-sales)"
-          strokeWidth={2}
-          dot={false}
-          filter="url(#shadowSales)"
-        />
-      </ComposedChart>
-    
-  </ChartContainer>
-</CardContent>
+                <Bar
+                  dataKey="orders"
+                  yAxisId="orders"
+                  fill="url(#colorOrders)"
+                  radius={4}
+                  barSize={20}
+                />
+
+                <Line
+                  type="monotone"
+                  yAxisId="sales"
+                  dataKey="sales"
+                  stroke="var(--color-sales)"
+                  strokeWidth={2}
+                  dot={false}
+                  filter="url(#shadowSales)"
+                />
+              </ComposedChart>
+
+            </ChartContainer>
+          </CardContent>
 
         </Card>
-        
-         <Card className="lg:col-span-2 hidden lg:block">
-            <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>All the orders from your store.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableBody>
-                    {ordersLoading ? (
-                        <TableRow>
-                            <TableCell colSpan={2} className="h-24 text-center">
-                                <Loader2 className="mx-auto h-8 w-8 animate-spin" />
-                            </TableCell>
-                        </TableRow>
-                    ) : recentOrders.length > 0 ? (
-                       recentOrders.map(order => (
-                         <TableRow key={order.id}>
-                           <TableCell>
-                             <div className="font-medium">{order.customerName}</div>
-                             <div className="text-sm text-muted-foreground">{order.id.substring(0, 7)}...</div>
-                           </TableCell>
-                           <TableCell className="text-right font-medium"><span className="font-currency">₹</span>{formatPrice(order.totalAmount || 0)}</TableCell>
-                         </TableRow>
-                       ))
-                    ) : (
-                         <TableRow>
-                            <TableCell colSpan={2} className="text-center">No recent orders.</TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
-            </CardContent>
+
+        <Card className="lg:col-span-2 hidden lg:block">
+          <CardHeader>
+            <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>All the orders from your store.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableBody>
+                {ordersLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="h-24 text-center">
+                      <Loader2 className="mx-auto h-8 w-8 animate-spin" />
+                    </TableCell>
+                  </TableRow>
+                ) : recentOrders.length > 0 ? (
+                  recentOrders.map(order => (
+                    <TableRow key={order.id}>
+                      <TableCell>
+                        <div className="font-medium">{order.customerName}</div>
+                        <div className="text-sm text-muted-foreground">{order.id.substring(0, 7)}...</div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium"><span className="font-currency">₹</span>{formatPrice(order.totalAmount || 0)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center">No recent orders.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
       </div>
 
@@ -611,11 +715,10 @@ export default function AdminDashboardPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => handleMobileTabChange(tab.key)}
-                className={`flex-1 px-3 py-2 text-xs font-medium rounded-full transition-all ${
-                  isActive
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-full transition-all ${isActive
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -625,14 +728,14 @@ export default function AdminDashboardPage() {
 
         <div className="relative overflow-hidden">
           <AnimatePresence initial={false} custom={swipeDirection}>
-          <motion.div
-  key={activeMobileTab}
-  initial={{ opacity: 0, y: 8 }}
-  animate={{ opacity: 1, y: 0 }}
-  exit={{ opacity: 0, y: -8 }}
-  transition={{ duration: 0.2 }}
-  className="w-full"
->
+            <motion.div
+              key={activeMobileTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
 
               {activeMobileTab === 'recent' && (
                 <Card className="hidden sm:block">
@@ -740,13 +843,13 @@ export default function AdminDashboardPage() {
                 </Card>
               )}
 
-              {activeMobileTab === 'reviews' && <CustomerReviews />}
+              {activeMobileTab === 'reviews' && <CustomerReviews reviews={allReviews || []} />}
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
-       <div className="hidden lg:grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="hidden lg:grid grid-cols-1 xl:grid-cols-3 gap-6">
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle>Top Selling Products</CardTitle>
@@ -772,12 +875,12 @@ export default function AdminDashboardPage() {
                     <TableCell>
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center">
-                           <Image
-                              src={product.image.url as string}
-                              alt={product.name}
-                              width={40}
-                              height={40}
-                              className="rounded-full object-contain p-1"
+                          <Image
+                            src={product.image.url as string}
+                            alt={product.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full object-contain p-1"
                           />
                         </div>
                         <span className="font-medium">{product.name}</span>
@@ -799,161 +902,24 @@ export default function AdminDashboardPage() {
             </Table>
           </CardContent>
         </Card>
-        <CustomerReviews />
+        <CustomerReviews reviews={allReviews || []} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Site Content Management</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-          ) : (
-            <>
-              {/* Hero Slides Management */}
-              <div>
-                <h3 className="font-semibold mb-4 text-lg">Hero Slides</h3>
-                <div className="space-y-4">
-                  {heroSlides.map((slide, index) => (
-                    <div key={slide.id} className="p-4 border rounded-lg space-y-4 relative">
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 h-7 w-7"
-                        onClick={() => removeHeroSlide(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>Image</Label>
-                          {slide.imageUrl && (
-                            <Image
-                              src={slide.imageUrl}
-                              alt="Hero Slide"
-                              width={150}
-                              height={150}
-                              className="rounded-md object-cover"
-                            />
-                          )}
-                          <Input
-                            type="file"
-                            onChange={(e) => e.target.files && handleHeroImageUpload(index, e.target.files[0])}
-                            disabled={isUploading}
-                          />
-                        </div>
-                        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           <div className="space-y-2">
-                            <Label>Headline</Label>
-                            <Input
-                              value={slide.headline}
-                              onChange={(e) => handleHeroSlideChange(index, 'headline', e.target.value)}
-                              placeholder="Hero Headline"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Tagline</Label>
-                            <Input
-                              value={slide.tagline}
-                              onChange={(e) => handleHeroSlideChange(index, 'tagline', e.target.value)}
-                              placeholder="Catchy Tagline"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>CTA Button Text</Label>
-                            <Input
-                              value={slide.cta}
-                              onChange={(e) => handleHeroSlideChange(index, 'cta', e.target.value)}
-                              placeholder="e.g., Shop Now"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>CTA Link</Label>
-                            <Input
-                              value={slide.link}
-                              onChange={(e) => handleHeroSlideChange(index, 'link', e.target.value)}
-                              placeholder="e.g., /products/my-product"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button onClick={addHeroSlide} variant="outline" className="mt-4">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Hero Slide
-                </Button>
-              </div>
+      <SiteContentManagement
+        heroSlides={heroSlides}
+        selectedDealIds={selectedDealIds}
+        products={products}
+        isLoading={isLoading}
+        isUploading={isUploading}
+        onDealSelection={handleDealSelection}
+        onHeroSlideChange={handleHeroSlideChange}
+        onAddHeroSlide={addHeroSlide}
+        onRemoveHeroSlide={removeHeroSlide}
+        onRestoreDefaults={restoreHeroDefaults}
+        onSaveChanges={handleSaveChanges}
+      />
 
-              {/* Deals of the Day Management */}
-              <div>
-                <h3 className="font-semibold mb-4 text-lg">"Deal of the Day" Products</h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {products.map((product) => (
-                    <div key={`deal-${product.id}`} className="flex items-center gap-3 rounded-md border p-2">
-                      <Checkbox
-                        id={`deal-${product.id}`}
-                        checked={selectedDealIds.includes(product.id)}
-                        onCheckedChange={() => handleDealSelection(product.id)}
-                      />
-                      <Label htmlFor={`deal-${product.id}`} className="flex-1 cursor-pointer text-sm">
-                        {product.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-        <CardFooter>
-            <Button onClick={handleSaveChanges} disabled={isLoading || isUploading}>
-              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-              Save Changes
-            </Button>
-        </CardFooter>
-      </Card>
-
-      {/* Mobile-only Products List */}
-<div className="sm:hidden space-y-3">
-  {sortedProducts.map((product) => (
-    <Card key={product.id}>
-      <CardContent className="flex items-center gap-3 p-3">
-        <Image
-          src={product.image.url as string}
-          alt={product.name}
-          width={40}
-          height={40}
-          className="rounded-md object-cover"
-        />
-
-        <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{product.name}</p>
-          <p className="text-sm text-muted-foreground">
-            ₹{formatPrice(product.defaultPrice)}
-          </p>
-        </div>
-
-        <Button
-          asChild
-          variant="ghost"
-          className="h-8 w-8 p-0"
-        >
-          <Link href={`/admin/products/edit/${product.id}`}>
-            <Edit className="h-4 w-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  ))}
-</div>
-
-
-
-       <Card className="hidden sm:block">
+      <Card className="hidden sm:block">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
             <CardTitle>Products Overview</CardTitle>
@@ -965,31 +931,31 @@ export default function AdminDashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="hidden lg:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('dateAdded')}>
-                        Date Added <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Button variant="ghost" onClick={() => requestSort('dateAdded')}>
+                    Date Added <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
                 </TableHead>
                 <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('name')}>
-                        Product Name <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Button variant="ghost" onClick={() => requestSort('name')}>
+                    Product Name <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
                 </TableHead>
                 <TableHead className="hidden sm:table-cell">Product ID</TableHead>
                 <TableHead className="hidden sm:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('defaultPrice')}>
-                        Price <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Button variant="ghost" onClick={() => requestSort('defaultPrice')}>
+                    Price <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
                 </TableHead>
                 <TableHead className="hidden md:table-cell">Status</TableHead>
                 <TableHead className="hidden lg:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('sales')}>
-                        Sales <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Button variant="ghost" onClick={() => requestSort('sales')}>
+                    Sales <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
                 </TableHead>
                 <TableHead className="text-right hidden lg:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('revenue')}>
-                        Revenue <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Button variant="ghost" onClick={() => requestSort('revenue')}>
+                    Revenue <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
                 </TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
@@ -1001,9 +967,9 @@ export default function AdminDashboardPage() {
                     <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                   </TableCell>
                 </TableRow>
-              ) : sortedProducts.map((product, index) => (
+              ) : sortedProducts.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell className="text-muted-foreground hidden lg:table-cell">{new Date(product.dateAdded).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-muted-foreground hidden lg:table-cell">{product.dateAdded && typeof product.dateAdded === 'string' ? new Date(product.dateAdded).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Image
@@ -1018,7 +984,7 @@ export default function AdminDashboardPage() {
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden sm:table-cell">#{product.id.substring(0, 8)}</TableCell>
                   <TableCell className="hidden sm:table-cell">
-                     <span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}
+                    <span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
@@ -1029,50 +995,46 @@ export default function AdminDashboardPage() {
                   <TableCell className="text-right hidden lg:table-cell"><span className="font-currency">₹</span>{formatPrice(product.revenue)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200">
-                                    <Eye className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                             <DialogContent className="max-w-4xl w-full p-0">
-                                <DialogHeader className="sr-only">
-                                  <DialogTitle>{product.name}</DialogTitle>
-                                  <DialogDescription>Details for {product.name}</DialogDescription>
-                                </DialogHeader>
-                                <ProductDetails product={product} />
-                            </DialogContent>
-                        </Dialog>
-                        <Button asChild variant="ghost" className="h-8 w-8 p-0 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200">
-                            <Link href={`/admin/products/edit/${product.id}`}>
-                                <Edit className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <Button variant="ghost" className="h-8 w-8 p-0 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the
-                                product "{product.name}".
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(product as WithId<Product>)}
-                                className="bg-destructive hover:bg-destructive/90"
-                              >
-                                Yes, delete product
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl w-full p-0">
+                          <ProductDetails product={product} />
+                        </DialogContent>
+                      </Dialog>
+                      <Button asChild variant="ghost" className="h-8 w-8 p-0 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200">
+                        <Link href={`/admin/products/edit/${product.id}`}>
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the
+                              product "{product.name}".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(product)}
+                              className="bg-destructive hover:bg-destructive/90"
+                            >
+                              Yes, delete product
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1081,20 +1043,19 @@ export default function AdminDashboardPage() {
           </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
-            <div>
-                showing {products.length} Entries
-            </div>
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">Prev</Button>
-                <Button variant="outline" size="sm" className="bg-primary/10 text-primary">1</Button>
-                <Button variant="outline" size="sm">2</Button>
-                <Button variant="outline" size="sm">3</Button>
-                <Button variant="outline" size="sm">Next</Button>
-            </div>
+          <div>
+            showing {products.length} Entries
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">Prev</Button>
+            <Button variant="outline" size="sm" className="bg-primary/10 text-primary">1</Button>
+            <Button variant="outline" size="sm">2</Button>
+            <Button variant="outline" size="sm">3</Button>
+            <Button variant="outline" size="sm">Next</Button>
+          </div>
         </CardFooter>
       </Card>
     </div>
   );
 }
 
-    

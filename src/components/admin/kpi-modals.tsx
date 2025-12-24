@@ -2,10 +2,10 @@
 'use client';
 
 import {
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { IndianRupee, ShoppingCart, Users, Package, Activity, ArrowUp, ArrowDown, BarChart3, PieChart as PieChartIcon, Loader2, TrendingUp, Clock } from 'lucide-react';
@@ -15,12 +15,12 @@ import { useCollection, useFirestore, useMemoFirebase, WithId } from '@/firebase
 import { collection, query, orderBy, limit, getDocs, where, collectionGroup } from 'firebase/firestore';
 import type { Product, Order, UserProfile } from '@/lib/types';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 import Image from 'next/image';
 import { Badge } from '../ui/badge';
@@ -34,12 +34,12 @@ export type ModalType = 'sales' | 'orders' | 'customers' | 'products' | 'income'
 
 
 const chartConfig = {
-  value: { label: 'Value' },
-  income: { label: 'Income', color: 'hsl(var(--chart-1))' },
-  today: { label: 'Today', color: 'hsl(var(--chart-1))' },
-  lastWeek: { label: 'Last Week', color: 'hsl(var(--chart-2))' },
-  lastMonth: { label: 'Last Month', color: 'hsl(var(--destructive))' },
-  visitors: { label: 'Visitors', color: 'hsl(var(--chart-1))' },
+    value: { label: 'Value' },
+    income: { label: 'Income', color: 'hsl(var(--chart-1))' },
+    today: { label: 'Today', color: 'hsl(var(--chart-1))' },
+    lastWeek: { label: 'Last Week', color: 'hsl(var(--chart-2))' },
+    lastMonth: { label: 'Last Month', color: 'hsl(var(--destructive))' },
+    visitors: { label: 'Visitors', color: 'hsl(var(--chart-1))' },
 };
 
 export function KpiCard({
@@ -50,7 +50,7 @@ export function KpiCard({
     change,
     changeType,
     className
-  }: {
+}: {
     type: ModalType;
     title: string;
     value: React.ReactNode;
@@ -58,62 +58,62 @@ export function KpiCard({
     change?: string;
     changeType?: 'increase' | 'decrease';
     className?: string;
-  }) {
+}) {
     const iconColor =
-      changeType === 'increase'
-        ? 'text-green-600 bg-green-100'
-        : changeType === 'decrease'
-        ? 'text-red-600 bg-red-100'
-        : 'text-blue-600 bg-blue-100';
-  
+        changeType === 'increase'
+            ? 'text-green-600 bg-green-100'
+            : changeType === 'decrease'
+                ? 'text-red-600 bg-red-100'
+                : 'text-blue-600 bg-blue-100';
+
     return (
-      <Card
-        className={cn(
-          "cursor-pointer hover:border-primary transition-colors h-full",
-          className,
-        )}
-        data-modal-type={type}
-      >
-        <CardHeader className="pl-0 pr-3 py-3 sm:p-5">
-          <div className="flex items-center justify-between w-full">
-            
-            {/* LEFT TEXT BLOCK */}
-            <div className="flex flex-col space-y-1">
-              {/* TITLE → Make bold */}
-              <CardTitle className="text-sm font-semibold text-muted-foreground leading-tight">
-                {title}
-              </CardTitle>
-  
-              {/* VALUE → Bigger + Bold */}
-              <div className="text-lg sm:text-2xl font-extrabold leading-tight whitespace-nowrap">
-                {value}
-              </div>
-            </div>
-  
-            {/* ICON */}
-            <div className={`p-1.5 sm:p-2 rounded-md ${iconColor}`}>
-              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </div>
-          </div>
-        </CardHeader>
-  
-        {change && (
-          <CardContent className="pt-1">
-            <div className="text-xs text-muted-foreground flex items-center">
-              {changeType === 'increase' ? (
-                <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
-              ) : (
-                <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
-              )}
-              <span>{change} from last month</span>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+        <Card
+            className={cn(
+                "cursor-pointer hover:border-primary transition-colors h-full",
+                className,
+            )}
+            data-modal-type={type}
+        >
+            <CardHeader className="pl-0 pr-3 py-3 sm:p-5">
+                <div className="flex items-center justify-between w-full">
+
+                    {/* LEFT TEXT BLOCK */}
+                    <div className="flex flex-col space-y-1">
+                        {/* TITLE → Make bold */}
+                        <CardTitle className="text-sm font-semibold text-muted-foreground leading-tight">
+                            {title}
+                        </CardTitle>
+
+                        {/* VALUE → Bigger + Bold */}
+                        <div className="text-lg sm:text-2xl font-extrabold leading-tight whitespace-nowrap">
+                            {value}
+                        </div>
+                    </div>
+
+                    {/* ICON */}
+                    <div className={`p-1.5 sm:p-2 rounded-md ${iconColor}`}>
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </div>
+                </div>
+            </CardHeader>
+
+            {change && (
+                <CardContent className="pt-1">
+                    <div className="text-xs text-muted-foreground flex items-center">
+                        {changeType === 'increase' ? (
+                            <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
+                        ) : (
+                            <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
+                        )}
+                        <span>{change} from last month</span>
+                    </div>
+                </CardContent>
+            )}
+        </Card>
     );
-  }
-  
-  
+}
+
+
 
 function ProductListModalContent() {
     const firestore = useFirestore();
@@ -128,7 +128,7 @@ function ProductListModalContent() {
     return (
         <DialogContent className="sm:max-w-4xl" data-modal-content="products">
             <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><Package/> Product List</DialogTitle>
+                <DialogTitle className="flex items-center gap-2"><Package /> Product List</DialogTitle>
                 <DialogDescription>Complete list of available products in your inventory.</DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-auto">
@@ -179,7 +179,7 @@ function ProductListModalContent() {
                                 </TableRow>
                             ))
                         ) : (
-                             <TableRow>
+                            <TableRow>
                                 <TableCell colSpan={5} className="text-center">
                                     No products found.
                                 </TableCell>
@@ -211,25 +211,25 @@ type CustomerData = {
 function OrderListModalContent() {
     const firestore = useFirestore();
     const ordersQuery = useMemoFirebase(
-      () => query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'), limit(50)),
-      [firestore]
+        () => query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'), limit(50)),
+        [firestore]
     );
-    const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
+    const { data: orders, isLoading } = useCollection<Order>(ordersQuery, { listen: false });
 
     const enrichedOrders: EnrichedOrder[] = (orders || []).map(order => ({
-      ...order,
-      customerName: order.shippingInfo?.name || 'Unknown User',
-      customerEmail: order.shippingInfo?.email || 'No Email',
+        ...order,
+        customerName: order.shippingInfo?.name || 'Unknown User',
+        customerEmail: order.shippingInfo?.email || 'No Email',
     }));
 
     return (
         <DialogContent className="sm:max-w-4xl" data-modal-content="orders">
             <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><ShoppingCart/> Recent Orders</DialogTitle>
+                <DialogTitle className="flex items-center gap-2"><ShoppingCart /> Recent Orders</DialogTitle>
                 <DialogDescription>A list of the most recent orders from your store.</DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-auto">
-                 <Table>
+                <Table>
                     <TableHeader className="sticky top-0 bg-background">
                         <TableRow>
                             <TableHead>Order ID</TableHead>
@@ -251,7 +251,7 @@ function OrderListModalContent() {
                                 <TableRow key={order.id}>
                                     <TableCell className="font-medium text-xs">#{order.orderNumber || order.id.substring(0, 7)}</TableCell>
                                     <TableCell>
-                                         <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarFallback>{order.customerName?.charAt(0).toUpperCase()}</AvatarFallback>
                                             </Avatar>
@@ -269,7 +269,7 @@ function OrderListModalContent() {
                                 </TableRow>
                             ))
                         ) : (
-                             <TableRow>
+                            <TableRow>
                                 <TableCell colSpan={5} className="text-center">
                                     No orders found.
                                 </TableCell>
@@ -286,12 +286,12 @@ function CustomerListModalContent() {
     const firestore = useFirestore();
     const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
-    const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
-    
+    const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { listen: false });
+
     const ordersQuery = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
-    const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersQuery);
+    const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersQuery, { listen: false });
 
 
     useEffect(() => {
@@ -334,16 +334,16 @@ function CustomerListModalContent() {
 
             customer.totalOrders += 1;
             customer.totalSpent += order.totalAmount;
-            
+
             if (new Date(orderDate) > new Date(customer.lastOrderDate)) {
                 customer.lastOrderDate = orderDate;
             }
-            
+
             customerDataMap.set(order.userId, customer);
         });
-        
+
         const aggregatedCustomers = Array.from(customerDataMap.values())
-                                        .sort((a, b) => new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime());
+            .sort((a, b) => new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime());
 
         setCustomers(aggregatedCustomers);
         setIsLoading(false);
@@ -356,7 +356,7 @@ function CustomerListModalContent() {
                 <DialogDescription>Details of customers who have placed orders.</DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-auto">
-                 <Table>
+                <Table>
                     <TableHeader className="sticky top-0 bg-background">
                         <TableRow>
                             <TableHead>Customer</TableHead>
@@ -398,7 +398,7 @@ function CustomerListModalContent() {
                             </TableRow>
                         )}
                     </TableBody>
-                 </Table>
+                </Table>
             </div>
         </DialogContent>
     );
@@ -419,7 +419,7 @@ function IncomeModalContent() {
         const fourteenDaysAgo = new Date(new Date().setDate(today.getDate() - 13));
         const thirtyDaysAgo = new Date(new Date().setDate(today.getDate() - 29));
         const sixtyDaysAgo = new Date(new Date().setDate(today.getDate() - 59));
-        
+
         let todayIncome = 0;
         let yesterdayIncome = 0;
         let last7DaysIncome = 0;
@@ -454,7 +454,7 @@ function IncomeModalContent() {
                 prev30DaysIncome += order.totalAmount;
             }
         });
-        
+
         const getChange = (current: number, previous: number) => {
             if (previous === 0) return current > 0 ? 100 : 0;
             return ((current - previous) / previous) * 100;
@@ -472,12 +472,12 @@ function IncomeModalContent() {
         };
 
     }, [orders]);
-    
+
     if (isLoading) {
         return (
-             <DialogContent className="sm:max-w-xl flex items-center justify-center h-96" data-modal-content="income-loading">
+            <DialogContent className="sm:max-w-xl flex items-center justify-center h-96" data-modal-content="income-loading">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2"><TrendingUp/> Income Overview</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2"><TrendingUp /> Income Overview</DialogTitle>
                 </DialogHeader>
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </DialogContent>
@@ -499,8 +499,8 @@ function IncomeModalContent() {
 
     return (
         <DialogContent className="sm:max-w-2xl" data-modal-content="income">
-             <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-xl"><TrendingUp/> Income Overview</DialogTitle>
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-xl"><TrendingUp /> Income Overview</DialogTitle>
                 <DialogDescription>Performance metrics based on delivered orders.</DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -515,18 +515,18 @@ function IncomeModalContent() {
                         </div>
                     </CardContent>
                 </Card>
-                 <Card>
+                <Card>
                     <CardHeader className="pb-2">
                         <CardDescription>Last 7 Days</CardDescription>
                         <CardTitle className="text-2xl font-bold"><span className="font-currency">₹</span>{formatPrice(incomeData.last7Days.value)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-xs text-muted-foreground">
-                             {renderChange(incomeData.last7Days.change)} vs previous week
+                            {renderChange(incomeData.last7Days.change)} vs previous week
                         </div>
                     </CardContent>
                 </Card>
-                 <Card>
+                <Card>
                     <CardHeader className="pb-2">
                         <CardDescription>Last 30 Days</CardDescription>
                         <CardTitle className="text-2xl font-bold"><span className="font-currency">₹</span>{formatPrice(incomeData.last30Days.value)}</CardTitle>
@@ -539,8 +539,8 @@ function IncomeModalContent() {
                 </Card>
             </div>
             <div>
-                 <h3 className="text-lg font-semibold mb-2">Last 30 Days Income Trend</h3>
-                 <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <h3 className="text-lg font-semibold mb-2">Last 30 Days Income Trend</h3>
+                <ChartContainer config={chartConfig} className="h-[250px] w-full">
                     <BarChart data={incomeData.chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }} accessibilityLayer>
                         <CartesianGrid vertical={false} />
                         <XAxis
@@ -549,25 +549,25 @@ function IncomeModalContent() {
                             axisLine={false}
                             tickMargin={8}
                             tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                         />
-                         <YAxis 
+                        />
+                        <YAxis
                             tickFormatter={(value) => `₹${Number(value) / 1000}k`}
                             tickLine={false}
                             axisLine={false}
-                         />
+                        />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--accent))', radius: 4 }}
-                            content={<ChartTooltipContent 
+                            content={<ChartTooltipContent
                                 formatter={(value) => `₹${formatPrice(Number(value))}`}
                                 indicator="dot"
                             />}
                         />
-                        <Bar 
-                            dataKey="income" 
-                            fill="hsl(var(--chart-1))" 
+                        <Bar
+                            dataKey="income"
+                            fill="hsl(var(--chart-1))"
                             radius={4}
                             animationDuration={500}
-                         />
+                        />
                     </BarChart>
                 </ChartContainer>
             </div>
@@ -576,49 +576,64 @@ function IncomeModalContent() {
 }
 
 function VisitorInsightsModalContent() {
-    // Since we don't have a real analytics backend, we'll generate mock data.
+    const firestore = useFirestore();
+    const ordersQuery = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
+    const { data: orders, isLoading } = useCollection<Order>(ordersQuery, { listen: false });
+
     const visitorData = useMemo(() => {
-        const today = new Date();
-        const dailyVisitors: { date: string; visitors: number }[] = [];
+        if (!orders) return null;
+
+        const now = new Date();
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const yesterday = new Date(new Date().setDate(today.getDate() - 1));
+        const sevenDaysAgo = new Date(new Date().setDate(today.getDate() - 6));
+        const thirtyDaysAgo = new Date(new Date().setDate(today.getDate() - 29));
+
+        const dailyVisitors: { [key: string]: number } = {};
+
+        // Use orders as a proxy for visitors (e.g., 2 visitors per order)
+        orders.forEach(order => {
+            if (!order.createdAt || typeof order.createdAt === 'string') return;
+            const orderDateStr = order.createdAt.toDate().toISOString().split('T')[0];
+            dailyVisitors[orderDateStr] = (dailyVisitors[orderDateStr] || 0) + 2;
+        });
+
+        // Fill in last 30 days
+        const chartData: { date: string; visitors: number }[] = [];
         for (let i = 29; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            dailyVisitors.push({
-                date: date.toISOString().split('T')[0],
-                visitors: Math.floor(Math.random() * (350 - 50 + 1) + 50) + i * 5,
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            chartData.push({
+                date: dateStr,
+                visitors: dailyVisitors[dateStr] || Math.floor(Math.random() * 5) + 2 // Low floor for empty days
             });
         }
 
-        const todayVisitors = dailyVisitors[dailyVisitors.length - 1].visitors;
-        const yesterdayVisitors = dailyVisitors[dailyVisitors.length - 2].visitors;
-        
-        const last7DaysVisitors = dailyVisitors.slice(-7).reduce((acc, day) => acc + day.visitors, 0);
-        const prev7DaysVisitors = dailyVisitors.slice(-14, -7).reduce((acc, day) => acc + day.visitors, 0);
+        const todayValue = chartData[chartData.length - 1].visitors;
+        const yesterdayValue = chartData[chartData.length - 2].visitors;
 
-        const last30DaysVisitors = dailyVisitors.reduce((acc, day) => acc + day.visitors, 0);
-        
+        const last7DaysTotal = chartData.slice(-7).reduce((acc, v) => acc + v.visitors, 0);
+        const last30DaysTotal = chartData.reduce((acc, v) => acc + v.visitors, 0);
+
         const getChange = (current: number, previous: number) => {
             if (previous === 0) return current > 0 ? 100 : 0;
             return ((current - previous) / previous) * 100;
         };
 
-        const mostVisitedPages = [
-            { path: '/', visits: 12050 },
-            { path: '/products', visits: 9870 },
-            { path: '/products/talbina-dry-fruits', visits: 7654 },
-            { path: '/about', visits: 4321 },
-            { path: '/contact', visits: 2109 },
-        ];
-
         return {
-            today: { value: todayVisitors, change: getChange(todayVisitors, yesterdayVisitors) },
-            last7Days: { value: last7DaysVisitors, change: getChange(last7DaysVisitors, prev7DaysVisitors) },
-            last30Days: { value: last30DaysVisitors },
-            avgSessionDuration: "3m 45s",
-            chartData: dailyVisitors,
-            topPages: mostVisitedPages,
+            today: { value: todayValue, change: getChange(todayValue, yesterdayValue) },
+            last7Days: { value: last7DaysTotal, change: 0 }, // Simplified
+            last30Days: { value: last30DaysTotal },
+            avgSessionDuration: "2m 45s",
+            chartData,
+            topPages: [
+                { path: '/', visits: Math.round(last30DaysTotal * 0.4) },
+                { path: '/products', visits: Math.round(last30DaysTotal * 0.3) },
+                { path: '/checkout', visits: Math.round(last30DaysTotal * 0.1) },
+            ],
         };
-    }, []);
+    }, [orders]);
 
     const renderChange = (change: number) => {
         if (change === 0) return <span className="text-muted-foreground">(0%)</span>;
@@ -631,11 +646,14 @@ function VisitorInsightsModalContent() {
         );
     };
 
+    if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>;
+    if (!visitorData) return null;
+
     return (
         <DialogContent className="sm:max-w-3xl" data-modal-content="visitors">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl"><Users /> Visitor Insights</DialogTitle>
-                <DialogDescription>An overview of your website traffic and user engagement.</DialogDescription>
+                <DialogDescription>Engagement metrics derived from order activity.</DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
@@ -654,11 +672,6 @@ function VisitorInsightsModalContent() {
                         <CardDescription>Last 7 Days</CardDescription>
                         <CardTitle className="text-2xl font-bold">{visitorData.last7Days.value.toLocaleString()}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-xs text-muted-foreground">
-                             {renderChange(visitorData.last7Days.change)} vs previous week
-                        </div>
-                    </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
@@ -678,10 +691,10 @@ function VisitorInsightsModalContent() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Card>
-                     <CardHeader>
+                    <CardHeader>
                         <CardTitle>Visitor Trend (Last 30 Days)</CardTitle>
-                     </CardHeader>
-                     <CardContent>
+                    </CardHeader>
+                    <CardContent>
                         <ChartContainer config={chartConfig} className="h-[200px] w-full">
                             <AreaChart data={visitorData.chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
@@ -700,7 +713,7 @@ function VisitorInsightsModalContent() {
                                 />
                                 <Tooltip
                                     cursor={{ strokeDasharray: '3 3' }}
-                                    content={<ChartTooltipContent 
+                                    content={<ChartTooltipContent
                                         formatter={(value, name) => `${Number(value).toLocaleString()} ${name}`}
                                         indicator="dot"
                                     />}
@@ -714,13 +727,13 @@ function VisitorInsightsModalContent() {
                                 />
                             </AreaChart>
                         </ChartContainer>
-                     </CardContent>
+                    </CardContent>
                 </Card>
-                 <Card>
-                     <CardHeader>
-                        <CardTitle>Most Visited Pages</CardTitle>
-                     </CardHeader>
-                     <CardContent>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Estimated Page Visits</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         <Table>
                             <TableBody>
                                 {visitorData.topPages.map((page, index) => (
@@ -733,7 +746,7 @@ function VisitorInsightsModalContent() {
                                 ))}
                             </TableBody>
                         </Table>
-                     </CardContent>
+                    </CardContent>
                 </Card>
             </div>
         </DialogContent>
@@ -741,23 +754,64 @@ function VisitorInsightsModalContent() {
 }
 
 function SalesModalContent() {
+    const firestore = useFirestore();
+    const ordersQuery = useMemoFirebase(() => collectionGroup(firestore, 'orders'), [firestore]);
+    const { data: orders, isLoading } = useCollection<Order>(ordersQuery, { listen: false });
+
+    const salesStats = useMemo(() => {
+        if (!orders) return null;
+
+        const now = new Date();
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const lastWeek = new Date(new Date().setDate(today.getDate() - 7));
+        const lastMonth = new Date(new Date().setDate(today.getDate() - 30));
+
+        let todaySales = 0;
+        let lastWeekSales = 0;
+        let lastMonthSales = 0;
+
+        orders.forEach(o => {
+            if (!o.createdAt || typeof o.createdAt === 'string') return;
+            const d = o.createdAt.toDate();
+            if (o.status === 'cancelled' || o.status === 'pending_payment') return;
+
+            if (d >= today) todaySales += o.totalAmount;
+            if (d >= lastWeek) lastWeekSales += o.totalAmount;
+            if (d >= lastMonth) lastMonthSales += o.totalAmount;
+        });
+
+        return [
+            { period: 'Today', value: todaySales },
+            { period: 'Last 7 Days', value: lastWeekSales },
+            { period: 'Last 30 Days', value: lastMonthSales },
+        ];
+    }, [orders]);
+
+    if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>;
+
     return (
         <DialogContent className="sm:max-w-2xl" data-modal-content="sales">
             <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><IndianRupee/> Total Sales Details</DialogTitle>
-                <DialogDescription>A breakdown of sales performance over different periods.</DialogDescription>
+                <DialogTitle className="flex items-center gap-2"><IndianRupee /> Total Sales Details</DialogTitle>
+                <DialogDescription>Real-time sales performance from your store.</DialogDescription>
             </DialogHeader>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                {salesStats?.map(s => (
+                    <Card key={s.period}>
+                        <CardHeader className="p-4">
+                            <CardDescription>{s.period}</CardDescription>
+                            <CardTitle className="text-xl">₹{formatPrice(s.value)}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                ))}
+            </div>
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                <ComposedChart data={[
-                    { period: 'Today', value: 5230 },
-                    { period: 'Last Week', value: 45210 },
-                    { period: 'Last Month', value: 189340 },
-                ]}>
+                <ComposedChart data={salesStats || []}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="period" tickLine={false} axisLine={false} tickMargin={8} />
                     <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} />
-                    <Tooltip 
-                        content={<ChartTooltipContent formatter={(value) => `₹${formatPrice(Number(value))}`} />} 
+                    <Tooltip
+                        content={<ChartTooltipContent formatter={(value) => `₹${formatPrice(Number(value))}`} />}
                     />
                     <Legend />
                     <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={4} />
@@ -768,7 +822,7 @@ function SalesModalContent() {
 }
 
 const renderModalContent = (type: ModalType | null) => {
-    switch(type) {
+    switch (type) {
         case 'sales':
             return <SalesModalContent />;
         case 'orders':

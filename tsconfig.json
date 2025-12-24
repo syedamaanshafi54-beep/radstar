@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": [
-      "dom",  
+      "dom",
       "dom.iterable",
       "esnext"
     ],
@@ -10,6 +10,7 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "nodenext",
     "moduleResolution": "nodenext",

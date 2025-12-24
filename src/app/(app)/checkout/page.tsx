@@ -35,7 +35,7 @@ import { useUser, useFirestore, useDoc, updateUserProfile } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { formatPrice } from "@/lib/utils";
 import type { UserProfile, Order, OrderStatus } from "@/lib/types";
-import { AnimatedCheck } from "@/components/ui/animated-check";
+import OrderSuccessAnimation from "@/components/OrderSuccessAnimation";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
@@ -67,6 +67,7 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<Order | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -300,8 +301,10 @@ export default function CheckoutPage() {
 
             if (verifyResult.success) {
               clearCart();
-              toast({ title: "Payment Successful!", description: "Your order has been placed." });
-              router.push(`/order-success?orderId=${firestoreOrderId}`);
+              setShowSuccess(true);
+              setTimeout(() => {
+                router.push(`/order-success?orderId=${firestoreOrderId}`);
+              }, 3000);
             } else {
               throw new Error(verifyResult.message || "Payment verification failed.");
             }
@@ -356,6 +359,10 @@ export default function CheckoutPage() {
       if (shippingInfo.paymentMethod === "cod") {
         await placeOrderInFirestore(shippingInfo);
         clearCart();
+        setShowSuccess(true);
+        setTimeout(() => {
+          router.push('/order-success'); // Redirect to success page after animation
+        }, 3000);
       } else if (shippingInfo.paymentMethod === "razorpay") {
         await handleRazorpayPayment(shippingInfo);
       }
@@ -378,184 +385,186 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
-      <div className="text-center mb-8 md:mb-12">
-        <h1 className="text-3xl md:text-5xl font-headline font-bold">Checkout</h1>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="grid lg:grid-cols-2 gap-8 md:gap-12">
-          <div>
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Shipping Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField control={form.control} name="email" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={!!orderPlaced || isProcessing} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="firstName" render={({ field }) => (
+    <>
+      {showSuccess && <OrderSuccessAnimation />}
+      <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-5xl font-headline font-bold">Checkout</h1>
+        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="grid lg:grid-cols-2 gap-8 md:gap-12">
+            <div>
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>Shipping Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled={!!orderPlaced || isProcessing} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <FormField control={form.control} name="lastName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <FormField control={form.control} name="address" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="grid sm:grid-cols-3 gap-4">
-                  <FormField control={form.control} name="city" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="state" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State</FormLabel>
-                      <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="zip" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ZIP Code</FormLabel>
-                      <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-background">
-                        <span className="px-3 text-muted-foreground">+91</span>
-                        <Input
-                          {...field}
-                          type="tel"
-                          disabled={!!orderPlaced || isProcessing}
-                          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                          onChange={(e) => {
-                            const numeric = e.target.value.replace(/[^0-9]/g, "");
-                            field.onChange(numeric);
-                          }}
-                          value={field.value}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Method</CardTitle>
-                <CardDescription className="font-medium">All transactions are secure and encrypted.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="grid grid-cols-1 gap-4"
-                        disabled={!!orderPlaced || isProcessing}
-                      >
-                        <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent data-[state=checked]:bg-accent data-[state=checked]:border-primary">
-                          <RadioGroupItem value="cod" id="cod" />
-                          <div>
-                            <span className="font-semibold">Cash on Delivery</span>
-                            <p className="text-sm text-muted-foreground">Pay with cash upon delivery.</p>
-                          </div>
-                        </Label>
-                        <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent data-[state=checked]:bg-accent data-[state=checked]:border-primary">
-                          <RadioGroupItem value="razorpay" id="razorpay" />
-                          <div className="flex items-center gap-2">
-                            <Image src="/razorpay-logo.svg" alt="Razorpay" width={24} height={24} />
-                            <div>
-                              <span className="font-semibold">Razorpay</span>
-                              <p className="text-sm text-muted-foreground">Credit/Debit Card, UPI, &amp; More.</p>
-                            </div>
-                          </div>
-                        </Label>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage className="pt-4" />
-                  </FormItem>
-                )} />
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="sticky top-28">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {orderPlaced ? (
-                  <div className="flex flex-col items-center justify-center text-center py-4">
-                    <AnimatedCheck />
-                    <h2 className="text-xl font-semibold mt-4">Order Placed Successfully!</h2>
-                    <p className="text-muted-foreground mb-4">You can view your order details in your account.</p>
-                    <Button asChild><a href="/account">Go to My Account</a></Button>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="firstName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="lastName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {cartItems.map(({ product, quantity, variant }) => {
-                      const price = variant?.salePrice ?? variant?.price ?? product.salePrice ?? product.defaultPrice;
-                      return (
-                        <div key={product.id + (variant?.id || '')} className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <Image src={product.image.url} alt={product.name} width={40} height={40} className="rounded-md" />
-                            <div>
-                              <p>{product.name} {variant ? `(${variant.name})` : ''}</p>
-                              <p className="text-sm text-muted-foreground">x{quantity}</p>
-                            </div>
-                          </div>
-                          <span><span className="font-currency">₹</span>{formatPrice(price * quantity)}</span>
+                  <FormField control={form.control} name="address" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <FormField control={form.control} name="city" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="state" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="zip" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ZIP Code</FormLabel>
+                        <FormControl><Input {...field} disabled={!!orderPlaced || isProcessing} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <div className="flex h-10 w-full items-center rounded-md border border-input bg-background">
+                          <span className="px-3 text-muted-foreground">+91</span>
+                          <Input
+                            {...field}
+                            type="tel"
+                            disabled={!!orderPlaced || isProcessing}
+                            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            onChange={(e) => {
+                              const numeric = e.target.value.replace(/[^0-9]/g, "");
+                              field.onChange(numeric);
+                            }}
+                            value={field.value}
+                          />
                         </div>
-                      );
-                    })}
-                    <Separator className="my-2" />
-                    <div className="flex justify-between font-semibold">
-                      <span>Total</span>
-                      <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Method</CardTitle>
+                  <CardDescription className="font-medium">All transactions are secure and encrypted.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="grid grid-cols-1 gap-4"
+                          disabled={!!orderPlaced || isProcessing}
+                        >
+                          <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent data-[state=checked]:bg-accent data-[state=checked]:border-primary">
+                            <RadioGroupItem value="cod" id="cod" />
+                            <div>
+                              <span className="font-semibold">Cash on Delivery</span>
+                              <p className="text-sm text-muted-foreground">Pay with cash upon delivery.</p>
+                            </div>
+                          </Label>
+                          <Label className="flex items-center gap-4 border rounded-md p-4 cursor-pointer hover:bg-accent data-[state=checked]:bg-accent data-[state=checked]:border-primary">
+                            <RadioGroupItem value="razorpay" id="razorpay" />
+                            <div className="flex items-center gap-2">
+                              <Image src="/razorpay-logo.svg" alt="Razorpay" width={24} height={24} />
+                              <div>
+                                <span className="font-semibold">Razorpay</span>
+                                <p className="text-sm text-muted-foreground">Credit/Debit Card, UPI, &amp; More.</p>
+                              </div>
+                            </div>
+                          </Label>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage className="pt-4" />
+                    </FormItem>
+                  )} />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              <Card className="sticky top-28">
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {orderPlaced ? (
+                    <div className="flex flex-col items-center justify-center text-center py-4">
+                      <h2 className="text-xl font-semibold mt-4 text-green-600">Order Placed!</h2>
+                      <p className="text-muted-foreground mb-4">You can view your order details in your account.</p>
+                      <Button asChild><a href="/account">Go to My Account</a></Button>
                     </div>
-                    <Button type="submit" disabled={isProcessing} className="w-full mt-4">
-                      {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place Order"}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </form>
-      </Form>
-    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {cartItems.map(({ product, quantity, variant }) => {
+                        const price = variant?.salePrice ?? variant?.price ?? product.salePrice ?? product.defaultPrice;
+                        return (
+                          <div key={product.id + (variant?.id || '')} className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <Image src={product.image.url} alt={product.name} width={40} height={40} className="rounded-md" />
+                              <div>
+                                <p>{product.name} {variant ? `(${variant.name})` : ''}</p>
+                                <p className="text-sm text-muted-foreground">x{quantity}</p>
+                              </div>
+                            </div>
+                            <span><span className="font-currency">₹</span>{formatPrice(price * quantity)}</span>
+                          </div>
+                        );
+                      })}
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-semibold">
+                        <span>Total</span>
+                        <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                      </div>
+                      <Button type="submit" disabled={isProcessing} className="w-full mt-4">
+                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place Order"}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }

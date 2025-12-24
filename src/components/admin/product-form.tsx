@@ -228,7 +228,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 name="defaultPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price (&lt;span className="font-currency"&gt;₹&lt;/span&gt;)</FormLabel>
+                    <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" {...field} />
                     </FormControl>
@@ -241,7 +241,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 name="salePrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sale Price (&lt;span className="font-currency"&gt;₹&lt;/span&gt;)</FormLabel>
+                    <FormLabel>Sale Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''} />
                     </FormControl>

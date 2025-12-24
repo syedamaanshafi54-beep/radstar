@@ -40,19 +40,19 @@ export interface InternalQuery extends Query<DocumentData> {
 }
 
 function getPathFromRef(ref: CollectionReference<DocumentData> | Query<DocumentData>): string {
-    const internalQuery = ref as unknown as InternalQuery;
-    
-    // Handle collection group queries
-    if (internalQuery._query.collectionGroup) {
-      return internalQuery._query.collectionGroup;
-    }
+  const internalQuery = ref as unknown as InternalQuery;
 
-    // Handle regular collection and query paths
-    if (internalQuery._query.path) {
-        return internalQuery._query.path.canonicalString();
-    }
-    
-    return ''; // Fallback for safety, though should not be reached with valid refs
+  // Handle collection group queries
+  if (internalQuery._query.collectionGroup) {
+    return internalQuery._query.collectionGroup;
+  }
+
+  // Handle regular collection and query paths
+  if (internalQuery._query.path) {
+    return internalQuery._query.path.canonicalString();
+  }
+
+  return ''; // Fallback for safety, though should not be reached with valid refs
 }
 
 /**
@@ -70,7 +70,7 @@ function getPathFromRef(ref: CollectionReference<DocumentData> | Query<DocumentD
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
-memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & { __memo?: boolean; }) | null | undefined, p0: { listen: boolean; },
+  memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & { __memo?: boolean; }) | null | undefined, p0: { listen: boolean; },
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
@@ -91,7 +91,7 @@ memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentDa
     // 1. Get the path from the reference.
     const path = getPathFromRef(memoizedTargetRefOrQuery);
     const isCollectionGroup = !!(memoizedTargetRefOrQuery as unknown as InternalQuery)._query.collectionGroup;
-    
+
     // 2. Add debug logging to see what path is being subscribed to.
     console.debug(`[useCollection] Subscribing to path: '${path}' (isCollectionGroup: ${isCollectionGroup})`);
 
@@ -113,37 +113,68 @@ memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentDa
     setIsLoading(true);
     setError(null);
 
-    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
-    const unsubscribe = onSnapshot(
-      memoizedTargetRefOrQuery,
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        const results: ResultItemType[] = [];
-        for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
+    const useListen = p0?.listen !== false;
+
+    if (useListen) {
+      const unsubscribe = onSnapshot(
+        memoizedTargetRefOrQuery,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          const results: ResultItemType[] = [];
+          for (const doc of snapshot.docs) {
+            results.push({ ...(doc.data() as T), id: doc.id });
+          }
+          setData(results);
+          setError(null);
+          setIsLoading(false);
+          console.debug(`[useCollection] Realtime update from path: '${path}' - Count: ${results.length}`);
+        },
+        (error: FirestoreError) => {
+          const contextualError = new FirestorePermissionError({
+            operation: 'list',
+            path,
+          })
+
+          setError(contextualError)
+          setData(null)
+          setIsLoading(false)
+
+          // trigger global error propagation
+          errorEmitter.emit('permission-error', contextualError);
         }
-        setData(results);
-        setError(null);
-        setIsLoading(false);
-      },
-      (error: FirestoreError) => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        })
+      );
+      return () => unsubscribe();
+    } else {
+      // One-time fetch
+      const fetchDocs = async () => {
+        try {
+          const { getDocs } = await import('firebase/firestore');
+          const snapshot = await getDocs(memoizedTargetRefOrQuery);
+          const results: ResultItemType[] = [];
+          for (const doc of snapshot.docs) {
+            results.push({ ...(doc.data() as T), id: doc.id });
+          }
+          setData(results);
+          setError(null);
+          setIsLoading(false);
+          console.debug(`[useCollection] One-time fetch from path: '${path}' - Count: ${results.length}`);
+        } catch (err: any) {
+          const contextualError = new FirestorePermissionError({
+            operation: 'list',
+            path,
+          });
+          setError(contextualError);
+          setData(null);
+          setIsLoading(false);
+          errorEmitter.emit('permission-error', contextualError);
+        }
+      };
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
-        // trigger global error propagation
-        errorEmitter.emit('permission-error', contextualError);
-      }
-    );
-
-    return () => unsubscribe();
+      fetchDocs();
+      return () => { };
+    }
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
-  
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
+
+  if (memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
   return { data, isLoading, error };
