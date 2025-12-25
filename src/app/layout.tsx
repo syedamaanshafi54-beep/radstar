@@ -53,6 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -78,16 +79,16 @@ export default function RootLayout({
         `}</style>
       </head>
       <body
-        className={cn("min-h-screen bg-background font-body antialiased")}
+        className={cn("min-h-[100dvh] bg-background font-body antialiased")}
       >
         <FirebaseClientProvider>
-            <CartProvider>
-                {loading && <GlobalLoader />}
-                {showSearchOverlay && <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />}
-                {children}
-                <Toaster />
-                <FirebaseErrorListener />
-            </CartProvider>
+          <CartProvider>
+            {loading && <GlobalLoader />}
+            {showSearchOverlay && <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />}
+            {children}
+            <Toaster />
+            <FirebaseErrorListener />
+          </CartProvider>
         </FirebaseClientProvider>
       </body>
     </html>

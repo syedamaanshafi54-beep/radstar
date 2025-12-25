@@ -2,80 +2,88 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- ADMIN HELPER ---
-    // Decisive admin check for your primary account
+    // --- HELPER FUNCTIONS ---
+
+    // Checks if the user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Checks if the user is the owner of the document
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks if the user is an admin - ROBUST VERSION
+    // Uses safe navigation to avoid errors if 'role' is missing
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.email == 'itsmeabdulk@gmail.com' || 
+      return isSignedIn() && (
+        request.auth.token.email == 'itsmeabdulk@gmail.com' ||
         request.auth.uid == 'Grp5q6hyTYbS01As4JyEcKam9BH2' ||
-        request.auth.token.role == 'admin'
+        (request.auth.token.keys().hasAny(['role']) && request.auth.token.role == 'admin')
       );
     }
 
-    // DECISIVE ADMIN ACCESS: Grant absolute control to the admin account.
-    match /{allPaths=**} {
-      allow read, write, list: if isAdmin();
-    }
-
-    // --- REVIEWS ---
-    // Smart Decouple: Anyone can read, logged-in USERS ONLY can create, Admin/Owner can moderate.
-    match /reviews {
-      allow read: if true;
-    }
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if request.auth != null && !isAdmin();
-      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
-    }
-
-    // --- ORDERS ---
-    // Universal access for Admin to ANY path containing 'orders'
-    // This covers both top-level and nested collections absolutely.
-    match /{allPaths=**}/orders/{orderId} {
-      allow read, write, list: if isAdmin();
-    }
-    
-    // Explicit collection group query support
-    match /{path=**}/orders {
-      allow list: if isAdmin();
-    }
-    
-    // Explicit match for owners
-    match /users/{userId}/orders/{orderId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Top-level fallback + list for collectionGroup
-    match /orders/{orderId} {
-      allow read, write, list: if isAdmin();
-    }
-
-    // --- PRODUCTS ---
-    match /products {
-       allow read: if true;
-       allow write: if isAdmin();
-    }
-    match /products/{productId=**} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // --- SITE CONFIG ---
-    match /site-config/{configId=**} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // --- USERS ---
+    // --- USERS RESOURCE ---
+    // Architecture: Users own their subtree. Admins have override access.
     match /users/{userId} {
-      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      match /{allPaths=**} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // 1. User Document Access
+      allow read, write: if isOwner(userId) || isAdmin();
+
+      // 2. Orders Subcollection Access
+      // Matches: /users/{userId}/orders/{orderId}
+      // This allows both listing the collection and reading individual orders
+      match /orders/{orderId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      // 3. Catch-all for other subcollections (future proofing)
+      match /{subcol}/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // --- PARTNERS ---
-    match /partners/{partnerId=**} {
+    // --- ADMIN DASHBOARD ---
+    // Architecture: Admin needs 'collectionGroup' access to ALL orders
+    // This rule allows queries like collectionGroup('orders')
+    match /{path=**}/orders/{orderId} {
+      allow read: if isAdmin();
+    }
+
+    // --- PUBLIC/MIXED RESOURCES ---
+    
+    // Reviews: Public read, Authenticated create, Owner/Admin manage
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && !isAdmin();
+      allow update, delete: if isSignedIn() && (
+        (request.auth.uid == resource.data.userId) || isAdmin()
+      );
+    }
+
+    // Products: Public read, Admin managed
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    // Recursive wildcard for nested product data if any
+    match /products/{productId}/{allChildren=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Site Config: Public read, Admin managed
+    match /site-config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /site-config/{configId}/{allChildren=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Partners: Public creation (application), Admin read
+    match /partners/{partnerId} {
       allow create: if true;
       allow read: if isAdmin();
     }
