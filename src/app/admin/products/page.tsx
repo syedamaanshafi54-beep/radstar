@@ -72,6 +72,7 @@ export default function AdminProductsPage() {
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Stock</TableHead>
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -79,7 +80,7 @@ export default function AdminProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin" />
                 </TableCell>
               </TableRow>
@@ -89,7 +90,7 @@ export default function AdminProductsPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={6} className="text-center">
                   No products found.
                 </TableCell>
               </TableRow>
@@ -114,6 +115,10 @@ function ProductRow({ product }: { product: WithId<Product> }) {
     });
   };
 
+  const totalStock = (product.stock ?? 0) + (product.variants?.reduce((acc, v) => acc + (v.stock ?? 0), 0) ?? 0);
+  const hasVariants = product.variants && product.variants.length > 0;
+  const displayStock = hasVariants && totalStock > 0 ? totalStock : (product.stock ?? 'N/A');
+
   return (
     <TableRow>
       <TableCell>
@@ -127,6 +132,13 @@ function ProductRow({ product }: { product: WithId<Product> }) {
       </TableCell>
       <TableCell className="font-medium">{product.name}</TableCell>
       <TableCell><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</TableCell>
+      <TableCell>
+        {displayStock !== 'N/A' && Number(displayStock) <= 5 ? (
+          <span className="text-destructive font-bold">{displayStock} (Low)</span>
+        ) : (
+          displayStock
+        )}
+      </TableCell>
       <TableCell>{product.category}</TableCell>
       <TableCell className="text-right">
         <AlertDialog>

@@ -70,7 +70,7 @@ function getPathFromRef(ref: CollectionReference<DocumentData> | Query<DocumentD
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
-  memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & { __memo?: boolean; }) | null | undefined, p0: { listen: boolean; },
+  memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & { __memo?: boolean; }) | null | undefined, p0?: { listen: boolean; },
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;

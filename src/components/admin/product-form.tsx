@@ -32,6 +32,7 @@ const formSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   defaultPrice: z.coerce.number().min(0, 'Price must be a positive number.'),
   salePrice: z.coerce.number().optional(),
+  stock: z.coerce.number().min(0).optional(),
   category: z.string().min(1, 'Category is required.'),
   benefits: z.string().min(3, 'Please list at least one benefit.'),
   ingredients: z.string().optional(),
@@ -44,6 +45,7 @@ const formSchema = z.object({
       name: z.string().min(1, 'Variant name is required.'),
       price: z.coerce.number().min(0, 'Price must be positive.'),
       salePrice: z.coerce.number().optional(),
+      stock: z.coerce.number().min(0).optional(),
     })
   ).optional(),
 });
@@ -70,6 +72,7 @@ export function ProductForm({ product }: ProductFormProps) {
       image: product.image.url as string,
       imageHint: product.image.hint || '',
       salePrice: product.salePrice,
+      stock: product.stock,
     }
     : {
       name: '',
@@ -77,6 +80,7 @@ export function ProductForm({ product }: ProductFormProps) {
       description: '',
       defaultPrice: 0,
       salePrice: undefined,
+      stock: undefined,
       category: '',
       benefits: '',
       ingredients: '',
@@ -114,6 +118,7 @@ export function ProductForm({ product }: ProductFormProps) {
       description: values.description,
       defaultPrice: values.defaultPrice,
       salePrice: values.salePrice,
+      stock: values.stock,
       variants: values.variants?.map(v => ({ ...v })) || [],
       category: values.category as Product['category'],
       benefits: values.benefits.split(',').map(s => s.trim()),
@@ -250,6 +255,21 @@ export function ProductForm({ product }: ProductFormProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stock Quantity</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Optional" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormDescription>Available inventory count.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="space-y-4">
               <FormLabel>Product Image</FormLabel>
@@ -447,6 +467,19 @@ export function ProductForm({ product }: ProductFormProps) {
                     <FormLabel>Sale Price</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`variants.${index}.stock`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="Opt" {...field} value={field.value ?? ''} className="w-20" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

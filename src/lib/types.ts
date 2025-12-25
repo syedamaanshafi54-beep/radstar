@@ -13,6 +13,7 @@ export type ProductVariant = {
   name: string; // e.g., "500g", "1kg"
   price: number;
   salePrice?: number;
+  stock?: number;
 };
 
 export type Product = {
@@ -24,6 +25,7 @@ export type Product = {
   benefits: string[];
   defaultPrice: number;
   salePrice?: number;
+  stock?: number;
   variants?: ProductVariant[];
   image: ProductImage;
   alternateImage?: ProductImage;
@@ -53,39 +55,39 @@ export type OrderItem = {
 }
 
 export type ShippingInfo = {
-    name: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    zip: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 };
 
 export type OrderStatus = 'placed' | 'pending_payment' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'paid';
 
 
 export type Order = {
-    id: string;
-    orderNumber: string;
-    userId: string;
-    items: OrderItem[];
-    shippingInfo: ShippingInfo;
-    subtotal: number;
-    shipping: number;
-    totalAmount: number;
+  id: string;
+  orderNumber: string;
+  userId: string;
+  items: OrderItem[];
+  shippingInfo: ShippingInfo;
+  subtotal: number;
+  shipping: number;
+  totalAmount: number;
 
-    paymentMethod: 'cod' | 'phonepe' | 'googlepay' | 'razorpay';
+  paymentMethod: 'cod' | 'phonepe' | 'googlepay' | 'razorpay';
+  status: OrderStatus;
+  createdAt: Timestamp;
+  statusUpdatedAt?: Timestamp;
+  trackingId?: string;
+  courierName?: string;
+  estDeliveryDate?: Timestamp;
+  statusHistory?: {
     status: OrderStatus;
-    createdAt: Timestamp;
-    statusUpdatedAt?: Timestamp;
-    trackingId?: string;
-    courierName?: string;
-    estDeliveryDate?: Timestamp;
-    statusHistory?: {
-      status: OrderStatus;
-      changedAt: Timestamp;
-    }[];
+    changedAt: Timestamp;
+  }[];
 }
 
 export type UserProfile = {
@@ -105,4 +107,3 @@ export type UserProfile = {
   cart?: CartItem[];
 }
 
-    
