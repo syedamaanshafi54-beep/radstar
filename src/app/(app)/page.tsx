@@ -432,7 +432,7 @@ export default function Home() {
             className="grid md:grid-cols-2 items-center gap-8 lg:gap-16">
             <motion.div variants={fadeInUp} className="order-2 md:order-1 relative aspect-square rounded-2xl overflow-hidden shadow-lg">
               <Image
-                src={'/images/aslitalbina/lc.jpg'}
+                src={'/images/image.png'}
                 alt="A legacy of healing and tradition"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
