@@ -53,7 +53,19 @@ export async function setSessionPersistence(authInstance: Auth, rememberMe?: boo
  * @param email The user's email address.
  */
 export async function sendPasswordReset(authInstance: Auth, email: string) {
-    return sendPasswordResetEmail(authInstance, email);
+  return sendPasswordResetEmail(authInstance, email);
 }
 
-    
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+
+/**
+ * Initiates phone number sign-in by sending an OTP.
+ * @param authInstance The Firebase Auth instance.
+ * @param phoneNumber The phone number to verify (e.g., "+919876543210").
+ * @param appVerifier The RecaptchaVerifier instance.
+ * @returns Promise<ConfirmationResult> The confirmation result object to use for OTP verification.
+ */
+export async function initiatePhoneSignIn(authInstance: Auth, phoneNumber: string, appVerifier: RecaptchaVerifier): Promise<ConfirmationResult> {
+  return signInWithPhoneNumber(authInstance, phoneNumber, appVerifier);
+}
+

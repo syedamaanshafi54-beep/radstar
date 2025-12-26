@@ -37,7 +37,8 @@ export {
   initiateEmailSignUp,
   initiateEmailSignIn,
   setSessionPersistence,
-  sendPasswordReset
+  sendPasswordReset,
+  initiatePhoneSignIn
 } from './non-blocking-login';
 export * from './errors';
 export * from './error-emitter';

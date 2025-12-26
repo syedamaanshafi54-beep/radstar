@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import {
@@ -25,12 +26,14 @@ import {
   setSessionPersistence,
   handleGoogleSignIn,
   getFirstName,
+  initiatePhoneSignIn,
 } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/social-icons';
 import { Checkbox } from '@/components/ui/checkbox';
+
 import {
   Dialog,
   DialogContent,
@@ -65,6 +68,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Phone Auth State
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [otp, setOtp] = useState('');
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -116,11 +123,74 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
-  const onPhoneSubmit = () => {
-    toast({
-      title: 'Coming Soon!',
-      description: 'Phone sign-in is not yet available.',
-    });
+
+
+
+
+  const onPhoneSubmit = async (values: z.infer<typeof phoneSchema>) => {
+    setIsSubmitting(true);
+    try {
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'normal',
+        'callback': (response: any) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        },
+        'expired-callback': () => {
+          // Response expired. Ask user to solve reCAPTCHA again.
+          toast({ variant: "destructive", title: "Recaptcha Expired", description: "Please try again." });
+        }
+      });
+
+      let phoneNumber = values.phone.trim();
+      if (!phoneNumber.startsWith('+')) {
+        phoneNumber = `+91${phoneNumber}`;
+      }
+
+      const result = await initiatePhoneSignIn(auth, phoneNumber, recaptchaVerifier);
+      setConfirmationResult(result);
+      toast({
+        title: "Code Sent",
+        description: `Verification code sent to ${phoneNumber}`,
+      });
+
+    } catch (error: any) {
+      console.error("Phone Auth Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to send code",
+        description: error.message,
+      });
+      // Reset recaptcha if needed
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.render().then(function (widgetId: any) {
+          (window as any).grecaptcha.reset(widgetId);
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!confirmationResult) return;
+      await confirmationResult.confirm(otp);
+      toast({
+        title: "Signed in!",
+        description: "Phone verification successful.",
+      });
+      onSuccess?.();
+    } catch (error: any) {
+      console.error("OTP Verification Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Invalid Code",
+        description: "The verification code is invalid or expired.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const onGoogleSignIn = async () => {
@@ -328,26 +398,69 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
                 className="space-y-4 pt-2"
               >
-                <FormField
-                  control={phoneForm.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="+91 12345 67890"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {!confirmationResult ? (
+                  <>
+                    <FormField
+                      control={phoneForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="+91 12345 67890"
+                              {...field}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div id="recaptcha-container"></div>
+                    <Button className="w-full" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Send Verification Code
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <FormLabel>Enter Verification Code</FormLabel>
+                      <Input
+                        placeholder="123456"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Code sent to {phoneForm.getValues('phone')}
+                      </p>
+                    </div>
 
-                <Button className="w-full" disabled>
-                  Send Code
-                </Button>
+                    <Button
+                      type="button"
+                      className="w-full"
+                      disabled={isSubmitting || otp.length !== 6}
+                      onClick={verifyOtp}
+                    >
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Verify & Sign In
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setConfirmationResult(null);
+                        setOtp('');
+                      }}
+                    >
+                      Change Phone Number
+                    </Button>
+                  </>
+                )}
               </form>
             </Form>
           </TabsContent>
