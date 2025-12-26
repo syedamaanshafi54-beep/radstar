@@ -19,5 +19,5 @@ yarn-error.log*
 .vscode
 firebase-debug.log
 "node_modules/" 
-"*.json" 
+*.json
 *.md
