@@ -87,5 +87,12 @@ service cloud.firestore {
       allow create: if true;
       allow read: if isAdmin();
     }
+
+    // --- METADATA RESOURCE ---
+    // Used for counters and system-wide settings
+    match /metadata/{docId} {
+      // Allow authenticated users to read/write the userCounter for ID generation
+      allow read, write: if isSignedIn(); 
+    }
   }
 }
