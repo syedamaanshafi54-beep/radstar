@@ -38,6 +38,15 @@ import type { UserProfile, Order, OrderStatus } from "@/lib/types";
 import OrderSuccessAnimation from "@/components/OrderSuccessAnimation";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import ProductDetails from "@/components/product-details";
 
 declare global {
   interface Window {
@@ -537,16 +546,27 @@ export default function CheckoutPage() {
                       {cartItems.map(({ product, quantity, variant }) => {
                         const price = variant?.salePrice ?? variant?.price ?? product.salePrice ?? product.defaultPrice;
                         return (
-                          <div key={product.id + (variant?.id || '')} className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <Image src={product.image.url} alt={product.name} width={40} height={40} className="rounded-md" />
-                              <div>
-                                <p>{product.name} {variant ? `(${variant.name})` : ''}</p>
-                                <p className="text-sm text-muted-foreground">x{quantity}</p>
-                              </div>
+                          <Dialog key={product.id + (variant?.id || '')}>
+                            <div className="flex justify-between items-center">
+                              <DialogTrigger asChild>
+                                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                                  <Image src={product.image.url} alt={product.name} width={40} height={40} className="rounded-md" />
+                                  <div>
+                                    <p className="hover:text-primary transition-colors">{product.name} {variant ? `(${variant.name})` : ''}</p>
+                                    <p className="text-sm text-muted-foreground">x{quantity}</p>
+                                  </div>
+                                </div>
+                              </DialogTrigger>
+                              <span><span className="font-currency">₹</span>{formatPrice(price * quantity)}</span>
                             </div>
-                            <span><span className="font-currency">₹</span>{formatPrice(price * quantity)}</span>
-                          </div>
+                            <DialogContent className="max-w-4xl w-full p-0">
+                              <DialogHeader className="sr-only">
+                                <DialogTitle>{product.name}</DialogTitle>
+                                <DialogDescription>{product.description}</DialogDescription>
+                              </DialogHeader>
+                              <ProductDetails product={product} />
+                            </DialogContent>
+                          </Dialog>
                         );
                       })}
                       <Separator className="my-2" />

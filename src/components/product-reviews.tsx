@@ -35,6 +35,21 @@ export default function ProductReviews({ productId }: { productId: string }) {
 
   const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery, { listen: true });
 
+  // Query user's orders to check if they've purchased this product
+  const ordersQuery = useMemoFirebase(
+    () => user ? query(collection(firestore, 'orders'), where('userId', '==', user.uid)) : null,
+    [firestore, user]
+  );
+
+  const { data: userOrders } = useCollection(ordersQuery, { listen: false });
+
+  const hasPurchased = useMemo(() => {
+    if (!userOrders || !user) return false;
+    return userOrders.some((order: any) =>
+      order.items?.some((item: any) => item.productId === productId)
+    );
+  }, [userOrders, productId, user]);
+
   const averageRating = useMemo(() => {
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
@@ -46,8 +61,17 @@ export default function ProductReviews({ productId }: { productId: string }) {
     if (!user) {
       toast({
         variant: "destructive",
-        title: "Login Required",
-        description: "Please login to submit a review.",
+        title: "Please login first",
+        description: "You need to be logged in to submit a review.",
+      });
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast({
+        variant: "destructive",
+        title: "Purchase Required",
+        description: "You can only review products you've purchased.",
       });
       return;
     }

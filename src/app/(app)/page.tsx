@@ -350,18 +350,38 @@ export default function Home() {
         </section>
       </div>
 
-      <section id="hadith-placards" className="bg-secondary/30 py-12 md:py-16">
+      <section id="hadith-placards" className="bg-gradient-to-b from-secondary/30 to-background py-16 md:py-24 relative overflow-hidden">
+        {/* Decorative Islamic Pattern Background */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, currentColor 35px, currentColor 36px),
+                             repeating-linear-gradient(-45deg, transparent, transparent 35px, currentColor 35px, currentColor 36px)`
+          }}></div>
+        </div>
+
         <motion.div
           initial="initial"
           whileInView="animate"
           viewport={{ once: true, amount: 0.2 }}
           variants={staggerContainer}
-          className="container mx-auto text-center mb-8 md:mb-10"
+          className="container mx-auto text-center mb-12 md:mb-16 relative z-10"
         >
-          <motion.h2 variants={fadeInUp} className="font-headline text-4xl md:text-6xl font-bold">Echoes of Wisdom</motion.h2>
-          <motion.p variants={fadeInUp} className="mt-4 text-lg md:text-xl font-bold text-muted-foreground max-w-2xl mx-auto">Timeless guidance on healing and nourishment from the Quran and Sunnah.</motion.p>
+          <motion.div variants={fadeInUp} className="inline-block">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary"></div>
+              <div className="text-primary text-2xl">☪</div>
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary"></div>
+            </div>
+          </motion.div>
+          <motion.h2 variants={fadeInUp} className="font-headline text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent">
+            Echoes of Wisdom
+          </motion.h2>
+          <motion.p variants={fadeInUp} className="mt-4 text-lg md:text-xl font-semibold text-muted-foreground max-w-2xl mx-auto">
+            Timeless guidance on healing and nourishment from the Quran and Sunnah
+          </motion.p>
         </motion.div>
-        <div className="container mx-auto">
+
+        <div className="container mx-auto relative z-10">
           <Carousel
             plugins={[hadithPlugin.current]}
             className="w-full"
@@ -372,11 +392,25 @@ export default function Home() {
             <CarouselContent>
               {hadithPlacards.map((slide) => (
                 <CarouselItem key={slide.id}>
-                  <div className="p-1">
-                    <Card className="w-full bg-background shadow-lg border-primary/20 h-full">
-                      <CardContent className="p-6 md:p-10 text-center flex flex-col items-center justify-center min-h-[35vh] md:min-h-[30vh]">
-                        <blockquote className="font-headline text-xl md:text-4xl italic text-foreground leading-relaxed">"{slide.text}"</blockquote>
-                        <p className="mt-6 text-base md:text-lg font-semibold tracking-wide text-muted-foreground">{slide.source}</p>
+                  <div className="p-2 md:p-4">
+                    <Card className="w-full bg-background/95 backdrop-blur shadow-2xl border-2 border-primary/30 relative overflow-hidden">
+                      {/* Corner Ornaments */}
+                      <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-primary/40 rounded-tl-lg"></div>
+                      <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-primary/40 rounded-tr-lg"></div>
+                      <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-primary/40 rounded-bl-lg"></div>
+                      <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-primary/40 rounded-br-lg"></div>
+
+                      <CardContent className="p-8 md:p-12 lg:p-16 text-center flex flex-col items-center justify-center min-h-[400px]">
+                        <div className="text-primary/20 text-6xl mb-4">"</div>
+                        <blockquote className="font-headline text-lg md:text-2xl lg:text-3xl italic text-foreground leading-relaxed max-w-4xl">
+                          {slide.text}
+                        </blockquote>
+                        <div className="text-primary/20 text-6xl mt-4 rotate-180">"</div>
+                        <div className="mt-8 pt-6 border-t-2 border-primary/20 w-full max-w-md">
+                          <p className="text-sm md:text-base lg:text-lg font-bold tracking-wide text-primary">
+                            — {slide.source}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
@@ -573,11 +607,11 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
           </div>
           <div className="p-4 flex flex-col flex-1">
             <DialogTrigger asChild>
-              <h3 className="font-headline text-2xl md:text-3xl font-bold flex-1 cursor-pointer hover:text-primary transition-colors text-justify">
+              <h3 className="font-headline text-2xl md:text-3xl font-bold flex-1 cursor-pointer hover:text-primary transition-colors text-left">
                 {product.name}
               </h3>
             </DialogTrigger>
-            <p className="mt-2 text-muted-foreground text-base flex-1 text-justify">{product.tagline}</p>
+            <p className="mt-2 text-muted-foreground text-base flex-1 text-left">{product.tagline}</p>
 
             {product.variants && product.variants.length > 0 ? (
               <div className="mt-4" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -609,35 +643,42 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                   <p className="text-2xl font-bold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
                 )}
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-2">
                 {cartQty > 0 ? (
-                  <div className="flex items-center border rounded-md">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty - 1); }} disabled={cartQty === 0}>
-                      <Minus className="h-4 w-4" />
+                  <>
+                    <div className="flex items-center border rounded-md">
+                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty - 1); }} disabled={cartQty === 0}>
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
+                        {cartQty}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty + 1); }}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button onClick={(e) => { e.stopPropagation(); router.push('/cart'); }} size="icon" aria-label="Go to cart" className="h-9 w-9">
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
-                      {cartQty}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty + 1); }}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex items-center border rounded-md">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(-1); }} disabled={quantity === 1}>
-                      <Minus className="h-4 w-4" />
+                  <>
+                    <div className="flex items-center border rounded-md">
+                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(-1); }} disabled={quantity === 1}>
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
+                        {quantity}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(1); }}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button onClick={handleAddToCart} size="icon" aria-label="Add to cart" className="h-9 w-9">
+                      <ShoppingCart className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
-                      {quantity}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(1); }}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </>
                 )}
-                <Button onClick={handleAddToCart} size="icon" aria-label="Add to cart" className="h-9 w-9">
-                  <ShoppingCart className="h-4 w-4" />
-                </Button>
               </div>
             </div>
           </div>

@@ -16,6 +16,15 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import ProductDetails from "@/components/product-details";
 
 const getCartItemId = (productId: string, variantId?: string) => {
   return variantId ? `${productId}-${variantId}` : productId;
@@ -37,7 +46,7 @@ export default function CartPage() {
 
       {isCartLoading ? (
         <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       ) : cartItems.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
@@ -61,83 +70,97 @@ export default function CartPage() {
 
 
               return (
-              <Card key={cartItemId} className="flex items-start md:items-center p-4">
-                <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-md overflow-hidden mr-4 flex-shrink-0">
-                  <Image
-                    src={product.image.url}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 80px, 96px"
-                  />
-                </div>
-                <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div className="flex-1">
-                    <Link href={`/products/${product.slug}`} className="font-semibold hover:underline leading-tight">
-                      {product.name}
-                    </Link>
-                    {variant && <p className="text-sm text-muted-foreground">{variant.name}</p>}
-                    <div className="flex items-baseline gap-2 md:hidden mt-1">
-                      {salePrice ? (
-                        <>
-                          <p className="font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
-                          <p className="text-muted-foreground line-through text-sm"><span className="font-currency">₹</span>{formatPrice(price)}</p>
-                        </>
-                      ) : (
-                        <p className="font-semibold">
-                          <span className="font-currency">₹</span>{formatPrice(price)}
-                        </p>
-                      )}
+                <Dialog key={cartItemId}>
+                  <Card className="flex items-start md:items-center p-4">
+                    <DialogTrigger asChild>
+                      <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-md overflow-hidden mr-4 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+                        <Image
+                          src={product.image.url}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 80px, 96px"
+                        />
+                      </div>
+                    </DialogTrigger>
+                    <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between">
+                      <div className="flex-1">
+                        <DialogTrigger asChild>
+                          <button className="font-semibold hover:text-primary transition-colors leading-tight text-left">
+                            {product.name}
+                          </button>
+                        </DialogTrigger>
+                        {variant && <p className="text-sm text-muted-foreground">{variant.name}</p>}
+                        <div className="flex items-baseline gap-2 md:hidden mt-1">
+                          {salePrice ? (
+                            <>
+                              <p className="font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
+                              <p className="text-muted-foreground line-through text-sm"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                            </>
+                          ) : (
+                            <p className="font-semibold">
+                              <span className="font-currency">₹</span>{formatPrice(price)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center mt-2 md:mt-0 md:justify-center md:w-48">
+                        <div className="flex items-center border rounded-md">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(cartItemId, quantity - 1)}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <Input
+                            type="number"
+                            value={quantity}
+                            onChange={(e) => updateQuantity(cartItemId, parseInt(e.target.value) || 1)}
+                            className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(cartItemId, quantity + 1)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive md:hidden ml-2"
+                          onClick={() => removeFromCart(cartItemId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="hidden md:flex items-center justify-end w-40">
+                        <p className="font-semibold text-right mr-4"><span className="font-currency">₹</span>{formatPrice(displayPrice * quantity)}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => removeFromCart(cartItemId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center mt-2 md:mt-0 md:justify-center md:w-48">
-                    <div className="flex items-center border rounded-md">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(cartItemId, quantity - 1)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => updateQuantity(cartItemId, parseInt(e.target.value) || 1)}
-                        className="w-16 h-8 text-center border-0 focus-visible:ring-0"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(cartItemId, quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive md:hidden ml-2"
-                        onClick={() => removeFromCart(cartItemId)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                  </div>
-                  <div className="hidden md:flex items-center justify-end w-40">
-                    <p className="font-semibold text-right mr-4"><span className="font-currency">₹</span>{formatPrice(displayPrice * quantity)}</p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeFromCart(cartItemId)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )})}
+                  </Card>
+                  <DialogContent className="max-w-4xl w-full p-0">
+                    <DialogHeader className="sr-only">
+                      <DialogTitle>{product.name}</DialogTitle>
+                      <DialogDescription>{product.description}</DialogDescription>
+                    </DialogHeader>
+                    <ProductDetails product={product} />
+                  </DialogContent>
+                </Dialog>
+              )
+            })}
           </div>
 
           <div className="lg:col-span-1">

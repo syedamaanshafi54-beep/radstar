@@ -208,133 +208,103 @@ export function ProductForm({ product }: ProductFormProps) {
               )}
             />
           </div>
+        </div>
 
-          <div className="space-y-8">
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Asli Talbina" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Enter a category. You can create a new one by typing it in.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Asli Talbina" {...field} />
+              </FormControl>
+              <FormDescription>
+                Enter a category. You can create a new one by typing it in.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="defaultPrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="salePrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sale Price</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="defaultPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.01" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="salePrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sale Price</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock Quantity</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="Optional" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormDescription>Available inventory count.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <FormField
+          control={form.control}
+          name="stock"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Stock Quantity</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="Optional" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormDescription>Available inventory count.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div className="space-y-4">
-              <FormLabel>Product Image</FormLabel>
-              <div className="flex flex-col items-center gap-4 p-6 border-2 border-dashed rounded-lg bg-muted/50">
-                {imagePreview ? (
-                  <div className="relative w-full aspect-square max-w-[200px] group">
-                    <Image
-                      src={imagePreview}
-                      alt="Image Preview"
-                      fill
-                      className="rounded-md object-contain border bg-white"
-                    />
-                    {/* Remove Image Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImagePreview(null);
-                        form.setValue('image', null);
-                        toast({ title: "Image Removed", description: "Product image has been deselected." });
-                      }}
-                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-lg hover:bg-destructive/90 transition-colors z-10"
-                      title="Remove Image"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+        <div className="space-y-4">
+          <FormLabel>Product Image</FormLabel>
+          <div className="flex flex-col items-center gap-4 p-6 border-2 border-dashed rounded-lg bg-muted/50">
+            {imagePreview ? (
+              <div className="relative w-full aspect-square max-w-[200px] group">
+                <Image
+                  src={imagePreview}
+                  alt="Image Preview"
+                  fill
+                  className="rounded-md object-contain border bg-white"
+                />
+                {/* Remove Image Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImagePreview(null);
+                    form.setValue('image', null);
+                    toast({ title: "Image Removed", description: "Product image has been deselected." });
+                  }}
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-lg hover:bg-destructive/90 transition-colors z-10"
+                  title="Remove Image"
+                >
+                  <X className="h-4 w-4" />
+                </button>
 
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                      <CldUploadWidget
-                        uploadPreset="products"
-                        onSuccess={(result: any) => {
-                          const url = result.info.secure_url;
-                          setImagePreview(url);
-                          form.setValue('image', url);
-                          toast({ title: "Image Uploaded", description: "Successfully updated product image." });
-                          // Force scroll restore
-                          document.body.style.pointerEvents = 'auto';
-                          document.body.style.overflow = 'auto';
-                        }}
-                        onClose={() => {
-                          document.body.style.pointerEvents = 'auto';
-                          document.body.style.overflow = 'auto';
-                        }}
-                      >
-                        {({ open }: { open: any }) => (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => open()}
-                          >
-                            Change Image
-                          </Button>
-                        )}
-                      </CldUploadWidget>
-                    </div>
-                  </div>
-                ) : (
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                   <CldUploadWidget
                     uploadPreset="products"
                     onSuccess={(result: any) => {
                       const url = result.info.secure_url;
                       setImagePreview(url);
                       form.setValue('image', url);
-                      toast({ title: "Image Uploaded", description: "Successfully added product image." });
+                      toast({ title: "Image Uploaded", description: "Successfully updated product image." });
                       // Force scroll restore
                       document.body.style.pointerEvents = 'auto';
                       document.body.style.overflow = 'auto';
@@ -345,43 +315,56 @@ export function ProductForm({ product }: ProductFormProps) {
                     }}
                   >
                     {({ open }: { open: any }) => (
-                      <div
-                        className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors"
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => open()}
                       >
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                          <Plus className="h-6 w-6 text-primary" />
-                        </div>
-                        <p className="text-sm font-medium">Add Product Image</p>
-                        <p className="text-xs text-muted-foreground mt-1 text-center">
-                          Click to upload via Cloudinary
-                        </p>
-                      </div>
+                        Change Image
+                      </Button>
                     )}
                   </CldUploadWidget>
-                )}
+                </div>
               </div>
-              <FormDescription>
-                Upload an image for your product. This is required for checkout visibility.
-              </FormDescription>
-            </div>
+            ) : (
+              <CldUploadWidget
+                uploadPreset="products"
+                onSuccess={(result: any) => {
+                  const url = result.info.secure_url;
+                  setImagePreview(url);
+                  form.setValue('image', url);
+                  toast({ title: "Image Uploaded", description: "Successfully added product image." });
+                  // Force scroll restore
+                  document.body.style.pointerEvents = 'auto';
+                  document.body.style.overflow = 'auto';
+                }}
+                onClose={() => {
+                  document.body.style.pointerEvents = 'auto';
+                  document.body.style.overflow = 'auto';
+                }}
+              >
+                {({ open }: { open: any }) => (
+                  <div
+                    className="flex flex-col items-center cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => open()}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                      <Plus className="h-6 w-6 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium">Add Product Image</p>
+                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                      Click to upload via Cloudinary
+                    </p>
+                  </div>
+                )}
+              </CldUploadWidget>
+            )}
           </div>
+          <FormDescription>
+            Upload an image for your product. This is required for checkout visibility.
+          </FormDescription>
         </div>
-
-        <FormField
-          control={form.control}
-          name="imageHint"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image AI Hint</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., product package" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormDescription>Provide one or two keywords for AI-assisted image searching.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}
@@ -430,7 +413,17 @@ export function ProductForm({ product }: ProductFormProps) {
         />
 
         <div className="space-y-4">
-          <FormLabel>Product Variants</FormLabel>
+          <div className="flex items-center justify-between">
+            <FormLabel>Product Variants</FormLabel>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => append({ id: `variant-${Date.now()}`, name: '', price: 0, salePrice: undefined })}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Variant
+            </Button>
+          </div>
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-center gap-4 p-4 border rounded-md">
               <FormField
@@ -490,13 +483,6 @@ export function ProductForm({ product }: ProductFormProps) {
               </Button>
             </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => append({ id: `variant-${Date.now()}`, name: '', price: 0, salePrice: undefined })}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Variant
-          </Button>
         </div>
 
         <Button type="submit" disabled={isSubmitting}>
@@ -511,7 +497,7 @@ export function ProductForm({ product }: ProductFormProps) {
             'Create Product'
           )}
         </Button>
-      </form>
-    </Form>
+      </form >
+    </Form >
   );
 }

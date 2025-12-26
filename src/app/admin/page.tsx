@@ -61,6 +61,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Input } from '@/components/ui/input';
 import SiteContentManagement from '@/components/admin/site-content-management.tsx';
+import { InventoryManagement } from '@/components/admin/inventory-management';
 
 
 type DealsData = {
@@ -918,6 +919,8 @@ export default function AdminDashboardPage() {
         onRestoreDefaults={restoreHeroDefaults}
         onSaveChanges={handleSaveChanges}
       />
+
+      <InventoryManagement products={products} />
 
       <Card className="hidden sm:block">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

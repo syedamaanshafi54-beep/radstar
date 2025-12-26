@@ -8,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ShoppingCart, Minus, Plus, Loader2 } from "lucide-react";
+import { Eye, ShoppingCart, Minus, Plus, Loader2, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +43,7 @@ function ProductsGrid() {
   const firestore = useFirestore();
 
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
-  
+
   const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection);
 
   const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore]);
@@ -57,14 +57,14 @@ function ProductsGrid() {
   }, [dealsData]);
 
   if (productsLoading || dealsLoading) {
-     return (
+    return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
   }
 
-  const displayedProducts = filter 
+  const displayedProducts = filter
     ? products.filter(p => p.category === filter)
     : products;
 
@@ -82,10 +82,10 @@ export default function ProductsPage() {
     <div className="bg-background">
       <div className="container mx-auto px-4 py-16 lg:py-24">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-headline font-bold">
-            Our Collection
+          <h1 className="text-4xl md:text-5xl font-headline font-bold hover:text-primary transition-colors cursor-default">
+            Discover Our Collection
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-xl font-semibold text-muted-foreground">
+          <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
             Discover a world of flavor and wellness. Each variant is crafted with care to bring you the best of nature's goodness.
           </p>
         </div>
@@ -104,15 +104,15 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const { toast } = useToast();
   const router = useRouter();
   const [localQuantity, setLocalQuantity] = useState(1);
-  
+
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
-  
+
   const getCartItemId = (productId: string, variantId?: string) => {
     return variantId ? `${productId}-${variantId}` : productId;
   };
-  
+
   const cartItemId = getCartItemId(product.id, selectedVariant?.id);
   const inCart = cartItems.find(item => getCartItemId(item.product.id, item.variant?.id) === cartItemId);
   const cartQty = inCart?.quantity || 0;
@@ -121,9 +121,9 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     e.preventDefault();
     e.stopPropagation();
     const amountToAdd = localQuantity;
-    
+
     addToCart(product, amountToAdd, selectedVariant);
-     toast({
+    toast({
       title: "Added to cart",
       description: `${amountToAdd} x ${product.name} ${selectedVariant ? `(${selectedVariant.name})` : ''} has been added.`,
       duration: 5000,
@@ -131,11 +131,11 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     });
     setLocalQuantity(1); // Reset local quantity after adding
   };
-  
+
   const handleQuantityChange = (change: number) => {
     setLocalQuantity((prev) => Math.max(1, prev + change));
   };
-  
+
   const handleCartQuantityChange = (newQuantity: number) => {
     updateQuantity(cartItemId, newQuantity);
   };
@@ -159,40 +159,40 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
             <div className="block relative w-full aspect-square overflow-hidden cursor-pointer">
               {isDeal && <Badge className="absolute top-2 right-2 z-10 bg-destructive">Deal</Badge>}
               <Image
-                  src={product.image.url as string}
-                  alt={product.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  data-ai-hint={product.image.hint}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                src={product.image.url as string}
+                alt={product.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                data-ai-hint={product.image.hint}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
             </div>
           </DialogTrigger>
           <div className="p-6 flex flex-col flex-1">
             <DialogTrigger asChild>
-                <h3 className="font-headline text-2xl flex-1 cursor-pointer text-justify">
-                  {product.name}
-                </h3>
+              <h3 className="font-headline text-2xl flex-1 cursor-pointer text-left">
+                {product.name}
+              </h3>
             </DialogTrigger>
-            <p className="mt-2 text-muted-foreground text-lg flex-1 text-justify">{product.tagline}</p>
-            
+            <p className="mt-2 text-muted-foreground text-lg flex-1 text-left">{product.tagline}</p>
+
             {product.variants && product.variants.length > 0 ? (
-                <div className="mt-4" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                  <Label htmlFor={`variant-select-card-${product.id}`} className="sr-only">Size</Label>
-                  <Select onValueChange={handleVariantChange} defaultValue={selectedVariant?.id}>
-                      <SelectTrigger id={`variant-select-card-${product.id}`} className="h-9">
-                          <SelectValue placeholder="Select a size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          {product.variants.map(v => (
-                              <SelectItem key={v.id} value={v.id}>
-                                  {v.name}
-                              </SelectItem>
-                          ))}
-                      </SelectContent>
-                  </Select>
-                </div>
-              ) : null
+              <div className="mt-4" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <Label htmlFor={`variant-select-card-${product.id}`} className="sr-only">Size</Label>
+                <Select onValueChange={handleVariantChange} defaultValue={selectedVariant?.id}>
+                  <SelectTrigger id={`variant-select-card-${product.id}`} className="h-9">
+                    <SelectValue placeholder="Select a size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {product.variants.map(v => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null
             }
 
             <div className="flex flex-wrap justify-between items-center mt-4 gap-2">
@@ -206,31 +206,34 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                   <p className="text-xl font-semibold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
                 )}
               </div>
-              
+
               {cartQty > 0 ? (
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center gap-2">
                   <div className="flex items-center border rounded-md">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => {e.stopPropagation(); handleCartQuantityChange(cartQty - 1);}} disabled={cartQty === 0}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty - 1); }} disabled={cartQty === 0}>
                       <Minus className="h-4 w-4" />
                     </Button>
                     <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
                       {cartQty}
                     </span>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => {e.stopPropagation(); handleCartQuantityChange(cartQty + 1);}}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty + 1); }}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
+                  <Button onClick={(e) => { e.stopPropagation(); router.push('/cart'); }} size="icon" aria-label="Go to cart" className="h-9 w-9">
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
                 </div>
               ) : (
                 <div className="flex items-center space-x-1">
                   <div className="flex items-center border rounded-md">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => {e.stopPropagation(); handleQuantityChange(-1)}} disabled={localQuantity === 1}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(-1) }} disabled={localQuantity === 1}>
                       <Minus className="h-4 w-4" />
                     </Button>
                     <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
                       {localQuantity}
                     </span>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => {e.stopPropagation(); handleQuantityChange(1)}}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(1) }}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
