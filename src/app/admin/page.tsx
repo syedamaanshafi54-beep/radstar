@@ -62,6 +62,7 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'fire
 import { Input } from '@/components/ui/input';
 import SiteContentManagement from '@/components/admin/site-content-management.tsx';
 import { InventoryManagement } from '@/components/admin/inventory-management';
+import { CategoryManagement } from '@/components/admin/category-management';
 
 
 type DealsData = {
@@ -918,6 +919,8 @@ export default function AdminDashboardPage() {
       />
 
       <InventoryManagement products={products} />
+
+      <CategoryManagement />
 
       <Card className="hidden sm:block">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
