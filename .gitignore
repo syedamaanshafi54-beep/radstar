@@ -20,3 +20,4 @@ yarn-error.log*
 firebase-debug.log
 "node_modules/" 
 "*.json" 
+*.md

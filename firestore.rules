@@ -82,6 +82,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Categories: Public read, Admin managed
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Partners: Public creation (application), Admin read
     match /partners/{partnerId} {
       allow create: if true;

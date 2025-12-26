@@ -1,6 +1,7 @@
 
 import { type StaticImageData } from "next/image";
 import { type Timestamp } from "firebase/firestore";
+import { type WithId } from "@/firebase";
 
 export type ProductImage = {
   id: string;
@@ -41,7 +42,7 @@ export type CartItem = {
 };
 
 export type PopulatedCartItem = {
-  product: Product;
+  product: WithId<Product>;
   quantity: number;
   variant?: ProductVariant;
 }

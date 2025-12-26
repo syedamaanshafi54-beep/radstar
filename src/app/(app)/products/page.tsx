@@ -32,10 +32,27 @@ import { Badge } from "@/components/ui/badge";
 import { staticProducts } from "@/data/static-products";
 import { ToastAction } from "@/components/ui/toast";
 import { formatPrice } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 type DealsData = {
   productIds: string[];
 }
+
+import { motion } from 'framer-motion';
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeInOut" } },
+};
+
+const staggerContainer = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
 function ProductsGrid() {
   const searchParams = useSearchParams();
@@ -56,6 +73,17 @@ function ProductsGrid() {
     return new Set(dealsData.productIds);
   }, [dealsData]);
 
+  const productsByCategory = useMemo(() => {
+    return products.reduce((acc, product) => {
+      const category = product.category;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(product as WithId<Product>);
+      return acc;
+    }, {} as Record<string, WithId<Product>[]>);
+  }, [products]);
+
   if (productsLoading || dealsLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -68,12 +96,20 @@ function ProductsGrid() {
     ? products.filter(p => p.category === filter)
     : products;
 
+  // Show all products in one animated grid - no category grouping
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    <motion.div
+      initial="initial"
+      animate="animate"
+      variants={staggerContainer}
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8"
+    >
       {displayedProducts.map((product) => (
-        <ProductCard key={product.id} product={product as WithId<Product>} isDeal={dealIdSet.has(product.id)} />
+        <motion.div variants={fadeInUp} key={product.id}>
+          <ProductCard product={product as WithId<Product>} isDeal={dealIdSet.has(product.id)} />
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -85,7 +121,7 @@ export default function ProductsPage() {
           <h1 className="text-4xl md:text-5xl font-headline font-bold hover:text-primary transition-colors cursor-default">
             Discover Our Collection
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+          <p className="mt-4 max-w-2xl mx-auto text-lg font-semibold text-muted-foreground">
             Discover a world of flavor and wellness. Each variant is crafted with care to bring you the best of nature's goodness.
           </p>
         </div>
@@ -121,6 +157,25 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     e.preventDefault();
     e.stopPropagation();
     const amountToAdd = localQuantity;
+    const availableStock = product.stock || 0;
+
+    // Check if requested quantity exceeds available stock
+    if (cartQty + amountToAdd > availableStock) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Stock",
+        description: `Only ${availableStock} units available. ${availableStock - cartQty} more can be added to cart. Contact us for bulk orders.`,
+        action: (
+          <ToastAction
+            altText="Contact on WhatsApp"
+            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
+          >
+            WhatsApp
+          </ToastAction>
+        ),
+      });
+      return;
+    }
 
     addToCart(product, amountToAdd, selectedVariant);
     toast({
@@ -133,10 +188,49 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   };
 
   const handleQuantityChange = (change: number) => {
-    setLocalQuantity((prev) => Math.max(1, prev + change));
+    const newQty = Math.max(1, localQuantity + change);
+    const availableStock = product.stock || 0;
+
+    if (newQty > availableStock) {
+      toast({
+        variant: "destructive",
+        title: "Stock Limit Reached",
+        description: `Only ${availableStock} units available. Contact us for bulk orders.`,
+        action: (
+          <ToastAction
+            altText="Contact on WhatsApp"
+            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
+          >
+            WhatsApp
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+
+    setLocalQuantity(newQty);
   };
 
   const handleCartQuantityChange = (newQuantity: number) => {
+    const availableStock = product.stock || 0;
+
+    if (newQuantity > availableStock) {
+      toast({
+        variant: "destructive",
+        title: "Stock Limit Reached",
+        description: `Only ${availableStock} units available. Contact us for bulk orders.`,
+        action: (
+          <ToastAction
+            altText="Contact on WhatsApp"
+            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
+          >
+            WhatsApp
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+
     updateQuantity(cartItemId, newQuantity);
   };
 
@@ -170,7 +264,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
           </DialogTrigger>
           <div className="p-6 flex flex-col flex-1">
             <DialogTrigger asChild>
-              <h3 className="font-headline text-2xl flex-1 cursor-pointer text-left">
+              <h3 className="font-headline text-2xl font-bold flex-1 cursor-pointer text-left hover:text-primary transition-colors">
                 {product.name}
               </h3>
             </DialogTrigger>
@@ -213,9 +307,18 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty - 1); }} disabled={cartQty === 0}>
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
-                      {cartQty}
-                    </span>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={cartQty}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        const val = parseInt(e.target.value) || 1;
+                        handleCartQuantityChange(val);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-12 h-9 text-center border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty + 1); }}>
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -230,9 +333,18 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(-1) }} disabled={localQuantity === 1}>
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
-                      {localQuantity}
-                    </span>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={localQuantity}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        const val = parseInt(e.target.value) || 1;
+                        setLocalQuantity(val);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-12 h-9 text-center border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(1) }}>
                       <Plus className="h-4 w-4" />
                     </Button>

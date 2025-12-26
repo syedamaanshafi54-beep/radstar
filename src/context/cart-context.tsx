@@ -1,16 +1,17 @@
 
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import type { CartItem, PopulatedCartItem, Product, ProductVariant } from "@/lib/types";
+import type { CartItem, PopulatedCartItem, Product, ProductVariant, UserProfile } from "@/lib/types";
 import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 
 interface CartContextType {
   cartItems: PopulatedCartItem[];
-  addToCart: (product: Product, quantity?: number, variant?: ProductVariant) => void;
+  addToCart: (product: Product, quantity?: number, variant?: ProductVariant) => boolean;
   removeFromCart: (cartItemId: string) => void;
-  updateQuantity: (cartItemId: string, newQuantity: number) => void;
+  updateQuantity: (cartItemId: string, newQuantity: number) => boolean;
   clearCart: () => void;
+  getCartQuantity: (cartItemId: string) => number;
   cartCount: number;
   cartTotal: number;
   isCartLoading: boolean;
@@ -37,9 +38,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // Function to save guest cart to local storage
   const updateGuestCart = (newCart: CartItem[]) => {
-      localStorage.setItem("guestCart", JSON.stringify(newCart));
+    localStorage.setItem("guestCart", JSON.stringify(newCart));
   }
-  
+
   // Function to persist cart to Firestore for logged-in users
   const updateFirestoreCart = useCallback(async (userId: string, newCart: CartItem[]) => {
     if (!firestore) return;
@@ -72,7 +73,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         // USER IS LOGGED IN
         setIsCartLoading(true);
         const userDocRef = doc(firestore, 'users', user.uid);
-        
+
         // 1. Read guest cart from localStorage FIRST
         const guestCartJson = localStorage.getItem("guestCart");
         const guestCart: CartItem[] = guestCartJson ? JSON.parse(guestCartJson) : [];
@@ -101,12 +102,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           });
           finalCart = Array.from(finalCartMap.values());
         }
-        
+
         setCart(finalCart);
 
         if (needsUpdate) {
-            await updateFirestoreCart(user.uid, finalCart);
-            localStorage.removeItem("guestCart");
+          await updateFirestoreCart(user.uid, finalCart);
+          localStorage.removeItem("guestCart");
         }
         setIsCartLoading(false);
 
@@ -117,66 +118,150 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setIsCartLoading(false);
       }
     };
-    
+
     handleAuthChange();
 
   }, [user, isUserLoading, isProductsLoading, firestore, updateFirestoreCart]);
-  
 
-  const addToCart = (product: Product, quantity: number = 1, variant?: ProductVariant) => {
+
+  const addToCart = (product: Product, quantity: number = 1, variant?: ProductVariant): boolean => {
+    // Get available stock
+    const availableStock = variant?.stock ?? product.stock;
+
+    // If no stock info, allow (assume unlimited)
+    if (availableStock === undefined) {
+      setCart(prevCart => {
+        const newCart = [...prevCart];
+        const cartItemId = getCartItemId(product.id, variant?.id);
+
+        const existingItemIndex = newCart.findIndex(
+          (item) => getCartItemId(item.productId, item.variantId) === cartItemId
+        );
+
+        if (existingItemIndex > -1) {
+          newCart[existingItemIndex].quantity += quantity;
+        } else {
+          newCart.push({
+            productId: product.id,
+            quantity,
+            variantId: variant?.id
+          });
+        }
+
+        if (user) {
+          updateFirestoreCart(user.uid, newCart);
+        } else {
+          updateGuestCart(newCart);
+        }
+        return newCart;
+      });
+      return true;
+    }
+
+    // Check current quantity in cart
+    const cartItemId = getCartItemId(product.id, variant?.id);
+    const currentCartItem = cart.find(
+      (item) => getCartItemId(item.productId, item.variantId) === cartItemId
+    );
+    const currentQuantity = currentCartItem?.quantity || 0;
+    const newTotalQuantity = currentQuantity + quantity;
+
+    // Validate against stock
+    if (newTotalQuantity > availableStock) {
+      console.warn(`Cannot add ${quantity} items. Only ${availableStock - currentQuantity} more available in stock.`);
+      return false;
+    }
+
     setCart(prevCart => {
       const newCart = [...prevCart];
-      const cartItemId = getCartItemId(product.id, variant?.id);
-      
       const existingItemIndex = newCart.findIndex(
-          (item) => getCartItemId(item.productId, item.variantId) === cartItemId
+        (item) => getCartItemId(item.productId, item.variantId) === cartItemId
       );
-  
+
       if (existingItemIndex > -1) {
-          newCart[existingItemIndex].quantity += quantity;
+        newCart[existingItemIndex].quantity += quantity;
       } else {
-          newCart.push({ 
-            productId: product.id, 
-            quantity, 
-            variantId: variant?.id 
-          });
+        newCart.push({
+          productId: product.id,
+          quantity,
+          variantId: variant?.id
+        });
       }
-      
+
       if (user) {
-          updateFirestoreCart(user.uid, newCart);
+        updateFirestoreCart(user.uid, newCart);
       } else {
-          updateGuestCart(newCart);
+        updateGuestCart(newCart);
       }
       return newCart;
     });
+    return true;
   };
 
   const removeFromCart = (cartItemId: string) => {
     const newCart = cart.filter((item) => getCartItemId(item.productId, item.variantId) !== cartItemId);
     setCart(newCart);
     if (user) {
-        updateFirestoreCart(user.uid, newCart);
+      updateFirestoreCart(user.uid, newCart);
     } else {
-        updateGuestCart(newCart);
+      updateGuestCart(newCart);
     }
   };
 
-  const updateQuantity = (cartItemId: string, newQuantity: number) => {
+  const updateQuantity = (cartItemId: string, newQuantity: number): boolean => {
     if (newQuantity <= 0) {
       removeFromCart(cartItemId);
-    } else {
-      const newCart = cart.map((item) =>
-          getCartItemId(item.productId, item.variantId) === cartItemId
-            ? { ...item, quantity: newQuantity }
-            : item
-        );
-      setCart(newCart);
-       if (user) {
-            updateFirestoreCart(user.uid, newCart);
-        } else {
-            updateGuestCart(newCart);
-        }
+      return true;
     }
+
+    // Find the cart item to get product and variant info
+    const cartItem = cart.find(item => getCartItemId(item.productId, item.variantId) === cartItemId);
+    if (!cartItem) return false;
+
+    // Find the product in allProducts
+    const product = allProducts?.find(p => p.id === cartItem.productId);
+    if (!product) return false;
+
+    // Get variant if applicable
+    const variant = product.variants?.find(v => v.id === cartItem.variantId);
+
+    // Get available stock
+    const availableStock = variant?.stock ?? product.stock;
+
+    // If no stock info, allow (assume unlimited)
+    if (availableStock === undefined) {
+      const newCart = cart.map((item) =>
+        getCartItemId(item.productId, item.variantId) === cartItemId
+          ? { ...item, quantity: newQuantity }
+          : item
+      );
+      setCart(newCart);
+      if (user) {
+        updateFirestoreCart(user.uid, newCart);
+      } else {
+        updateGuestCart(newCart);
+      }
+      return true;
+    }
+
+    // Validate against stock
+    if (newQuantity > availableStock) {
+      console.warn(`Cannot update quantity to ${newQuantity}. Only ${availableStock} available in stock.`);
+      return false;
+    }
+
+    const newCart = cart.map((item) =>
+      getCartItemId(item.productId, item.variantId) === cartItemId
+        ? { ...item, quantity: newQuantity }
+        : item
+    );
+    setCart(newCart);
+    if (user) {
+      updateFirestoreCart(user.uid, newCart);
+    } else {
+      updateGuestCart(newCart);
+    }
+    return true;
   };
 
   const clearCart = () => {
@@ -186,24 +271,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else {
       updateGuestCart([]);
     }
-  }
-  
+  };
+
+  const getCartQuantity = (cartItemId: string): number => {
+    const item = cart.find(item => getCartItemId(item.productId, item.variantId) === cartItemId);
+    return item?.quantity || 0;
+  };
+
   // Populate cart items with full product details
   const populatedCartItems: PopulatedCartItem[] = cart
-  .map(cartItem => {
-    const product = allProducts?.find(p => p.id === cartItem.productId);
-    if (!product) return null;
+    .map(cartItem => {
+      const product = allProducts?.find(p => p.id === cartItem.productId);
+      if (!product) return null;
 
-    const variant = product.variants?.find(v => v.id === cartItem.variantId);
-    
-    return {
-      product,
-      quantity: cartItem.quantity,
-      variant,
-    };
-  })
-  .filter((item): item is PopulatedCartItem => item !== null);
-  
+      const variant = product.variants?.find(v => v.id === cartItem.variantId);
+
+      return {
+        product,
+        quantity: cartItem.quantity,
+        variant,
+      } as PopulatedCartItem;
+    })
+    .filter((item): item is PopulatedCartItem => item !== null);
+
 
   const cartCount = populatedCartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -221,6 +311,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        getCartQuantity,
         cartCount,
         cartTotal,
         isCartLoading: isCartLoading || isUserLoading || isProductsLoading,

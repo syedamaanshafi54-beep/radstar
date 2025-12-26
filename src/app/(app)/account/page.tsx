@@ -19,6 +19,7 @@ import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Sa
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import type { Order, OrderItem, UserProfile } from '@/lib/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatPrice } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,37 @@ function OrderHistory() {
   );
   const { data: orders, isLoading } = useCollection<Order>(ordersQuery, { listen: true });
 
+  // Status configuration matching admin interface
+  const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    switch (status) {
+      case 'pending_payment':
+        return 'outline';
+      case 'packed':
+      case 'shipped':
+      case 'out_for_delivery':
+        return 'secondary';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+      'placed': 'Placed',
+      'pending_payment': 'Pending Payment',
+      'paid': 'Paid',
+      'confirmed': 'Confirmed',
+      'packed': 'Packed',
+      'shipped': 'Shipped',
+      'out_for_delivery': 'Out for Delivery',
+      'delivered': 'Delivered',
+      'cancelled': 'Cancelled',
+    };
+    return labels[status] || status;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -84,7 +116,9 @@ function OrderHistory() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{order.status}</span>
+                    <Badge variant={getStatusBadgeVariant(order.status)}>
+                      {getStatusLabel(order.status)}
+                    </Badge>
                     <div className="p-2 rounded-full hover:bg-accent">
                       {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       <span className="sr-only">Toggle Details</span>

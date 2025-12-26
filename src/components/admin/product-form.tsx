@@ -23,8 +23,11 @@ import type { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, PlusCircle, Upload, Loader2, ImageIcon, Plus, X } from 'lucide-react';
 import { CldUploadWidget } from 'next-cloudinary';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCollection, useMemoFirebase } from '@/firebase';
+import { initialCategories } from '@/data/categories';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -62,6 +65,20 @@ export function ProductForm({ product }: ProductFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image.url as string || null);
+
+  // Fetch categories from Firestore
+  const categoriesCollection = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
+  const { data: firestoreCategories } = useCollection(categoriesCollection, { listen: true });
+
+  const categories = useMemo(() => {
+    if (firestoreCategories && firestoreCategories.length > 0) {
+      return firestoreCategories.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name || cat.id
+      }));
+    }
+    return initialCategories;
+  }, [firestoreCategories]);
 
   const defaultValues = product
     ? {
@@ -216,12 +233,21 @@ export function ProductForm({ product }: ProductFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Asli Talbina" {...field} />
-              </FormControl>
-              <FormDescription>
-                Enter a category. You can create a new one by typing it in.
-              </FormDescription>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>Product category</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -254,22 +280,21 @@ export function ProductForm({ product }: ProductFormProps) {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="stock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Stock Quantity</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Optional" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormDescription>Inventory count</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-
-        <FormField
-          control={form.control}
-          name="stock"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Stock Quantity</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="Optional" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormDescription>Available inventory count.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="space-y-4">
           <FormLabel>Product Image</FormLabel>
@@ -361,9 +386,7 @@ export function ProductForm({ product }: ProductFormProps) {
               </CldUploadWidget>
             )}
           </div>
-          <FormDescription>
-            Upload an image for your product. This is required for checkout visibility.
-          </FormDescription>
+          <FormDescription>Required for checkout</FormDescription>
         </div>
 
         <FormField
@@ -375,9 +398,7 @@ export function ProductForm({ product }: ProductFormProps) {
               <FormControl>
                 <Textarea placeholder="Enter comma-separated benefits" {...field} />
               </FormControl>
-              <FormDescription>
-                Separate each benefit with a comma (e.g., Benefit 1, Benefit 2).
-              </FormDescription>
+              <FormDescription>Comma-separated list</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -392,7 +413,7 @@ export function ProductForm({ product }: ProductFormProps) {
               <FormControl>
                 <Textarea placeholder="Enter comma-separated ingredients" {...field} value={field.value ?? ''} />
               </FormControl>
-              <FormDescription>Separate each ingredient with a comma.</FormDescription>
+              <FormDescription>Comma-separated list</FormDescription>
               <FormMessage />
             </FormItem>
           )}

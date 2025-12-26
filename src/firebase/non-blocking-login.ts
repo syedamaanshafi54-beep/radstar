@@ -37,9 +37,9 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 /**
  * Sets the session persistence for Firebase Auth.
  * @param authInstance The Firebase Auth instance.
- * @param rememberMe If true, uses local persistence. Otherwise, uses session persistence.
+ * @param rememberMe If true, uses local persistence. If false, uses session persistence. Default is true.
  */
-export async function setSessionPersistence(authInstance: Auth, rememberMe?: boolean) {
+export async function setSessionPersistence(authInstance: Auth, rememberMe: boolean = true) {
   const persistence = rememberMe
     ? browserLocalPersistence
     : browserSessionPersistence;

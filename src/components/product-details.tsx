@@ -5,7 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Minus, Plus, ShoppingCart } from "lucide-react";
+import { CheckCircle, Minus, Plus, ShoppingCart, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, ProductVariant } from "@/lib/types";
@@ -29,7 +29,7 @@ type ProductDetailsProps = {
 
 export default function ProductDetails({ product }: ProductDetailsProps) {
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart, getCartQuantity } = useCart();
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
@@ -38,12 +38,44 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
   const handleAddToCart = () => {
     const amountToAdd = quantity;
-    addToCart(product, amountToAdd, selectedVariant);
+    // Check variant stock first, then product stock
+    const availableStock = selectedVariant?.stock ?? product.stock;
+
+    // If stock is undefined, allow unlimited (no stock tracking for this product)
+    if (availableStock !== undefined) {
+      // Check if requested quantity exceeds available stock
+      if (cartQty + amountToAdd > availableStock) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient Stock",
+          description: `Only ${availableStock} units available. ${Math.max(0, availableStock - cartQty)} more can be added. Contact us for bulk orders.`,
+          action: (
+            <ToastAction
+              altText="Contact on WhatsApp"
+              onClick={() => window.open('https://wa.me/919032561974', '_blank')}
+            >
+              WhatsApp
+            </ToastAction>
+          ),
+        });
+        return;
+      }
+    }
+
+    const success = addToCart(product, amountToAdd, selectedVariant);
+    if (!success) {
+      toast({
+        variant: "destructive",
+        title: "Cannot Add to Cart",
+        description: "Stock limit reached. Please reduce quantity.",
+      });
+      return;
+    }
+
     toast({
       title: "Added to cart",
-      description: `${amountToAdd} x ${product.name} ${
-        selectedVariant ? `(${selectedVariant.name})` : ""
-      } has been added.`,
+      description: `${amountToAdd} x ${product.name} ${selectedVariant ? `(${selectedVariant.name})` : ""
+        } has been added.`,
       duration: 5000,
       action: (
         <ToastAction altText="View Cart" onClick={() => router.push("/cart")}>
@@ -51,10 +83,38 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         </ToastAction>
       ),
     });
+    // Reset quantity after adding
+    setQuantity(1);
+  };
+
+  const handleGoToCart = () => {
+    router.push('/cart');
   };
 
   const handleQuantityChange = (change: number) => {
-    setQuantity((prev) => Math.max(1, prev + change));
+    const newQty = Math.max(1, quantity + change);
+    // Check variant stock first, then product stock
+    const availableStock = selectedVariant?.stock ?? product.stock;
+
+    // If stock is defined, validate against it
+    if (availableStock !== undefined && newQty > availableStock) {
+      toast({
+        variant: "destructive",
+        title: "Stock Limit Reached",
+        description: `Only ${availableStock} units available. Contact us for bulk orders.`,
+        action: (
+          <ToastAction
+            altText="Contact on WhatsApp"
+            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
+          >
+            WhatsApp
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+
+    setQuantity(newQty);
   };
 
   const handleVariantChange = (variantId: string) => {
@@ -64,6 +124,10 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
   const price = selectedVariant?.price ?? product.defaultPrice;
   const salePrice = selectedVariant?.salePrice ?? product.salePrice;
+
+  // Check if product is in cart
+  const cartItemId = selectedVariant ? `${product.id}-${selectedVariant.id}` : product.id;
+  const cartQty = getCartQuantity(cartItemId);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-full gap-4 md:gap-0 pt-8">
@@ -160,13 +224,23 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               </Button>
             </div>
 
-            <Button
-              size="lg"
-              className="flex-1 h-10 md:h-11 text-base w-full"
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
-            </Button>
+            {cartQty > 0 ? (
+              <Button
+                size="lg"
+                className="flex-1 h-10 md:h-11 text-base w-full"
+                onClick={handleGoToCart}
+              >
+                <ArrowRight className="mr-2 h-5 w-5" /> Go to Cart ({cartQty})
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                className="flex-1 h-10 md:h-11 text-base w-full"
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+              </Button>
+            )}
           </div>
         </div>
       </div>

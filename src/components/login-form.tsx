@@ -98,12 +98,22 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     setIsSubmitting(true);
     try {
       await setSessionPersistence(auth, values.rememberMe);
-      await initiateEmailSignIn(auth, values.email, values.password);
+      const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
+
+      // Check if user is admin and redirect accordingly
+      const isAdmin = userCredential.user.email === 'itsmeabdulk@gmail.com' ||
+        userCredential.user.email === 'radstar.in@gmail.com';
+
       toast({
         title: 'Signed in!',
-        description: "You're now logged in.",
+        description: isAdmin ? "Welcome back, Admin!" : "You're now logged in.",
       });
-      onSuccess?.();
+
+      if (isAdmin) {
+        router.push('/admin');
+      } else {
+        onSuccess?.();
+      }
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential') {
         toast({

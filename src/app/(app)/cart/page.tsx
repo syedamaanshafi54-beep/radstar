@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import ProductDetails from "@/components/product-details";
+import { useToast } from "@/hooks/use-toast";
 
 const getCartItemId = (productId: string, variantId?: string) => {
   return variantId ? `${productId}-${variantId}` : productId;
@@ -32,6 +33,7 @@ const getCartItemId = (productId: string, variantId?: string) => {
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, isCartLoading } = useCart();
+  const { toast } = useToast();
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24 pt-28 sm:pt-8">
@@ -68,10 +70,17 @@ export default function CartPage() {
               const salePrice = variant?.salePrice ?? product.salePrice;
               const displayPrice = salePrice ?? price;
 
+              // Get available stock
+              const availableStock = variant?.stock ?? product.stock;
+              const hasStockInfo = availableStock !== undefined;
+              const isOutOfStock = hasStockInfo && availableStock === 0;
+              const exceedsStock = hasStockInfo && quantity > availableStock;
+              const atMaxStock = hasStockInfo && quantity >= availableStock;
+
 
               return (
                 <Dialog key={cartItemId}>
-                  <Card className="flex items-start md:items-center p-4">
+                  <Card className={`flex items-start md:items-center p-4 ${exceedsStock ? 'border-destructive' : ''}`}>
                     <DialogTrigger asChild>
                       <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-md overflow-hidden mr-4 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
                         <Image
@@ -86,11 +95,18 @@ export default function CartPage() {
                     <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between">
                       <div className="flex-1">
                         <DialogTrigger asChild>
-                          <button className="font-semibold hover:text-primary transition-colors leading-tight text-left">
+                          <button className="font-headline text-xl font-semibold hover:text-primary transition-colors leading-tight text-left">
                             {product.name}
                           </button>
                         </DialogTrigger>
                         {variant && <p className="text-sm text-muted-foreground">{variant.name}</p>}
+                        {hasStockInfo && (
+                          <p className={`text-xs mt-1 ${exceedsStock ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                            {exceedsStock
+                              ? `⚠️ Only ${availableStock} in stock!`
+                              : `${availableStock} available`}
+                          </p>
+                        )}
                         <div className="flex items-baseline gap-2 md:hidden mt-1">
                           {salePrice ? (
                             <>
@@ -117,14 +133,35 @@ export default function CartPage() {
                           <Input
                             type="number"
                             value={quantity}
-                            onChange={(e) => updateQuantity(cartItemId, parseInt(e.target.value) || 1)}
+                            onChange={(e) => {
+                              const newQty = parseInt(e.target.value) || 1;
+                              const success = updateQuantity(cartItemId, newQty);
+                              if (!success && hasStockInfo) {
+                                toast({
+                                  title: 'Stock Limit Reached',
+                                  description: `Only ${availableStock} units available in stock.`,
+                                  variant: 'destructive',
+                                });
+                              }
+                            }}
                             className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+                            max={hasStockInfo ? availableStock : undefined}
                           />
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(cartItemId, quantity + 1)}
+                            onClick={() => {
+                              const success = updateQuantity(cartItemId, quantity + 1);
+                              if (!success && hasStockInfo) {
+                                toast({
+                                  title: 'Stock Limit Reached',
+                                  description: `Only ${availableStock} units available in stock.`,
+                                  variant: 'destructive',
+                                });
+                              }
+                            }}
+                            disabled={atMaxStock}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>

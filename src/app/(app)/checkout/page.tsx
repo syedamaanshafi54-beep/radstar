@@ -84,6 +84,19 @@ export default function CheckoutPage() {
   const userDocRef = useMemo(() => user ? doc(firestore, "users", user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
+  // Block admin from placing orders
+  const isAdmin = user?.email === 'itsmeabdulk@gmail.com' || user?.email === 'radstar.in@gmail.com';
+
+  useEffect(() => {
+    if (isAdmin) {
+      toast({
+        title: "Access Restricted",
+        description: "Admins cannot place orders. Please use a customer account.",
+      });
+      router.push('/admin');
+    }
+  }, [isAdmin, router, toast]);
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -538,8 +551,8 @@ export default function CheckoutPage() {
                   {orderPlaced ? (
                     <div className="flex flex-col items-center justify-center text-center py-4">
                       <h2 className="text-xl font-semibold mt-4 text-green-600">Order Placed!</h2>
-                      <p className="text-muted-foreground mb-4">You can view your order details in your account.</p>
-                      <Button asChild><a href="/account">Go to My Account</a></Button>
+                      <p className="text-muted-foreground mb-4">Thank you for your order! Continue shopping to discover more products.</p>
+                      <Button asChild><a href="/products">Discover Our Collection</a></Button>
                     </div>
                   ) : (
                     <div className="space-y-4">

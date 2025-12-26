@@ -39,6 +39,7 @@ import { Review } from '@/lib/types/reviews';
 import ProductReviews from '@/components/product-reviews';
 import GlobalLoader from "@/components/GlobalLoader";
 import { getAuth, signOut } from "firebase/auth";
+import { Input } from '@/components/ui/input';
 
 type HeroSlide = {
   id: string;
@@ -650,9 +651,18 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                       <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty - 1); }} disabled={cartQty === 0}>
                         <Minus className="h-4 w-4" />
                       </Button>
-                      <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
-                        {cartQty}
-                      </span>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={cartQty}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const val = parseInt(e.target.value) || 1;
+                          handleCartQuantityChange(val);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-12 h-9 text-center border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
                       <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleCartQuantityChange(cartQty + 1); }}>
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -667,9 +677,18 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
                       <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(-1); }} disabled={quantity === 1}>
                         <Minus className="h-4 w-4" />
                       </Button>
-                      <span className="w-12 h-9 text-center flex items-center justify-center text-sm font-medium text-foreground">
-                        {quantity}
-                      </span>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const val = parseInt(e.target.value) || 1;
+                          setQuantity(val);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-12 h-9 text-center border-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
                       <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => { e.stopPropagation(); handleQuantityChange(1); }}>
                         <Plus className="h-4 w-4" />
                       </Button>

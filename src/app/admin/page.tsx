@@ -562,9 +562,6 @@ export default function AdminDashboardPage() {
           <div onClick={() => setActiveModal('products')} className="p-0">
             <KpiCard type="products" title="Total Products" value={products.length} icon={Package} change=" " />
           </div>
-          <div onClick={() => setActiveModal('income')} className="p-0">
-            <KpiCard type="income" title="Total Income" value={<><span className="font-currency">₹</span>{formatPrice(totalIncome)}</>} icon={TrendingUp} change={`${incomeChange >= 0 ? '+' : ''}${incomeChange.toFixed(1)}%`} changeType={incomeChange >= 0 ? 'increase' : 'decrease'} />
-          </div>
           <div onClick={() => setActiveModal('visitors')} className="p-0">
             <KpiCard type="visitors" title="Total Visitors" value={totalVisitors.toLocaleString()} icon={Users} change={`${visitorsChange >= 0 ? '+' : ''}${visitorsChange.toFixed(1)}%`} changeType={visitorsChange >= 0 ? 'increase' : 'decrease'} />
           </div>
