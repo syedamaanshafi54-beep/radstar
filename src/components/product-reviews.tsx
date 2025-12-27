@@ -37,7 +37,7 @@ export default function ProductReviews({ productId }: { productId: string }) {
 
   // Query user's orders to check if they've purchased this product
   const ordersQuery = useMemoFirebase(
-    () => user ? query(collection(firestore, 'orders'), where('userId', '==', user.uid)) : null,
+    () => user ? collection(firestore, 'users', user.uid, 'orders') : null,
     [firestore, user]
   );
 
