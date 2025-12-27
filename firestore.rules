@@ -55,7 +55,7 @@ service cloud.firestore {
     // Reviews: Public read, Authenticated create, Owner/Admin manage
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isSignedIn() && !isAdmin();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isSignedIn() && (
         (request.auth.uid == resource.data.userId) || isAdmin()
       );
