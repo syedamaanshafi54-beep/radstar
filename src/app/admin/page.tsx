@@ -532,25 +532,29 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="space-y-6 px-0 max-w-full overflow-x-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Rad Star Dashboard</h1>
-        <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-0 max-w-full overflow-x-hidden pb-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-4 sm:pt-0">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Rad Star Dashboard</h1>
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="text-sm font-medium text-muted-foreground hidden sm:block">
             <Link href="/admin" className="text-primary hover:underline">Home</Link>
             <span className="mx-2">/</span>
             <span>Dashboard</span>
           </div>
-          <Button asChild className="hidden md:flex">
+          <Button asChild size="sm" className="w-full sm:w-auto">
             <Link href="/admin/products/new">
-              <PlusCircle />
-              <span>Add Product</span>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Add Product</span>
+              <span className="sm:hidden">Add</span>
             </Link>
           </Button>
         </div>
       </div>
+
+      {/* KPI Cards */}
       <Dialog open={!!activeModal} onOpenChange={(isOpen) => !isOpen && setActiveModal(null)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
           <div onClick={() => setActiveModal('sales')} className="p-0">
             <KpiCard type="sales" title="Total Sales" value={<><span className="font-currency">₹</span>{formatPrice(totalRevenue)}</>} icon={IndianRupee} change={`${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}%`} changeType={revenueChange >= 0 ? 'increase' : 'decrease'} />
           </div>

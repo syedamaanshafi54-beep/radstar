@@ -81,25 +81,25 @@ export function InventoryManagement({ products }: InventoryManagementProps) {
 
     return (
         <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-primary" />
-                        <CardTitle>Inventory Management</CardTitle>
+                        <Package className="h-5 w-5 text-primary flex-shrink-0" />
+                        <CardTitle className="text-lg sm:text-xl">Inventory Management</CardTitle>
                     </div>
-                    <div className="flex gap-2">
-                        <Badge variant="outline" className="gap-1">
+                    <div className="flex gap-2 flex-wrap">
+                        <Badge variant="outline" className="gap-1 text-xs">
                             <Package className="h-3 w-3" />
                             {totalProducts} Products
                         </Badge>
                         {lowStockCount > 0 && (
-                            <Badge variant="default" className="gap-1 bg-yellow-600">
+                            <Badge variant="default" className="gap-1 bg-yellow-600 text-xs">
                                 <AlertTriangle className="h-3 w-3" />
                                 {lowStockCount} Low
                             </Badge>
                         )}
                         {outOfStockCount > 0 && (
-                            <Badge variant="destructive" className="gap-1">
+                            <Badge variant="destructive" className="gap-1 text-xs">
                                 <AlertTriangle className="h-3 w-3" />
                                 {outOfStockCount} Out
                             </Badge>
@@ -107,32 +107,32 @@ export function InventoryManagement({ products }: InventoryManagementProps) {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="p-4 border rounded-lg">
-                        <p className="text-sm text-muted-foreground">Total Inventory Value</p>
-                        <p className="text-2xl font-bold"><span className="font-currency">₹</span>{totalInventoryValue.toLocaleString()}</p>
+            <CardContent className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="p-3 sm:p-4 border rounded-lg">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Total Inventory Value</p>
+                        <p className="text-xl sm:text-2xl font-bold mt-1"><span className="font-currency">₹</span>{totalInventoryValue.toLocaleString()}</p>
                     </div>
-                    <div className="p-4 border rounded-lg">
-                        <p className="text-sm text-muted-foreground">Low Stock Items</p>
-                        <p className="text-2xl font-bold text-yellow-600">{lowStockCount}</p>
+                    <div className="p-3 sm:p-4 border rounded-lg">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Low Stock Items</p>
+                        <p className="text-xl sm:text-2xl font-bold text-yellow-600 mt-1">{lowStockCount}</p>
                     </div>
-                    <div className="p-4 border rounded-lg">
-                        <p className="text-sm text-muted-foreground">Out of Stock</p>
-                        <p className="text-2xl font-bold text-destructive">{outOfStockCount}</p>
+                    <div className="p-3 sm:p-4 border rounded-lg">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Out of Stock</p>
+                        <p className="text-xl sm:text-2xl font-bold text-destructive mt-1">{outOfStockCount}</p>
                     </div>
                 </div>
 
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Product</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead className="text-center">Current Stock</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Update Stock</TableHead>
-                                <TableHead className="text-center">Action</TableHead>
+                                <TableHead className="min-w-[150px]">Product</TableHead>
+                                <TableHead className="min-w-[100px]">Category</TableHead>
+                                <TableHead className="text-center min-w-[100px]">Current Stock</TableHead>
+                                <TableHead className="text-center min-w-[100px]">Status</TableHead>
+                                <TableHead className="text-center min-w-[120px]">Update Stock</TableHead>
+                                <TableHead className="text-center min-w-[100px]">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -144,13 +144,13 @@ export function InventoryManagement({ products }: InventoryManagementProps) {
 
                                 return (
                                     <TableRow key={product.id}>
-                                        <TableCell className="font-medium">{product.name}</TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">{product.category}</TableCell>
+                                        <TableCell className="font-medium text-sm">{product.name}</TableCell>
+                                        <TableCell className="text-xs sm:text-sm text-muted-foreground">{product.category}</TableCell>
                                         <TableCell className="text-center">
-                                            <span className={`font-bold ${status.color}`}>{currentStock}</span>
+                                            <span className={`font-bold text-sm sm:text-base ${status.color}`}>{currentStock}</span>
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            <Badge variant={status.variant} className="text-xs">
+                                            <Badge variant={status.variant} className="text-xs whitespace-nowrap">
                                                 {status.label}
                                             </Badge>
                                         </TableCell>
@@ -160,7 +160,7 @@ export function InventoryManagement({ products }: InventoryManagementProps) {
                                                 min="0"
                                                 value={pendingUpdate !== undefined ? pendingUpdate : currentStock}
                                                 onChange={(e) => handleStockChange(product.id, e.target.value)}
-                                                className="w-20 mx-auto text-center"
+                                                className="w-16 sm:w-20 mx-auto text-center text-sm"
                                                 disabled={updating[product.id]}
                                             />
                                         </TableCell>
@@ -169,14 +169,14 @@ export function InventoryManagement({ products }: InventoryManagementProps) {
                                                 size="sm"
                                                 onClick={() => handleUpdateStock(product)}
                                                 disabled={!hasUpdate || updating[product.id]}
-                                                className="gap-1"
+                                                className="gap-1 text-xs"
                                             >
                                                 {updating[product.id] ? (
                                                     <Loader2 className="h-3 w-3 animate-spin" />
                                                 ) : (
                                                     <Save className="h-3 w-3" />
                                                 )}
-                                                Save
+                                                <span className="hidden sm:inline">Save</span>
                                             </Button>
                                         </TableCell>
                                     </TableRow>

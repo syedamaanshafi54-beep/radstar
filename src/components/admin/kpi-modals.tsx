@@ -74,36 +74,36 @@ export function KpiCard({
             )}
             data-modal-type={type}
         >
-            <CardHeader className="pl-0 pr-3 py-3 sm:p-5">
+            <CardHeader className="p-4 sm:p-5">
                 <div className="flex items-center justify-between w-full">
 
                     {/* LEFT TEXT BLOCK */}
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex flex-col space-y-1.5 sm:space-y-1">
                         {/* TITLE → Make bold */}
-                        <CardTitle className="text-sm font-semibold text-muted-foreground leading-tight">
+                        <CardTitle className="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">
                             {title}
                         </CardTitle>
 
                         {/* VALUE → Bigger + Bold */}
-                        <div className="text-lg sm:text-2xl font-extrabold leading-tight whitespace-nowrap">
+                        <div className="text-xl sm:text-2xl md:text-3xl font-extrabold leading-tight whitespace-nowrap">
                             {value}
                         </div>
                     </div>
 
                     {/* ICON */}
-                    <div className={`p-1.5 sm:p-2 rounded-md ${iconColor}`}>
-                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <div className={`p-2 sm:p-2.5 rounded-md ${iconColor} flex-shrink-0`}>
+                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                 </div>
             </CardHeader>
 
             {change && (
-                <CardContent className="pt-1">
-                    <div className="text-xs text-muted-foreground flex items-center">
+                <CardContent className="px-4 pb-4 pt-0 sm:px-5 sm:pb-5">
+                    <div className="text-xs sm:text-sm text-muted-foreground flex items-center">
                         {changeType === 'increase' ? (
-                            <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
+                            <ArrowUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500 mr-1" />
                         ) : (
-                            <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
+                            <ArrowDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-500 mr-1" />
                         )}
                         <span>{change} from last month</span>
                     </div>
