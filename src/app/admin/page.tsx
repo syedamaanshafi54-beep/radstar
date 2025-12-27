@@ -216,14 +216,14 @@ export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
   const isAdminUser = user?.email === 'itsmeabdulk@gmail.com' || user?.email === 'radstar.in@gmail.com';
 
-  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore, isAdminUser]);
-  const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: false });
+  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: true });
 
   const ordersCollectionGroup = useMemoFirebase(() => {
     if (!isAdminUser) return null;
     return collectionGroup(firestore, 'orders');
   }, [firestore, isAdminUser]);
-  const { data: allOrders, isLoading: allOrdersLoading } = useCollection<Order>(ordersCollectionGroup, { listen: false });
+  const { data: allOrders, isLoading: allOrdersLoading } = useCollection<Order>(ordersCollectionGroup, { listen: true });
 
   const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore, isAdminUser]);
   const { data: dealsData, isLoading: dealInfoLoading } = useDoc<DealsData>(dealsDocRef);
