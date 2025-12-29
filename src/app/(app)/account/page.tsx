@@ -12,18 +12,29 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save, Home, User, Phone, Mail, Edit, X } from 'lucide-react';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
-import type { Order, OrderItem, UserProfile } from '@/lib/types';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Package, History, LifeBuoy, Repeat, ChevronDown, ChevronUp, Save, Home, User, Phone, Mail, Edit, X, RefreshCw, Star, ShoppingCart } from 'lucide-react';
+import { collection, query, orderBy, doc, where, limit } from 'firebase/firestore';
+import type { Order, OrderItem, UserProfile, Product } from '@/lib/types';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { formatPrice } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
+import { useCart } from '@/context/cart-context';
+import Link from 'next/link';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import ProductReviews from '@/components/product-reviews'; // Verify this path
 
 function OrderDetails({ items }: { items: OrderItem[] }) {
   if (!items || items.length === 0) {
@@ -46,10 +57,85 @@ function OrderDetails({ items }: { items: OrderItem[] }) {
   );
 }
 
+function ProductRecommendations({ orders, allProducts }: { orders: Order[], allProducts: Product[] }) {
+  const recommendations = useMemo(() => {
+    if (!orders || orders.length === 0 || !allProducts || allProducts.length === 0) {
+      return allProducts.slice(0, 5);
+    }
 
-function OrderHistory() {
+    const purchasedCategories = new Set<string>();
+    orders.forEach(order => {
+      order.items?.forEach(item => {
+        const product = allProducts.find(p => p.id === item.productId);
+        if (product) purchasedCategories.add(product.category);
+      });
+    });
+
+    let recs = allProducts.filter(p => purchasedCategories.has(p.category));
+
+    if (recs.length < 3) {
+      const others = allProducts.filter(p => !purchasedCategories.has(p.category));
+      recs = [...recs, ...others];
+    }
+
+    return recs.slice(0, 8);
+  }, [orders, allProducts]);
+
+  if (recommendations.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-headline font-semibold">You May Also Like</h3>
+      <Carousel
+        opts={{
+          align: "start",
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {recommendations.map((product) => (
+            <CarouselItem key={product.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+              {/* Note: Linking to existing product dialog might be better if no dedicated page, but for now assuming listing page handles it or we link to listing? 
+                  The user asked for suggestions. I'll link to product listing for now if individual page doesn't exist, 
+                  BUT I previously created product/[slug]/page.tsx. Oh wait, I deleted it.
+                  I should link to /products?product_id=... OR just /products. 
+                  Actually, linking to the main products page where user can find it is safest if I deleted the detail page.
+                  But detailed view is better. 
+                  Given constraints, I'll link to /products.
+              */}
+              <Link href={`/products?highlight=${product.id}`} className="block h-full">
+                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="aspect-square relative overflow-hidden rounded-t-lg bg-secondary/20">
+                    <Image
+                      src={product.image.url as string}
+                      alt={product.image.hint}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-3">
+                    <h4 className="font-medium line-clamp-1 text-sm mb-1">{product.name}</h4>
+                    <p className="font-bold text-sm"><span className="font-currency">₹</span>{formatPrice(product.salePrice || product.defaultPrice)}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden md:flex -left-4" />
+        <CarouselNext className="hidden md:flex -right-4" />
+      </Carousel>
+    </div>
+  );
+}
+
+
+function OrderHistory({ allProducts }: { allProducts: Product[] }) {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { addToCart } = useCart();
+  const router = useRouter();
+  const { toast } = useToast();
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
 
   const ordersQuery = useMemoFirebase(
@@ -58,28 +144,51 @@ function OrderHistory() {
   );
   const { data: orders, isLoading } = useCollection<Order>(ordersQuery, { listen: true });
 
-  // Status configuration matching admin interface
+  const handleReorder = (order: Order) => {
+    let addedCount = 0;
+    order.items.forEach(item => {
+      const product = allProducts.find(p => p.id === item.productId);
+      if (product) {
+        const variant = product.variants?.find(v => v.name === item.variantName);
+        addToCart(product, item.qty, variant);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      toast({
+        title: "Items Added to Cart",
+        description: `${addedCount} items from your previous order have been added.`,
+      });
+      router.push('/cart');
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Cannot Reorder",
+        description: "Products from this order are no longer available.",
+      });
+    }
+  };
+
   const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
       case 'pending_payment':
-        return 'outline';
+      case 'placed': return 'outline';
       case 'packed':
       case 'shipped':
-      case 'out_for_delivery':
-        return 'secondary';
-      case 'cancelled':
-        return 'destructive';
-      default:
-        return 'default';
+      case 'out_for_delivery': return 'secondary';
+      case 'cancelled': return 'destructive';
+      case 'delivered': return 'default';
+      default: return 'default';
     }
   };
 
   const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
-      'placed': 'Placed',
-      'pending_payment': 'Pending Payment',
+      'placed': 'Order Placed',
+      'pending_payment': 'Payment Pending',
       'paid': 'Paid',
-      'confirmed': 'Confirmed',
+      'confirmed': 'Order Confirmed',
       'packed': 'Packed',
       'shipped': 'Shipped',
       'out_for_delivery': 'Out for Delivery',
@@ -98,47 +207,150 @@ function OrderHistory() {
   }
 
   if (!orders || orders.length === 0) {
-    return <p className="text-muted-foreground">You have not placed any orders yet.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-secondary/20 rounded-lg">
+        <ShoppingBagIcon className="h-12 w-12 text-muted-foreground mb-3" />
+        <p className="text-lg font-medium">No orders yet</p>
+        <p className="text-sm text-muted-foreground mb-4">Start shopping to see your orders here.</p>
+        <Button asChild>
+          <Link href="/products">Shop Now</Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {orders.map((order) => (
-        <Collapsible key={order.id} open={openOrderId === order.id} onOpenChange={(isOpen) => setOpenOrderId(isOpen ? order.id : null)}>
-          <Card>
-            <CardHeader className="p-4">
-              <CollapsibleTrigger asChild>
-                <div className="flex justify-between items-center w-full cursor-pointer">
-                  <div className="text-left">
-                    <p className="font-semibold">Order #{order.orderNumber}</p>
+    <div className="space-y-8">
+      <ProductRecommendations orders={orders} allProducts={allProducts} />
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <History className="h-5 w-5" />
+          <h3 className="text-xl font-headline font-semibold">Your Orders</h3>
+        </div>
+        {orders.map((order) => {
+          const orderImages = order.items.map(item => {
+            const p = allProducts.find(product => product.id === item.productId);
+            return p?.image?.url;
+          }).filter(Boolean).slice(0, 5);
+
+          const firstProductId = order.items[0]?.productId;
+          const firstProduct = allProducts.find(p => p.id === firstProductId);
+
+          return (
+            <Card key={order.id} className="overflow-hidden border-muted/60 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="p-4 bg-secondary/5 border-b pb-3">
+                <div className="flex flex-wrap justify-between items-start gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant={getStatusBadgeVariant(order.status)} className="capitalize rounded-full px-3 py-0.5">
+                        {getStatusLabel(order.status)}
+                      </Badge>
+                      {order.status === 'delivered' && <CheckCircleIcon className="h-4 w-4 text-green-600" />}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      {order.createdAt ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : ''} - <span className="font-currency">₹</span>{formatPrice(order.totalAmount)}
+                      Placed on {order.createdAt ? new Date(order.createdAt.seconds * 1000).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true }) : ''}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getStatusBadgeVariant(order.status)}>
-                      {getStatusLabel(order.status)}
-                    </Badge>
-                    <div className="p-2 rounded-full hover:bg-accent">
-                      {openOrderId === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      <span className="sr-only">Toggle Details</span>
-                    </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg"><span className="font-currency">₹</span>{formatPrice(order.totalAmount)}</p>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground ml-auto" onClick={() => setOpenOrderId(openOrderId === order.id ? null : order.id)}>
+                      {openOrderId === order.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </Button>
                   </div>
                 </div>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="p-4 pt-0">
-                <OrderDetails items={order.items} />
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none mb-4">
+                  {orderImages.map((img, i) => (
+                    <div key={i} className="relative h-14 w-14 min-w-[3.5rem] rounded-md border bg-background overflow-hidden flex-shrink-0">
+                      <Image src={img as string} alt="Product" fill className="object-cover" />
+                    </div>
+                  ))}
+                  {order.items.length > 5 && (
+                    <div className="h-14 w-14 min-w-[3.5rem] rounded-md border bg-secondary/50 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      +{order.items.length - 5}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t mt-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex-1 border-dashed">
+                        <Star className="mr-2 h-4 w-4" /> Rate Order
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Reviews for {firstProduct?.name || 'Product'}</DialogTitle>
+                        <DialogDescription>
+                          Rate this product/order or view existing reviews.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <ProductReviews productId={firstProductId} defaultOpen={true} />
+                    </DialogContent>
+                  </Dialog>
+
+                  <Button className="flex-1" onClick={() => handleReorder(order)}>
+                    <RefreshCw className="mr-2 h-4 w-4" /> Order Again
+                  </Button>
+                </div>
+
+                <Collapsible open={openOrderId === order.id} onOpenChange={(isOpen) => setOpenOrderId(isOpen ? order.id : null)}>
+                  <CollapsibleContent className="pt-4 mt-2 border-t border-dashed">
+                    <OrderDetails items={order.items} />
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      ))}
+            </Card>
+          )
+        })}
+      </div>
     </div>
   );
 }
 
+function ShoppingBagIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  )
+}
+
+function CheckCircleIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  )
+}
 
 export default function AccountPage() {
   const { user, isUserLoading } = useUser();
@@ -150,6 +362,9 @@ export default function AccountPage() {
 
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
+
+  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const { data: allProducts, isLoading: isProductsLoading } = useCollection<Product>(productsCollection, { listen: false });
 
   const [displayName, setDisplayName] = useState('');
   const [phone, setPhone] = useState('');
@@ -201,7 +416,7 @@ export default function AccountPage() {
     }
   };
 
-  if (isUserLoading || isProfileLoading || !user) {
+  if (isUserLoading || isProfileLoading || !user || isProductsLoading) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -281,15 +496,8 @@ export default function AccountPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><History /> Order History</CardTitle>
-            <CardDescription>Review your previous orders and their status.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OrderHistory />
-          </CardContent>
-        </Card>
+        {/* Order History Section with Recommendations */}
+        <OrderHistory allProducts={allProducts || []} />
 
         <div className="grid md:grid-cols-2 gap-8">
           <Card className="bg-secondary/40 border-dashed">

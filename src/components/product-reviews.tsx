@@ -19,14 +19,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Review } from '@/lib/types/reviews';
 import { cn } from '@/lib/utils';
 
-export default function ProductReviews({ productId }: { productId: string }) {
+export default function ProductReviews({ productId, defaultOpen = false }: { productId: string; defaultOpen?: boolean }) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const reviewsQuery = useMemoFirebase(
     () => query(collection(firestore, 'reviews'), where('productId', '==', productId), orderBy('createdAt', 'desc')),

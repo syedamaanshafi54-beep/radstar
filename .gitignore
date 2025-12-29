@@ -21,3 +21,4 @@ firebase-debug.log
 "node_modules/" 
 *.json
 *.md
+!docs/CONCEPTUAL_LEARNING_GUIDE.md
