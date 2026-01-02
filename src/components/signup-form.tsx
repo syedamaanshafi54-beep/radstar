@@ -40,7 +40,7 @@ const emailSchema = z.object({
 });
 
 const phoneSchema = z.object({
-  phone: z.string().min(10, 'Please enter a valid phone number.'),
+  phone: z.string().length(10, 'Phone number must be exactly 10 digits.'),
 });
 
 interface SignupFormProps {
@@ -75,22 +75,22 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   });
 
   const handleNewUser = async (userCredential: UserCredential, isNew: boolean) => {
-     if (isNew) {
-        toast({
-          title: `Welcome!`,
-          description: "Let's complete your profile.",
-          duration: 4000,
-        });
-        router.push('/onboarding');
-      } else {
-        const firstName = getFirstName(userCredential.user);
-        toast({
-          title: `Welcome back, ${firstName}!`,
-          description: "You're now logged in.",
-          duration: 4000,
-        });
-        onSuccess?.();
-      }
+    if (isNew) {
+      toast({
+        title: `Welcome!`,
+        description: "Let's complete your profile.",
+        duration: 4000,
+      });
+      router.push('/onboarding');
+    } else {
+      const firstName = getFirstName(userCredential.user);
+      toast({
+        title: `Welcome back, ${firstName}!`,
+        description: "You're now logged in.",
+        duration: 4000,
+      });
+      onSuccess?.();
+    }
   }
 
 
@@ -201,14 +201,14 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="phone">Phone</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="email">
             <Form {...emailForm}>
               <form
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
                 className="space-y-4 pt-2"
               >
-                 <FormField
+                <FormField
                   control={emailForm.control}
                   name="displayName"
                   render={({ field }) => (
@@ -305,8 +305,13 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="+91 12345 67890"
+                          placeholder="9876543210"
                           {...field}
+                          maxLength={10}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -322,10 +327,10 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           </TabsContent>
         </Tabs>
       </CardContent>
-       <CardFooter className="flex justify-center p-0 pt-3">
-          <p className="text-xs text-center text-muted-foreground">
-              By creating an account, you agree to our Terms of Service.
-          </p>
+      <CardFooter className="flex justify-center p-0 pt-3">
+        <p className="text-xs text-center text-muted-foreground">
+          By creating an account, you agree to our Terms of Service.
+        </p>
       </CardFooter>
     </div>
   );

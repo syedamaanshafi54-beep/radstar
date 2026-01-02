@@ -57,7 +57,7 @@ const emailSchema = z.object({
 });
 
 const phoneSchema = z.object({
-  phone: z.string().min(10, 'Please enter a valid phone number.'),
+  phone: z.string().length(10, 'Phone number must be exactly 10 digits.'),
 });
 
 interface LoginFormProps {
@@ -418,8 +418,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="+91 12345 67890"
+                              placeholder="9876543210"
                               {...field}
+                              maxLength={10}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                field.onChange(value);
+                              }}
                               disabled={isSubmitting}
                             />
                           </FormControl>

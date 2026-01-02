@@ -30,7 +30,7 @@ import { getDoc, doc } from 'firebase/firestore';
 
 const onboardingSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters.'),
-  phone: z.string().min(10, 'Please enter a valid phone number.').optional(),
+  phone: z.string().length(10, 'Phone number must be exactly 10 digits.').optional().or(z.literal('')),
   address: z.string().min(10, 'Please enter a valid address.').optional(),
 });
 
@@ -70,11 +70,11 @@ export default function OnboardingPage() {
           });
           router.replace('/');
         } else {
-            // Pre-fill form with any existing data
-            const data = userSnap.data();
-            form.setValue('displayName', user.displayName || data?.displayName || '');
-            form.setValue('phone', data?.phone || '');
-            form.setValue('address', data?.address || '');
+          // Pre-fill form with any existing data
+          const data = userSnap.data();
+          form.setValue('displayName', user.displayName || data?.displayName || '');
+          form.setValue('phone', data?.phone || '');
+          form.setValue('address', data?.address || '');
         }
       };
       checkProfile();
@@ -151,7 +151,15 @@ export default function OnboardingPage() {
                   <FormItem>
                     <FormLabel>Phone Number (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., +91 98765 43210" {...field} />
+                      <Input
+                        placeholder="9876543210"
+                        {...field}
+                        maxLength={10}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          field.onChange(value);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

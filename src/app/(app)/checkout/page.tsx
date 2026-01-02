@@ -62,7 +62,7 @@ const formSchema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   zip: z.string().min(5, "ZIP code is required"),
-  phone: z.string().min(10, "Phone number is required"),
+  phone: z.string().length(10, "Phone number must be exactly 10 digits"),
   paymentMethod: z.enum(["cod", "razorpay"], {
     required_error: "You need to select a payment method.",
   }),
@@ -485,11 +485,12 @@ export default function CheckoutPage() {
                           <Input
                             {...field}
                             type="tel"
+                            maxLength={10}
                             disabled={!!orderPlaced || isProcessing}
                             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                             onChange={(e) => {
                               const numeric = e.target.value.replace(/[^0-9]/g, "");
-                              field.onChange(numeric);
+                              field.onChange(numeric.slice(0, 10));
                             }}
                             value={field.value}
                           />

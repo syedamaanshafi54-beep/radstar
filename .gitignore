@@ -20,5 +20,6 @@ yarn-error.log*
 firebase-debug.log
 "node_modules/" 
 *.json
+!package.json
 *.md
-!docs/CONCEPTUAL_LEARNING_GUIDE.md
+!docs/*.md

@@ -94,6 +94,11 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // --- VENDORS RESOURCE ---
+    match /vendors/{vendorId} {
+      allow read, write: if isAdmin();
+    }
+
     // --- METADATA RESOURCE ---
     // Used for counters and system-wide settings
     match /metadata/{docId} {

@@ -386,6 +386,10 @@ export default function AccountPage() {
       toast({ variant: "destructive", title: "Display name cannot be empty." });
       return;
     }
+    if (phone && phone.length !== 10) {
+      toast({ variant: "destructive", title: "Phone number must be 10 digits." });
+      return;
+    }
     setIsSaving(true);
     try {
       await updateUserProfile(user, { displayName, phone, address });
@@ -473,10 +477,14 @@ export default function AccountPage() {
                       <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Phone number"
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          if (value.length <= 10) setPhone(value);
+                        }}
+                        placeholder="9876543210"
                         className="pl-9"
                         disabled={!isEditing}
+                        maxLength={10}
                       />
                     </div>
                   </div>
