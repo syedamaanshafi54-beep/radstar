@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import type { CartItem, PopulatedCartItem, Product, ProductVariant, UserProfile } from "@/lib/types";
 import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from "@/firebase";
 import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { useVendorPricing } from "@/hooks/useVendor";
 
 interface CartContextType {
   cartItems: PopulatedCartItem[];
@@ -31,6 +32,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartLoading, setIsCartLoading] = useState(true);
+  const { getPrice } = useVendorPricing();
 
   // This ref is just for products, which are public and can be fetched once.
   const productsCollectionRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
@@ -299,8 +301,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const cartTotal = populatedCartItems.reduce(
     (acc, item) => {
-      const price = item.variant?.salePrice ?? item.variant?.price ?? item.product.salePrice ?? item.product.defaultPrice;
-      return acc + price * item.quantity;
+      const basePrice = item.variant?.salePrice ?? item.variant?.price ?? item.product.salePrice ?? item.product.defaultPrice;
+      const finalPrice = getPrice(basePrice, item.product.id, item.quantity);
+      return acc + finalPrice * item.quantity;
     }, 0);
 
   return (

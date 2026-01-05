@@ -20,13 +20,13 @@ export type ProductVariant = {
 export type Product = {
   id: string;
   slug: string;
+  stock?: number;
   name: string;
   tagline: string;
   description: string;
   benefits: string[];
   defaultPrice: number;
   salePrice?: number;
-  stock?: number;
   variants?: ProductVariant[];
   image: ProductImage;
   alternateImage?: ProductImage;
@@ -106,5 +106,62 @@ export type UserProfile = {
   updatedAt?: Timestamp | string;
   lastLogin: Timestamp | string;
   cart?: CartItem[];
+  // Vendor-related fields
+  isVendor?: boolean;
+  vendorId?: string;
+  vendorName?: string;
 }
+
+// Vendor Management Types
+export type VendorLocation = {
+  type: 'manual' | 'geolocation';
+  address?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+};
+
+export type BulkDiscountTier = {
+  minQuantity: number;
+  discount: number; // Percentage
+};
+
+export type VendorStatus = 'pending' | 'approved' | 'rejected';
+
+export type Vendor = {
+  id: string;
+  userId: string;
+  businessName: string;
+  businessType: 'Retailer' | 'Wholesaler' | 'Distributor' | 'Other';
+  phone: string;
+  email: string;
+  location: VendorLocation;
+  defaultDiscount: number; // Percentage (e.g., 10 means 10%)
+  productDiscounts?: Record<string, number>; // productId -> discount percentage
+  bulkDiscountTiers?: BulkDiscountTier[];
+  status: VendorStatus;
+  appliedAt: Timestamp;
+  reviewedAt?: Timestamp;
+  reviewedBy?: string; // Admin UID
+  lastModifiedAt?: Timestamp;
+  lastModifiedBy?: string; // Admin UID
+};
+
+export type VendorDiscountChangeType = 'default' | 'product' | 'bulk_tier';
+
+export type VendorDiscountHistory = {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  productId?: string;
+  productName?: string;
+  changeType: VendorDiscountChangeType;
+  previousValue: any;
+  newValue: any;
+  changedBy: string; // Admin UID
+  changedByName: string;
+  changedAt: Timestamp;
+  notes?: string;
+};
 

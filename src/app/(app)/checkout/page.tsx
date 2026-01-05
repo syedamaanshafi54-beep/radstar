@@ -34,6 +34,7 @@ import {
 import { useUser, useFirestore, useDoc, updateUserProfile } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { formatPrice } from "@/lib/utils";
+import { useVendorPricing } from "@/hooks/useVendor";
 import type { UserProfile, Order, OrderStatus } from "@/lib/types";
 import OrderSuccessAnimation from "@/components/OrderSuccessAnimation";
 import { Loader2 } from "lucide-react";
@@ -72,6 +73,14 @@ type ShippingInfo = z.infer<typeof formSchema>;
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart, isCartLoading } = useCart();
+  const { isVendor, getPrice } = useVendorPricing();
+
+  const originalTotal = cartItems.reduce((acc, item) => {
+    const price = item.variant?.salePrice ?? item.variant?.price ?? item.product.salePrice ?? item.product.defaultPrice;
+    return acc + (price * item.quantity);
+  }, 0);
+
+  const totalSavings = originalTotal - cartTotal;
   const router = useRouter();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -167,17 +176,21 @@ export default function CheckoutPage() {
     return {
       orderNumber,
       userId: user.uid,
-      items: cartItems.map((item) => ({
-        productId: item.product.id,
-        name: item.product.name,
-        variantName: item.variant?.name || null,
-        qty: item.quantity,
-        price:
-          item.variant?.salePrice ??
+      items: cartItems.map((item) => {
+        const basePrice = item.variant?.salePrice ??
           item.variant?.price ??
           item.product.salePrice ??
-          item.product.defaultPrice,
-      })),
+          item.product.defaultPrice;
+        const finalPrice = getPrice(basePrice, item.product.id, item.quantity);
+
+        return {
+          productId: item.product.id,
+          name: item.product.name,
+          variantName: item.variant?.name || null,
+          qty: item.quantity,
+          price: finalPrice,
+        };
+      }),
       shippingInfo: {
         name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
         email: shippingInfo.email,
@@ -571,7 +584,7 @@ export default function CheckoutPage() {
                                   </div>
                                 </div>
                               </DialogTrigger>
-                              <span><span className="font-currency">₹</span>{formatPrice(price * quantity)}</span>
+                              <span><span className="font-currency">₹</span>{formatPrice(getPrice(price, product.id, quantity) * quantity)}</span>
                             </div>
                             <DialogContent className="max-w-4xl w-full p-0">
                               <DialogHeader className="sr-only">
@@ -584,9 +597,26 @@ export default function CheckoutPage() {
                         );
                       })}
                       <Separator className="my-2" />
-                      <div className="flex justify-between font-semibold">
-                        <span>Total</span>
-                        <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Retail Subtotal</span>
+                          <span className={isVendor && totalSavings > 0 ? "line-through text-muted-foreground" : ""}><span className="font-currency">₹</span>{formatPrice(originalTotal)}</span>
+                        </div>
+                        {isVendor && totalSavings > 0 && (
+                          <div className="flex justify-between text-sm text-green-600 font-medium">
+                            <span>Your Savings</span>
+                            <span>- <span className="font-currency">₹</span>{formatPrice(totalSavings)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping</span>
+                          <span>Free</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-bold text-lg">
+                          <span>Total {isVendor ? 'Payable' : ''}</span>
+                          <span className={isVendor ? "text-primary" : ""}><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                        </div>
                       </div>
                       <Button type="submit" disabled={isProcessing} className="w-full mt-4">
                         {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Place Order"}

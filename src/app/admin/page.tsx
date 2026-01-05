@@ -22,6 +22,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, CartesianGrid, Le
 import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 import { AiReviewAnalysis } from '@/components/admin/ai-review-analysis';
 import { CldUploadWidget } from 'next-cloudinary';
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -158,53 +159,59 @@ function CustomerReviews({ reviews }: { reviews: Review[] }) {
   }, [reviews]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Customer Reviews</CardTitle>
-        <span className="text-sm text-muted-foreground">{total} total</span>
+    <Card className="h-full shadow-sm overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between py-4 px-5">
+        <CardTitle className="text-base sm:text-lg">Customer Reviews</CardTitle>
+        <Badge variant="secondary" className="text-[10px] font-medium">{total} total</Badge>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2 mb-4">
-          <p className="text-4xl font-bold">{average.toFixed(1)}</p>
+      <CardContent className="p-4 sm:p-6 sm:pt-0">
+        <div className="flex items-center gap-3 mb-6">
+          <p className="text-4xl sm:text-5xl font-bold tracking-tight">{average.toFixed(1)}</p>
           <div className="flex flex-col">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${i < Math.floor(average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                  className={`h-4 w-4 ${i < Math.floor(average) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                 />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">({average.toFixed(1)} out of 5)</p>
+            <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Out of 5 Stars</p>
           </div>
         </div>
 
-        <div className="space-y-2 mb-6">
+        <div className="space-y-3 mb-8">
           {distribution.map(item => (
-            <div key={item.star} className="flex items-center gap-4 text-sm">
-              <span className="w-12 text-muted-foreground">{item.star} Star</span>
-              <Progress value={item.percentage} className="h-2 flex-1" />
-              <span className="w-12 text-right font-medium text-xs text-muted-foreground">{item.count} revs</span>
-              <span className="w-8 text-right font-medium">{item.percentage}%</span>
+            <div key={item.star} className="flex items-center gap-3 text-xs sm:text-sm">
+              <span className="w-8 sm:w-10 text-muted-foreground font-medium">{item.star}★</span>
+              <Progress value={item.percentage} className="h-1.5 sm:h-2 flex-1" />
+              <span className="w-12 text-right font-semibold tabular-nums text-muted-foreground">{item.percentage}%</span>
             </div>
           ))}
         </div>
 
-        <div className="max-h-[300px] overflow-y-auto space-y-4">
-          {reviews.slice(0, 10).map((review, i) => (
-            <div key={review.id || i} className="border-t pt-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-sm">{review.userName}</span>
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                  ))}
+        <div className="max-h-[350px] overflow-y-auto space-y-4 pr-1 scrollbar-hide">
+          <div className="space-y-4">
+            {reviews.slice(0, 10).map((review, i) => (
+              <div key={review.id || i} className="border-t pt-4 first:border-0 first:pt-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-semibold text-xs sm:text-sm truncate mr-2">{review.userName}</span>
+                  <div className="flex items-center shrink-0">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                    ))}
+                  </div>
                 </div>
+                <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-3 italic font-medium">"{review.comment}"</p>
               </div>
-              <p className="text-xs text-muted-foreground italic line-clamp-2">"{review.comment}"</p>
+            ))}
+          </div>
+          {reviews.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Sparkles className="h-8 w-8 mb-2 opacity-20" />
+              <p className="text-sm">No reviews yet.</p>
             </div>
-          ))}
-          {reviews.length === 0 && <p className="text-center text-sm text-muted-foreground p-4">No reviews yet.</p>}
+          )}
         </div>
       </CardContent>
     </Card>
@@ -214,7 +221,7 @@ function CustomerReviews({ reviews }: { reviews: Review[] }) {
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
-  const isAdminUser = user?.email === 'itsmeabdulk@gmail.com' || user?.email === 'radstar.in@gmail.com';
+  const isAdminUser = user?.email === 'itsmeabdulk@gmail.com' || user?.email === 'radstartrading@gmail.com';
 
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const { data: firestoreProducts, isLoading: productsLoading } = useCollection<Product>(productsCollection, { listen: true });
@@ -534,17 +541,20 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-0 max-w-full overflow-x-hidden pb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-4 sm:pt-0">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Rad Star Dashboard</h1>
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="text-sm font-medium text-muted-foreground hidden sm:block">
+      <div className="flex items-center justify-between gap-2 pt-2 sm:pt-0">
+        <div className="space-y-0.5">
+          <h1 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight">Rad Star Dashboard</h1>
+          <p className="text-[10px] sm:text-xs text-muted-foreground sm:hidden">Welcome, Admin</p>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="text-xs font-medium text-muted-foreground hidden md:block">
             <Link href="/admin" className="text-primary hover:underline">Home</Link>
             <span className="mx-2">/</span>
             <span>Dashboard</span>
           </div>
-          <Button asChild size="sm" className="w-full sm:w-auto">
+          <Button asChild size="sm" className="h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm">
             <Link href="/admin/products/new">
-              <PlusCircle className="h-4 w-4 mr-2" />
+              <PlusCircle className="h-3.5 w-3.5 mr-1.5 sm:mr-2" />
               <span className="hidden sm:inline">Add Product</span>
               <span className="sm:hidden">Add</span>
             </Link>
@@ -554,7 +564,7 @@ export default function AdminDashboardPage() {
 
       {/* KPI Cards */}
       <Dialog open={!!activeModal} onOpenChange={(isOpen) => !isOpen && setActiveModal(null)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-4">
           <div onClick={() => setActiveModal('sales')} className="p-0">
             <KpiCard type="sales" title="Total Sales" value={<><span className="font-currency">₹</span>{formatPrice(totalRevenue)}</>} icon={IndianRupee} change={`${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}%`} changeType={revenueChange >= 0 ? 'increase' : 'decrease'} />
           </div>
@@ -565,7 +575,7 @@ export default function AdminDashboardPage() {
             <KpiCard type="customers" title="Total Customers" value={totalCustomers} icon={Users} change={`${customersChange >= 0 ? '+' : ''}${customersChange.toFixed(1)}%`} changeType={customersChange >= 0 ? 'increase' : 'decrease'} />
           </div>
           <div onClick={() => setActiveModal('products')} className="p-0">
-            <KpiCard type="products" title="Total Products" value={products.length} icon={Package} change=" " />
+            <KpiCard type="products" title="Total Products" value={products.length} icon={Package} change="--%" />
           </div>
           <div onClick={() => setActiveModal('visitors')} className="p-0">
             <KpiCard type="visitors" title="Total Visitors" value={totalVisitors.toLocaleString()} icon={Users} change={`${visitorsChange >= 0 ? '+' : ''}${visitorsChange.toFixed(1)}%`} changeType={visitorsChange >= 0 ? 'increase' : 'decrease'} />
@@ -573,10 +583,10 @@ export default function AdminDashboardPage() {
         </div>
         <KpiModals activeModal={activeModal} />
       </Dialog>
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Order vs Sales</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
+        <Card className="lg:col-span-3 card-premium">
+          <CardHeader className="py-4 px-5">
+            <CardTitle className="text-sm sm:text-lg font-bold">Sales & Orders Trend</CardTitle>
           </CardHeader>
           <CardContent className="px-1 sm:px-2">
             <ChartContainer
@@ -623,6 +633,7 @@ export default function AdminDashboardPage() {
                   width={60}
                   domain={[0, 'dataMax + 5000']}
                   tickFormatter={(value) => `₹${Number(value) / 1000}k`}
+                  tick={{ fontFamily: 'Playfair Display, serif' }}
                 />
 
                 <YAxis
@@ -708,23 +719,24 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* Mobile-only tabs + swipe slider */}
-      <div className="lg:hidden space-y-3">
-        <div className="flex items-center rounded-full bg-muted p-1">
+      {/* Tab Switcher for Details (Mobile Only) */}
+      <div className="lg:hidden space-y-2">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide px-0.5 py-1">
           {mobileTabs.map((tab) => {
             const isActive = tab.key === activeMobileTab;
             return (
-              <button
+              <Button
                 key={tab.key}
-                type="button"
+                variant={isActive ? "default" : "secondary"}
+                size="sm"
                 onClick={() => handleMobileTabChange(tab.key)}
-                className={`flex-1 px-3 py-2 text-xs font-medium rounded-full transition-all ${isActive
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={cn(
+                  "h-8 rounded-full text-[10px] font-bold uppercase tracking-wider px-4 shrink-0 shadow-sm",
+                  isActive ? "bg-primary text-primary-foreground" : "bg-muted/50"
+                )}
               >
                 {tab.label}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -741,7 +753,7 @@ export default function AdminDashboardPage() {
             >
 
               {activeMobileTab === 'recent' && (
-                <Card className="hidden sm:block">
+                <Card className="card-premium">
                   <CardHeader>
                     <CardTitle>Recent Orders</CardTitle>
                     <CardDescription>All the orders from your store.</CardDescription>
@@ -853,9 +865,9 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="hidden lg:grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
+        <Card className="xl:col-span-2 card-premium">
+          <CardHeader className="py-4 px-5">
+            <CardTitle className="text-sm sm:text-lg font-bold">Top Selling Products</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -908,23 +920,30 @@ export default function AdminDashboardPage() {
         <CustomerReviews reviews={allReviews || []} />
       </div>
 
-      <SiteContentManagement
-        heroSlides={heroSlides}
-        selectedDealIds={selectedDealIds}
-        products={products}
-        isLoading={isLoading}
-        isUploading={isUploading}
-        onDealSelection={handleDealSelection}
-        onHeroSlideChange={handleHeroSlideChange}
-        onAddHeroSlide={addHeroSlide}
-        onRemoveHeroSlide={removeHeroSlide}
-        onRestoreDefaults={restoreHeroDefaults}
-        onSaveChanges={handleSaveChanges}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <div className="card-premium h-full rounded-xl overflow-hidden border">
+          <SiteContentManagement
+            heroSlides={heroSlides}
+            selectedDealIds={selectedDealIds}
+            products={products}
+            isLoading={isLoading}
+            isUploading={isUploading}
+            onDealSelection={handleDealSelection}
+            onHeroSlideChange={handleHeroSlideChange}
+            onAddHeroSlide={addHeroSlide}
+            onRemoveHeroSlide={removeHeroSlide}
+            onRestoreDefaults={restoreHeroDefaults}
+            onSaveChanges={handleSaveChanges}
+          />
+        </div>
+        <div className="card-premium h-full rounded-xl overflow-hidden border">
+          <InventoryManagement products={products} />
+        </div>
+      </div>
 
-      <InventoryManagement products={products} />
-
-      <CategoryManagement />
+      <div className="card-premium rounded-xl overflow-hidden border">
+        <CategoryManagement />
+      </div>
 
       <Card className="hidden sm:block">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -1009,6 +1028,7 @@ export default function AdminDashboardPage() {
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl w-full p-0">
+                          <DialogTitle className="sr-only">Product Details: {product.name}</DialogTitle>
                           <ProductDetails product={product} />
                         </DialogContent>
                       </Dialog>
@@ -1062,7 +1082,7 @@ export default function AdminDashboardPage() {
           </div>
         </CardFooter>
       </Card>
-    </div>
+    </div >
   );
 }
 

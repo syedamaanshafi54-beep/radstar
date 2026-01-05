@@ -15,7 +15,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Package, Users, ShoppingCart, BarChart2, Sprout, LogOut } from 'lucide-react';
+import { Home, Package, Users, ShoppingCart, BarChart2, Sprout, LogOut, Store } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser, FirebaseClientProvider } from '@/firebase';
@@ -28,6 +28,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/vendors', label: 'Vendors', icon: Store },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
     { href: '/admin/customers', label: 'Customers', icon: Users },
   ];
@@ -36,9 +37,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar className="border-r border-border/20">
         <SidebarHeader>
-           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-                <span>Rad Star Admin</span>
-           </Link>
+          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+            <span>Rad Star Admin</span>
+          </Link>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -57,21 +58,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-            <div className="flex items-center gap-2 p-2">
-                <Avatar className="h-9 w-9">
-                {user?.photoURL && <AvatarImage src={user.photoURL} />}
-                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                <span className="text-sm font-semibold text-sidebar-foreground">
-                    {user?.displayName || user?.email}
-                </span>
-                <span className="text-xs text-sidebar-muted-foreground">Administrator</span>
-                </div>
+          <div className="flex items-center gap-2 p-2">
+            <Avatar className="h-9 w-9">
+              {user?.photoURL && <AvatarImage src={user.photoURL} />}
+              <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-sidebar-foreground">
+                {user?.displayName || user?.email}
+              </span>
+              <span className="text-xs text-sidebar-muted-foreground">Administrator</span>
             </div>
-             <Link href="/">
-                <SidebarMenuButton icon={<LogOut/>}>Back to Site</SidebarMenuButton>
-            </Link>
+          </div>
+          <Link href="/">
+            <SidebarMenuButton icon={<LogOut />}>Back to Site</SidebarMenuButton>
+          </Link>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="bg-[#f7f9fc]">

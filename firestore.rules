@@ -14,13 +14,13 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Checks if the user is an admin - ROBUST VERSION
-    // Uses safe navigation to avoid errors if 'role' is missing
+    // Checks if the user is an admin
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'itsmeabdulk@gmail.com' ||
         request.auth.uid == 'Grp5q6hyTYbS01As4JyEcKam9BH2' ||
-        (request.auth.token.keys().hasAny(['role']) && request.auth.token.role == 'admin')
+        request.auth.token.email in ['itsmeabdulk@gmail.com'] ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
@@ -96,7 +96,24 @@ service cloud.firestore {
 
     // --- VENDORS RESOURCE ---
     match /vendors/{vendorId} {
-      allow read, write: if isAdmin();
+      // Users can create their own vendor application
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      
+      // Allow get if owner or admin
+      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      
+      // Allow list if admin or if filtering by own userId
+      allow list: if isAdmin() || (isSignedIn() && request.query.filters.userId == request.auth.uid);
+      
+      // Only admins can update or delete
+      allow update, delete: if isAdmin();
+    }
+
+    // Vendor Discount History: Admin write, Vendor can read their own
+    match /vendorDiscountHistory/{historyId} {
+      allow read: if isSignedIn() && (resource.data.vendorId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow write: if isAdmin();
     }
 
     // --- METADATA RESOURCE ---

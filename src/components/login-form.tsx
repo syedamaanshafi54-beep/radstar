@@ -43,6 +43,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/signup-form';
+import { VendorRegistrationForm } from '@/components/vendor/vendor-registration-form';
 import {
   CardDescription,
   CardFooter,
@@ -67,6 +68,7 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [isVendorRegOpen, setIsVendorRegOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // Phone Auth State
@@ -482,7 +484,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex justify-center p-0 pt-4">
+      <CardFooter className="flex flex-col gap-3 p-0 pt-4">
         <p className="text-sm text-center text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
@@ -503,6 +505,32 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   setIsSignupOpen(false);
                   onSuccess?.();
                 }}
+              />
+            </DialogContent>
+          </Dialog>
+        </p>
+
+        <p className="text-sm text-center text-muted-foreground">
+          Want to become a vendor?{' '}
+          <Dialog open={isVendorRegOpen} onOpenChange={setIsVendorRegOpen}>
+            <DialogTrigger asChild>
+              <button className="font-medium text-primary hover:underline">
+                Register as Vendor
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl p-4 sm:p-6 rounded-xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Vendor Registration</DialogTitle>
+                <DialogDescription>
+                  Apply to become a vendor and get special pricing on our products.
+                </DialogDescription>
+              </DialogHeader>
+              <VendorRegistrationForm
+                onSuccess={() => {
+                  setIsVendorRegOpen(false);
+                  onSuccess?.();
+                }}
+                onCancel={() => setIsVendorRegOpen(false)}
               />
             </DialogContent>
           </Dialog>

@@ -113,10 +113,39 @@
 
   .font-currency {
     font-family: 'Playfair Display', serif;
-    font-weight: 700;
-    font-size: 1.1em;
-    margin-right: 0.1em;
-    line-height: 1;
+    font-weight: 600;
+    font-size: 1.05em;
+    margin-right: 0.05em;
+    vertical-align: middle;
+    position: relative;
+    top: -0.05em;
+  }
+
+  .recharts-cartesian-axis-tick text,
+  .recharts-legend-item-text,
+  .recharts-label {
+    font-family: 'Playfair Display', serif !important;
+  }
+
+  /* ✅ Sleek Dashboard Cards */
+  .card-premium {
+    @apply transition-all duration-300 hover:shadow-lg active:scale-[0.99];
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .dark .card-premium {
+    background: rgba(15, 23, 42, 0.8);
+  }
+
+  /* ✅ Better Scrollbars for Mobile */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

@@ -33,6 +33,7 @@ import { staticProducts } from "@/data/static-products";
 import { ToastAction } from "@/components/ui/toast";
 import { formatPrice } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { useVendorPricing } from "@/hooks/useVendor";
 
 type DealsData = {
   productIds: string[];
@@ -140,6 +141,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const { toast } = useToast();
   const router = useRouter();
   const [localQuantity, setLocalQuantity] = useState(1);
+  const { isVendor, getPrice, getDiscount } = useVendorPricing();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
@@ -157,25 +159,6 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
     e.preventDefault();
     e.stopPropagation();
     const amountToAdd = localQuantity;
-    const availableStock = product.stock || 0;
-
-    // Check if requested quantity exceeds available stock
-    if (cartQty + amountToAdd > availableStock) {
-      toast({
-        variant: "destructive",
-        title: "Insufficient Stock",
-        description: `Only ${availableStock} units available. ${availableStock - cartQty} more can be added to cart. Contact us for bulk orders.`,
-        action: (
-          <ToastAction
-            altText="Contact on WhatsApp"
-            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
-          >
-            WhatsApp
-          </ToastAction>
-        ),
-      });
-      return;
-    }
 
     addToCart(product, amountToAdd, selectedVariant);
     toast({
@@ -184,53 +167,14 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
       duration: 5000,
       action: <ToastAction altText="View Cart" onClick={() => router.push('/cart')}>View Cart</ToastAction>,
     });
-    setLocalQuantity(1); // Reset local quantity after adding
+    setLocalQuantity(1);
   };
 
   const handleQuantityChange = (change: number) => {
-    const newQty = Math.max(1, localQuantity + change);
-    const availableStock = product.stock || 0;
-
-    if (newQty > availableStock) {
-      toast({
-        variant: "destructive",
-        title: "Stock Limit Reached",
-        description: `Only ${availableStock} units available. Contact us for bulk orders.`,
-        action: (
-          <ToastAction
-            altText="Contact on WhatsApp"
-            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
-          >
-            WhatsApp
-          </ToastAction>
-        ),
-      });
-      return;
-    }
-
-    setLocalQuantity(newQty);
+    setLocalQuantity(Math.max(1, localQuantity + change));
   };
 
   const handleCartQuantityChange = (newQuantity: number) => {
-    const availableStock = product.stock || 0;
-
-    if (newQuantity > availableStock) {
-      toast({
-        variant: "destructive",
-        title: "Stock Limit Reached",
-        description: `Only ${availableStock} units available. Contact us for bulk orders.`,
-        action: (
-          <ToastAction
-            altText="Contact on WhatsApp"
-            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
-          >
-            WhatsApp
-          </ToastAction>
-        ),
-      });
-      return;
-    }
-
     updateQuantity(cartItemId, newQuantity);
   };
 
@@ -243,6 +187,11 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
 
   const price = selectedVariant?.price ?? product.defaultPrice;
   const salePrice = selectedVariant?.salePrice ?? product.salePrice;
+
+  // Calculate vendor pricing
+  const displayPrice = salePrice || price;
+  const vendorPrice = isVendor ? getPrice(displayPrice, product.id, localQuantity) : displayPrice;
+  const vendorDiscount = isVendor ? getDiscount(product.id, localQuantity) : 0;
 
 
   return (
@@ -290,11 +239,21 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
             }
 
             <div className="flex flex-wrap justify-between items-center mt-4 gap-2">
-              <div className="flex items-baseline gap-2">
-                {salePrice ? (
+              <div className="flex flex-col gap-1">
+                {isVendor ? (
                   <>
-                    <p className="text-xl font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
-                    <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xl font-semibold text-green-600"><span className="font-currency">₹</span>{formatPrice(vendorPrice)}</p>
+                      {(salePrice || price > vendorPrice) && <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>}
+                    </div>
+                    <Badge variant="secondary" className="w-fit text-xs">💎 Your Price ({vendorDiscount}% off)</Badge>
+                  </>
+                ) : salePrice ? (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xl font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
+                      <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
+                    </div>
                   </>
                 ) : (
                   <p className="text-xl font-semibold"><span className="font-currency">₹</span>{formatPrice(price)}</p>

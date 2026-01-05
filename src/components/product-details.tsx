@@ -5,7 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Minus, Plus, ShoppingCart, ArrowRight } from "lucide-react";
+import { CheckCircle, Minus, Plus, ShoppingCart, ArrowRight, Loader2 } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, ProductVariant } from "@/lib/types";
@@ -21,7 +21,9 @@ import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { ToastAction } from "./ui/toast";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { useVendorPricing } from "@/hooks/useVendor";
 
 type ProductDetailsProps = {
   product: Product;
@@ -35,6 +37,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
+  const { isVendor, getPrice, getDiscount } = useVendorPricing();
 
   const handleAddToCart = () => {
     const amountToAdd = quantity;
@@ -125,6 +128,11 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const price = selectedVariant?.price ?? product.defaultPrice;
   const salePrice = selectedVariant?.salePrice ?? product.salePrice;
 
+  // Calculate vendor pricing
+  const displayPrice = salePrice || price;
+  const vendorPrice = isVendor ? getPrice(displayPrice, product.id, quantity) : displayPrice;
+  const vendorDiscount = isVendor ? getDiscount(product.id, quantity) : 0;
+
   // Check if product is in cart
   const cartItemId = selectedVariant ? `${product.id}-${selectedVariant.id}` : product.id;
   const cartQty = getCartQuantity(cartItemId);
@@ -144,22 +152,38 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         </div>
 
         <div className="space-y-3 mt-auto pt-4 px-4 md:px-0">
-          <h1 className="font-headline text-2xl md:text-4xl font-bold">{product.name}</h1>
+          <h1 className="font-headline text-xl md:text-4xl font-bold tracking-tight">{product.name}</h1>
 
-          <div className="flex items-baseline gap-2">
-            {salePrice ? (
+          <div className="flex flex-col gap-1">
+            {isVendor ? (
               <>
-                <p className="text-2xl md:text-3xl font-bold text-destructive">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl md:text-3xl font-bold text-green-600">
+                    <span className="font-currency">₹</span>
+                    {formatPrice(vendorPrice)}
+                  </p>
+                  {(salePrice || price > vendorPrice) && (
+                    <p className="text-base md:text-xl text-muted-foreground line-through opacity-70">
+                      <span className="font-currency">₹</span>
+                      {formatPrice(price)}
+                    </p>
+                  )}
+                </div>
+                <Badge variant="secondary" className="w-fit text-[10px] md:text-sm font-semibold tracking-wide py-0.5">💎 PARTNER PRICE ({vendorDiscount}% OFF)</Badge>
+              </>
+            ) : salePrice ? (
+              <div className="flex items-baseline gap-2">
+                <p className="text-xl md:text-3xl font-bold text-destructive">
                   <span className="font-currency">₹</span>
                   {formatPrice(salePrice)}
                 </p>
-                <p className="text-lg md:text-xl text-muted-foreground line-through">
+                <p className="text-base md:text-xl text-muted-foreground line-through opacity-70">
                   <span className="font-currency">₹</span>
                   {formatPrice(price)}
                 </p>
-              </>
+              </div>
             ) : (
-              <p className="text-2xl md:text-3xl font-bold text-primary">
+              <p className="text-xl md:text-3xl font-bold text-primary">
                 <span className="font-currency">₹</span>
                 {formatPrice(price)}
               </p>
@@ -167,9 +191,9 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           </div>
 
           {product.variants && product.variants.length > 0 && (
-            <div>
-              <Label htmlFor="product-variant" className="text-base font-semibold mb-2 block">
-                Size:
+            <div className="pt-1">
+              <Label htmlFor="product-variant" className="text-sm font-semibold mb-1.5 block text-muted-foreground">
+                Select Size:
               </Label>
               <Select
                 onValueChange={handleVariantChange}
@@ -177,13 +201,13 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               >
                 <SelectTrigger
                   id="product-variant"
-                  className="w-full md:w-[200px] h-11 text-base"
+                  className="w-full md:w-[200px] h-10 text-sm font-medium"
                 >
                   <SelectValue placeholder="Select a size" />
                 </SelectTrigger>
                 <SelectContent>
                   {product.variants.map((v) => (
-                    <SelectItem key={v.id} value={v.id} className="text-base">
+                    <SelectItem key={v.id} value={v.id} className="text-sm">
                       {v.name} - <span className="font-currency">₹</span>
                       {formatPrice(v.salePrice || v.price)}
                     </SelectItem>
@@ -193,16 +217,16 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 pt-2">
-            <div className="flex items-center border rounded-md w-full md:w-auto">
+          <div className="flex flex-row items-center gap-3 pt-3">
+            <div className="flex items-center border rounded-lg bg-muted/30 overflow-hidden shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-11 md:w-11"
+                className="h-9 w-9 md:h-11 md:w-11 rounded-none hover:bg-muted"
                 onClick={() => handleQuantityChange(-1)}
                 disabled={quantity <= 1}
               >
-                <Minus className="h-5 w-5" />
+                <Minus className="h-4 w-4" />
               </Button>
 
               <Input
@@ -211,34 +235,34 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 onChange={(e) =>
                   setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                 }
-                className="w-full md:w-20 h-10 md:h-11 text-center border-0 focus-visible:ring-0 text-lg font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-12 md:w-16 h-9 md:h-11 text-center border-0 bg-transparent focus-visible:ring-0 text-sm md:text-lg font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
               />
 
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-11 md:w-11"
+                className="h-9 w-9 md:h-11 md:w-11 rounded-none hover:bg-muted"
                 onClick={() => handleQuantityChange(1)}
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
 
             {cartQty > 0 ? (
               <Button
-                size="lg"
-                className="flex-1 h-10 md:h-11 text-base w-full"
+                className="flex-1 h-9 md:h-11 font-bold text-sm md:text-base shadow-sm active:scale-[0.98] transition-all"
                 onClick={handleGoToCart}
               >
-                <ArrowRight className="mr-2 h-5 w-5" /> Go to Cart ({cartQty})
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Go to Cart ({cartQty})
               </Button>
             ) : (
               <Button
-                size="lg"
-                className="flex-1 h-10 md:h-11 text-base w-full"
+                className="flex-1 h-9 md:h-11 font-bold text-sm md:text-base shadow-sm active:scale-[0.98] transition-all"
                 onClick={handleAddToCart}
               >
-                <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart
               </Button>
             )}
           </div>

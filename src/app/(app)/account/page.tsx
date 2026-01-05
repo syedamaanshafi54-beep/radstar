@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import ProductReviews from '@/components/product-reviews'; // Verify this path
+import { VendorRegistrationForm } from '@/components/vendor/vendor-registration-form';
+import { useVendor } from '@/hooks/useVendor';
 
 function OrderDetails({ items }: { items: OrderItem[] }) {
   if (!items || items.length === 0) {
@@ -359,6 +361,9 @@ export default function AccountPage() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isVendorRegOpen, setIsVendorRegOpen] = useState(false);
+
+  const { vendor, isVendor } = useVendor();
 
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
@@ -508,6 +513,89 @@ export default function AccountPage() {
         <OrderHistory allProducts={allProducts || []} />
 
         <div className="grid md:grid-cols-2 gap-8">
+          {/* Vendor Registration/Status Card */}
+          {!isVendor ? (
+            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart /> Become a Vendor
+                </CardTitle>
+                <CardDescription>Get special pricing on all our products</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground font-medium mb-4">
+                  Apply to become a vendor and unlock exclusive discounts on bulk orders. Perfect for retailers, wholesalers, and distributors.
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="h-4 w-4 text-primary" />
+                    Special vendor pricing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="h-4 w-4 text-primary" />
+                    Bulk discount tiers
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircleIcon className="h-4 w-4 text-primary" />
+                    Priority support
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Dialog open={isVendorRegOpen} onOpenChange={setIsVendorRegOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full">Apply Now</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-2xl p-4 sm:p-6 rounded-xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Vendor Registration</DialogTitle>
+                      <DialogDescription>
+                        Fill out the form below to apply for vendor status.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <VendorRegistrationForm
+                      onSuccess={() => {
+                        setIsVendorRegOpen(false);
+                        toast({
+                          title: 'Application Submitted',
+                          description: 'Your vendor application has been submitted successfully.',
+                        });
+                      }}
+                      onCancel={() => setIsVendorRegOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </CardFooter>
+            </Card>
+          ) : (
+            <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                  Vendor Account
+                </CardTitle>
+                <CardDescription>You have vendor status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Business Name</p>
+                    <p className="font-medium">{vendor?.businessName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Default Discount</p>
+                    <p className="font-medium text-green-600">{vendor?.defaultDiscount}% off</p>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      You're seeing special vendor pricing across the site
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="bg-secondary/40 border-dashed">
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Repeat /> Auto-Pay Subscription</CardTitle>

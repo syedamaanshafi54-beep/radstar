@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/dialog";
 import ProductDetails from "@/components/product-details";
 import { useToast } from "@/hooks/use-toast";
+import { useVendorPricing } from "@/hooks/useVendor";
+import { Badge } from "@/components/ui/badge";
 
 const getCartItemId = (productId: string, variantId?: string) => {
   return variantId ? `${productId}-${variantId}` : productId;
@@ -34,6 +36,14 @@ const getCartItemId = (productId: string, variantId?: string) => {
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, isCartLoading } = useCart();
   const { toast } = useToast();
+  const { isVendor, getPrice, getDiscount } = useVendorPricing();
+
+  const originalTotal = cartItems.reduce((acc, item) => {
+    const price = item.variant?.salePrice ?? item.variant?.price ?? item.product.salePrice ?? item.product.defaultPrice;
+    return acc + (price * item.quantity);
+  }, 0);
+
+  const totalSavings = originalTotal - cartTotal;
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24 pt-28 sm:pt-8">
@@ -69,18 +79,13 @@ export default function CartPage() {
               const price = variant?.price ?? product.defaultPrice;
               const salePrice = variant?.salePrice ?? product.salePrice;
               const displayPrice = salePrice ?? price;
-
-              // Get available stock
-              const availableStock = variant?.stock ?? product.stock;
-              const hasStockInfo = availableStock !== undefined;
-              const isOutOfStock = hasStockInfo && availableStock === 0;
-              const exceedsStock = hasStockInfo && quantity > availableStock;
-              const atMaxStock = hasStockInfo && quantity >= availableStock;
+              const vendorPrice = isVendor ? getPrice(displayPrice, product.id, quantity) : displayPrice;
+              const vendorDiscount = isVendor ? getDiscount(product.id, quantity) : 0;
 
 
               return (
                 <Dialog key={cartItemId}>
-                  <Card className={`flex items-start md:items-center p-4 ${exceedsStock ? 'border-destructive' : ''}`}>
+                  <Card className="flex items-start md:items-center p-4">
                     <DialogTrigger asChild>
                       <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-md overflow-hidden mr-4 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
                         <Image
@@ -100,15 +105,13 @@ export default function CartPage() {
                           </button>
                         </DialogTrigger>
                         {variant && <p className="text-sm text-muted-foreground">{variant.name}</p>}
-                        {hasStockInfo && (
-                          <p className={`text-xs mt-1 ${exceedsStock ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-                            {exceedsStock
-                              ? `⚠️ Only ${availableStock} in stock!`
-                              : `${availableStock} available`}
-                          </p>
-                        )}
-                        <div className="flex items-baseline gap-2 md:hidden mt-1">
-                          {salePrice ? (
+                        <div className="flex flex-col gap-1 md:hidden mt-1">
+                          {isVendor ? (
+                            <>
+                              <p className="font-semibold text-green-600"><span className="font-currency">₹</span>{formatPrice(vendorPrice)}</p>
+                              <Badge variant="secondary" className="w-fit text-xs">💎 {vendorDiscount}% off</Badge>
+                            </>
+                          ) : salePrice ? (
                             <>
                               <p className="font-semibold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
                               <p className="text-muted-foreground line-through text-sm"><span className="font-currency">₹</span>{formatPrice(price)}</p>
@@ -135,33 +138,15 @@ export default function CartPage() {
                             value={quantity}
                             onChange={(e) => {
                               const newQty = parseInt(e.target.value) || 1;
-                              const success = updateQuantity(cartItemId, newQty);
-                              if (!success && hasStockInfo) {
-                                toast({
-                                  title: 'Stock Limit Reached',
-                                  description: `Only ${availableStock} units available in stock.`,
-                                  variant: 'destructive',
-                                });
-                              }
+                              updateQuantity(cartItemId, newQty);
                             }}
                             className="w-16 h-8 text-center border-0 focus-visible:ring-0"
-                            max={hasStockInfo ? availableStock : undefined}
                           />
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => {
-                              const success = updateQuantity(cartItemId, quantity + 1);
-                              if (!success && hasStockInfo) {
-                                toast({
-                                  title: 'Stock Limit Reached',
-                                  description: `Only ${availableStock} units available in stock.`,
-                                  variant: 'destructive',
-                                });
-                              }
-                            }}
-                            disabled={atMaxStock}
+                            onClick={() => updateQuantity(cartItemId, quantity + 1)}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -175,8 +160,19 @@ export default function CartPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      <div className="hidden md:flex items-center justify-end w-40">
-                        <p className="font-semibold text-right mr-4"><span className="font-currency">₹</span>{formatPrice(displayPrice * quantity)}</p>
+                      <div className="hidden md:flex flex-col items-end justify-center w-40 text-right mr-4">
+                        {isVendor && vendorDiscount > 0 ? (
+                          <>
+                            <p className="font-semibold text-green-600">
+                              <span className="font-currency">₹</span>{formatPrice(vendorPrice * quantity)}
+                            </p>
+                            <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 mt-1">💎 {vendorDiscount}% B2B Discount</Badge>
+                          </>
+                        ) : (
+                          <p className="font-semibold"><span className="font-currency">₹</span>{formatPrice(vendorPrice * quantity)}</p>
+                        )}
+                      </div>
+                      <div className="hidden md:flex items-center">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -207,18 +203,29 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal ({cartCount} items)</span>
-                  <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                  <span className="text-muted-foreground">Retail Subtotal</span>
+                  <span className={isVendor ? "line-through text-muted-foreground" : ""}><span className="font-currency">₹</span>{formatPrice(originalTotal)}</span>
                 </div>
+                {isVendor && totalSavings > 0 && (
+                  <div className="flex justify-between text-green-600 font-medium">
+                    <span>Your Savings</span>
+                    <span>- <span className="font-currency">₹</span>{formatPrice(totalSavings)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span>Free</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                  <span>Total {isVendor ? 'Payable' : ''}</span>
+                  <span className={isVendor ? "text-primary" : ""}><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
                 </div>
+                {isVendor && totalSavings > 0 && (
+                  <p className="text-xs text-center text-green-600 font-medium mt-2 animate-pulse">
+                    Your verified partner status saved you <span className="font-currency">₹</span>{formatPrice(totalSavings)}!
+                  </p>
+                )}
               </CardContent>
               <CardFooter>
                 <Button asChild size="lg" className="w-full text-lg rounded-lg">

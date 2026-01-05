@@ -18,6 +18,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
 import ProductDetails from './product-details';
+import { useVendorPricing } from '@/hooks/useVendor';
+import { Badge } from './ui/badge';
 
 type DealsData = {
   productIds: string[];
@@ -26,21 +28,22 @@ type DealsData = {
 export function DealPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState<WithId<Product> | null>(null);
+  const { isVendor, getPrice, getDiscount } = useVendorPricing();
 
   const firestore = useFirestore();
 
   const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore]);
   const { data: dealsData, isLoading: dealsLoading } = useDoc<DealsData>(dealsDocRef);
-  
+
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsCollection);
-  
+
   const dealProducts = useMemo(() => {
     const sourceProducts = productsData || [];
     if (!dealsData || !dealsData.productIds || dealsData.productIds.length === 0) {
       return sourceProducts.filter(p => p.salePrice || (p.variants && p.variants.some(v => v.salePrice)));
     }
-    
+
     const dealIdSet = new Set(dealsData.productIds);
     return sourceProducts.filter((p) => dealIdSet.has(p.id) && (p.salePrice || (p.variants && p.variants.some(v => v.salePrice))));
   }, [dealsData, productsData]);
@@ -52,11 +55,11 @@ export function DealPopup() {
       const hasShown = sessionStorage.getItem(sessionKey);
 
       if (!hasShown) {
-          const timer = setTimeout(() => {
-            setIsOpen(true);
-            sessionStorage.setItem(sessionKey, 'true');
-          }, 1500); 
-          return () => clearTimeout(timer);
+        const timer = setTimeout(() => {
+          setIsOpen(true);
+          sessionStorage.setItem(sessionKey, 'true');
+        }, 1500);
+        return () => clearTimeout(timer);
       }
     }
   }, [dealProducts, dealsLoading, productsLoading]);
@@ -64,12 +67,12 @@ export function DealPopup() {
   const handleDismiss = () => {
     setIsOpen(false);
   };
-  
+
   const handleProductClick = (product: WithId<Product>) => {
     setActiveProduct(product);
     setIsOpen(false); // Close the deals popup
   };
-  
+
   const handleDetailsClose = () => {
     setActiveProduct(null);
   };
@@ -99,15 +102,23 @@ export function DealPopup() {
                 </div>
                 <div>
                   <p className="font-semibold text-lg">{product.name}</p>
-                  <div className="flex items-center gap-2">
-                     {product.salePrice ? (
-                        <>
-                          <p className="text-xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(product.salePrice)}</p>
-                          <p className="text-base text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</p>
-                        </>
-                      ) : (
-                        <p className="text-xl font-bold text-primary"><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</p>
-                      )}
+                  <div className="flex flex-col">
+                    {isVendor ? (
+                      <>
+                        <div className="flex items-baseline gap-2">
+                          <p className="text-xl font-bold text-green-600"><span className="font-currency">₹</span>{formatPrice(getPrice(product.salePrice || product.defaultPrice, product.id, 1))}</p>
+                          <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</p>
+                        </div>
+                        <Badge variant="secondary" className="w-fit text-[10px] h-4">💎 Partner Price ({getDiscount(product.id, 1)}% off)</Badge>
+                      </>
+                    ) : product.salePrice ? (
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(product.salePrice)}</p>
+                        <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xl font-bold text-primary"><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</p>
+                    )}
                   </div>
                 </div>
               </button>
@@ -119,21 +130,20 @@ export function DealPopup() {
 
       <Dialog open={!!activeProduct} onOpenChange={(isOpen) => !isOpen && handleDetailsClose()}>
         <DialogContent className="max-w-4xl w-full p-0 h-full max-h-full overflow-y-auto sm:h-auto sm:max-h-[90vh] sm:rounded-lg">
-            {activeProduct && (
-              <>
-                <DialogHeader className="sr-only">
-                    <DialogTitle>{activeProduct.name}</DialogTitle>
-                    <DialogDescription>Details for {activeProduct.name}</DialogDescription>
-                </DialogHeader>
-                <ProductDetails product={activeProduct} />
-              </>
-            )}
+          {activeProduct && (
+            <>
+              <DialogHeader className="sr-only">
+                <DialogTitle>{activeProduct.name}</DialogTitle>
+                <DialogDescription>Details for {activeProduct.name}</DialogDescription>
+              </DialogHeader>
+              <ProductDetails product={activeProduct} />
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
   );
 }
 
-    
 
-    
+

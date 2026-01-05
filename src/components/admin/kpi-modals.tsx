@@ -69,43 +69,43 @@ export function KpiCard({
     return (
         <Card
             className={cn(
-                "cursor-pointer hover:border-primary transition-colors h-full",
+                "cursor-pointer hover:border-primary transition-colors h-full overflow-hidden shadow-sm",
                 className,
             )}
             data-modal-type={type}
         >
-            <CardHeader className="p-4 sm:p-5">
+            <CardHeader className="p-3 sm:p-5">
                 <div className="flex items-center justify-between w-full">
 
                     {/* LEFT TEXT BLOCK */}
-                    <div className="flex flex-col space-y-1.5 sm:space-y-1">
+                    <div className="flex flex-col space-y-1 sm:space-y-1.5 overflow-hidden">
                         {/* TITLE → Make bold */}
-                        <CardTitle className="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">
+                        <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider leading-tight">
                             {title}
                         </CardTitle>
 
                         {/* VALUE → Bigger + Bold */}
-                        <div className="text-xl sm:text-2xl md:text-3xl font-extrabold leading-tight whitespace-nowrap">
+                        <div className="text-lg sm:text-2xl md:text-3xl font-bold leading-tight truncate">
                             {value}
                         </div>
                     </div>
 
                     {/* ICON */}
-                    <div className={`p-2 sm:p-2.5 rounded-md ${iconColor} flex-shrink-0`}>
-                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <div className={`p-1.5 sm:p-2.5 rounded-lg ${iconColor} flex-shrink-0 ml-2`}>
+                        <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                     </div>
                 </div>
             </CardHeader>
 
             {change && (
-                <CardContent className="px-4 pb-4 pt-0 sm:px-5 sm:pb-5">
-                    <div className="text-xs sm:text-sm text-muted-foreground flex items-center">
+                <CardContent className="px-3 pb-3 pt-0 sm:px-5 sm:pb-5">
+                    <div className="text-[10px] sm:text-sm text-muted-foreground flex items-center">
                         {changeType === 'increase' ? (
-                            <ArrowUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500 mr-1" />
+                            <ArrowUp className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-green-500 mr-1" />
                         ) : (
-                            <ArrowDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-500 mr-1" />
+                            <ArrowDown className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-red-500 mr-1" />
                         )}
-                        <span>{change} from last month</span>
+                        <span className="truncate">{change} from last month</span>
                     </div>
                 </CardContent>
             )}
@@ -554,6 +554,7 @@ function IncomeModalContent() {
                             tickFormatter={(value) => `₹${Number(value) / 1000}k`}
                             tickLine={false}
                             axisLine={false}
+                            tick={{ fontFamily: 'Playfair Display, serif' }}
                         />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--accent))', radius: 4 }}
@@ -800,7 +801,7 @@ function SalesModalContent() {
                     <Card key={s.period}>
                         <CardHeader className="p-4">
                             <CardDescription>{s.period}</CardDescription>
-                            <CardTitle className="text-xl">₹{formatPrice(s.value)}</CardTitle>
+                            <CardTitle className="text-xl"><span className="font-currency">₹</span>{formatPrice(s.value)}</CardTitle>
                         </CardHeader>
                     </Card>
                 ))}
@@ -809,7 +810,7 @@ function SalesModalContent() {
                 <ComposedChart data={salesStats || []}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="period" tickLine={false} axisLine={false} tickMargin={8} />
-                    <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} />
+                    <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} tick={{ fontFamily: 'Playfair Display, serif' }} />
                     <Tooltip
                         content={<ChartTooltipContent formatter={(value) => `₹${formatPrice(Number(value))}`} />}
                     />
