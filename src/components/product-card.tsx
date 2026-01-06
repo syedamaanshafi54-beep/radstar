@@ -182,17 +182,17 @@ export function ProductCard({ product, isDeal }: ProductCardProps) {
                             <div className="flex flex-col gap-1">
                                 {isVendor ? (
                                     <>
-                                        <div className="flex items-baseline gap-2">
-                                            <p className="text-2xl font-bold text-green-600">
-                                                <span className="font-currency">₹</span>{formatPrice(vendorPrice)}
-                                            </p>
+                                        <div className="flex flex-col">
                                             {(salePrice || price > vendorPrice) && (
-                                                <p className="text-base text-muted-foreground line-through">
-                                                    <span className="font-currency">₹</span>{formatPrice(price)}
+                                                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">
+                                                    MRP: <span className="font-currency">₹</span>{formatPrice(price)}
                                                 </p>
                                             )}
+                                            <p className="text-2xl font-bold text-green-600 leading-tight">
+                                                <span className="font-currency">₹</span>{formatPrice(vendorPrice)}
+                                            </p>
                                         </div>
-                                        <Badge variant="secondary" className="w-fit text-xs">💎 Your Price ({vendorDiscount}% off)</Badge>
+                                        <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1 mt-1">💎 Partner Price ({vendorDiscount}% off)</Badge>
                                     </>
                                 ) : salePrice ? (
                                     <>

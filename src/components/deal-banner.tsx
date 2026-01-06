@@ -167,12 +167,12 @@ export const DealBanner = () => {
                 <div className="flex flex-col items-center gap-1">
                   {isVendor ? (
                     <>
-                      <div className="flex items-baseline gap-3">
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs font-bold text-muted-foreground uppercase opacity-70">
+                          MRP: <span className="font-currency">₹</span>{formatPrice(price)}
+                        </span>
                         <span className="text-3xl font-bold text-green-600">
                           <span className="font-currency">₹</span>{formatPrice(getPrice(salePrice, dealProduct.id, 1))}
-                        </span>
-                        <span className="text-xl text-muted-foreground line-through opacity-70">
-                          <span className="font-currency">₹</span>{formatPrice(price)}
                         </span>
                       </div>
                       <Badge variant="secondary" className="w-fit text-[10px] bg-green-50 text-green-700 border-green-100 uppercase font-bold tracking-wider">

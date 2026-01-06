@@ -36,7 +36,7 @@ const getCartItemId = (productId: string, variantId?: string) => {
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, isCartLoading } = useCart();
   const { toast } = useToast();
-  const { isVendor, getPrice, getDiscount } = useVendorPricing();
+  const { isVendor, getPrice, getDiscount, vendor } = useVendorPricing();
 
   const originalTotal = cartItems.reduce((acc, item) => {
     const price = item.variant?.salePrice ?? item.variant?.price ?? item.product.salePrice ?? item.product.defaultPrice;
@@ -108,8 +108,11 @@ export default function CartPage() {
                         <div className="flex flex-col gap-1 md:hidden mt-1">
                           {isVendor ? (
                             <>
-                              <p className="font-semibold text-green-600"><span className="font-currency">₹</span>{formatPrice(vendorPrice)}</p>
-                              <Badge variant="secondary" className="w-fit text-xs">💎 {vendorDiscount}% off</Badge>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-bold text-muted-foreground">MRP: ₹{formatPrice(price)}</span>
+                                <p className="font-semibold text-green-600"><span className="font-currency">₹</span>{formatPrice(vendorPrice)}</p>
+                              </div>
+                              <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1 font-currency">💎 -₹{formatPrice((displayPrice - vendorPrice) * quantity)} Partner Discount</Badge>
                             </>
                           ) : salePrice ? (
                             <>
@@ -166,7 +169,7 @@ export default function CartPage() {
                             <p className="font-semibold text-green-600">
                               <span className="font-currency">₹</span>{formatPrice(vendorPrice * quantity)}
                             </p>
-                            <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 mt-1">💎 {vendorDiscount}% B2B Discount</Badge>
+                            <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 mt-1 font-currency">💎 -₹{formatPrice((displayPrice - vendorPrice) * quantity)} Partner Discount</Badge>
                           </>
                         ) : (
                           <p className="font-semibold"><span className="font-currency">₹</span>{formatPrice(vendorPrice * quantity)}</p>
@@ -210,6 +213,12 @@ export default function CartPage() {
                   <div className="flex justify-between text-green-600 font-medium">
                     <span>Your Savings</span>
                     <span>- <span className="font-currency">₹</span>{formatPrice(totalSavings)}</span>
+                  </div>
+                )}
+                {isVendor && vendor?.defaultDiscount && (
+                  <div className="flex justify-between text-muted-foreground text-sm">
+                    <span>Partner Discount</span>
+                    <span>{vendor.defaultDiscount}%</span>
                   </div>
                 )}
                 <div className="flex justify-between">

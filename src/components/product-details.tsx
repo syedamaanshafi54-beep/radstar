@@ -118,10 +118,10 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const cartQty = getCartQuantity(cartItemId);
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-full gap-0 overflow-y-auto overflow-x-hidden scrollbar-hide bg-background">
-      {/* Left Column: Image & Primary Action */}
-      <div className="flex flex-col space-y-4 p-4 md:p-8 md:pt-4 border-b md:border-b-0 md:border-r border-border/50">
-        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted/30">
+    <div className="flex flex-col md:grid md:grid-cols-2 bg-background md:h-[min(800px,90vh)] max-h-screen overflow-hidden">
+      {/* Left Column: Image & Primary Action - Fixed on Desktop */}
+      <div className="flex flex-col space-y-4 p-4 md:p-8 md:pt-4 border-b md:border-b-0 md:border-r border-border/50 overflow-y-auto md:overflow-visible">
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted/30 shrink-0">
           <Image
             src={product.image.url}
             alt={product.name}
@@ -139,15 +139,15 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           <div className="flex flex-col gap-1">
             {isVendor ? (
               <>
-                <div className="flex items-baseline gap-2">
+                <div className="flex flex-col">
+                  {(salePrice || price > vendorPrice) && (
+                    <p className="text-sm font-medium text-muted-foreground uppercase mb-0.5">
+                      MRP: <span className="font-currency">₹</span>{formatPrice(price)}
+                    </p>
+                  )}
                   <p className="text-2xl md:text-3xl font-bold text-green-600">
                     <span className="font-currency">₹</span>{formatPrice(vendorPrice)}
                   </p>
-                  {(salePrice || price > vendorPrice) && (
-                    <p className="text-base md:text-xl text-muted-foreground line-through opacity-70">
-                      <span className="font-currency">₹</span>{formatPrice(price)}
-                    </p>
-                  )}
                 </div>
                 <Badge variant="secondary" className="w-fit text-[10px] md:text-xs font-bold tracking-wider uppercase py-0.5 px-2 bg-green-50 text-green-700 border-green-100">
                   💎 Partner Price ({vendorDiscount}% OFF)
@@ -231,8 +231,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         </div>
       </div>
 
-      {/* Right Column: Detailed Info */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Right Column: Detailed Info - Independently Scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent pr-1">
         <div className="space-y-8 p-6 md:p-8">
           <div>
             <h2 className="text-xl md:text-2xl font-bold font-headline mb-4">Description</h2>

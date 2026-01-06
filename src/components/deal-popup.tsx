@@ -105,9 +105,13 @@ export function DealPopup() {
                   <div className="flex flex-col">
                     {isVendor ? (
                       <>
-                        <div className="flex items-baseline gap-2">
-                          <p className="text-xl font-bold text-green-600"><span className="font-currency">₹</span>{formatPrice(getPrice(product.salePrice || product.defaultPrice, product.id, 1))}</p>
-                          <p className="text-sm text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}</p>
+                        <div className="flex flex-col">
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5 leading-none">
+                            MRP: <span className="font-currency">₹</span>{formatPrice(product.defaultPrice)}
+                          </p>
+                          <p className="text-xl font-bold text-green-600">
+                            <span className="font-currency">₹</span>{formatPrice(getPrice(product.salePrice || product.defaultPrice, product.id, 1))}
+                          </p>
                         </div>
                         <Badge variant="secondary" className="w-fit text-[10px] h-4">💎 Partner Price ({getDiscount(product.id, 1)}% off)</Badge>
                       </>
