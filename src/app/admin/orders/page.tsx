@@ -73,7 +73,7 @@ function StatusSelect({ order }: { order: EnrichedOrder }) {
           ...(order.statusHistory || []),
           {
             status: newStatus,
-            changedAt: serverTimestamp(),
+            changedAt: new Date(),
           }
         ]
       });
