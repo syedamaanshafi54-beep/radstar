@@ -11,6 +11,7 @@ import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { SearchOverlay } from "@/components/search-overlay";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { VendorProvider } from "@/context/vendor-context";
 import GlobalLoader from "@/components/GlobalLoader";
 
 
@@ -82,13 +83,15 @@ export default function RootLayout({
         className={cn("min-h-[100dvh] bg-background font-body antialiased")}
       >
         <FirebaseClientProvider>
-          <CartProvider>
-            {loading && <GlobalLoader />}
-            {showSearchOverlay && <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />}
-            {children}
-            <Toaster />
-            <FirebaseErrorListener />
-          </CartProvider>
+          <VendorProvider>
+            <CartProvider>
+              {loading && <GlobalLoader />}
+              {showSearchOverlay && <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />}
+              {children}
+              <Toaster />
+              <FirebaseErrorListener />
+            </CartProvider>
+          </VendorProvider>
         </FirebaseClientProvider>
       </body>
     </html>

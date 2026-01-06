@@ -138,7 +138,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const cartQty = getCartQuantity(cartItemId);
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-full gap-0">
+    <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-full gap-0 overflow-y-auto overflow-x-hidden scrollbar-hide">
       <div className="flex flex-col space-y-4 p-0 md:p-8 md:pt-4">
         <div className="relative aspect-square overflow-hidden flex-shrink-0">
           <Image
@@ -269,7 +269,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="md:flex-1 md:overflow-y-auto">
         <div className="space-y-6 p-5 md:p-8">
           <div>
             <h2 className="text-xl md:text-2xl font-bold font-headline mb-3">Overview</h2>
