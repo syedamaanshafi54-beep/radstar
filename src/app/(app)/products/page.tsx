@@ -317,7 +317,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
           </div>
         </CardContent>
       </Card>
-      <DialogContent className="max-w-4xl w-full p-0">
+      <DialogContent className="max-w-4xl p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>{product.name}</DialogTitle>
           <DialogDescription>{product.description}</DialogDescription>

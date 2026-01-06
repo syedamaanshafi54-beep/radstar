@@ -129,7 +129,7 @@ export function DealPopup() {
       </Dialog>
 
       <Dialog open={!!activeProduct} onOpenChange={(isOpen) => !isOpen && handleDetailsClose()}>
-        <DialogContent className="max-w-4xl w-full p-0 h-full max-h-full overflow-y-auto sm:h-auto sm:max-h-[90vh] sm:rounded-lg">
+        <DialogContent className="max-w-4xl p-0">
           {activeProduct && (
             <>
               <DialogHeader className="sr-only">

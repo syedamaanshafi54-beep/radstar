@@ -138,21 +138,22 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const cartQty = getCartQuantity(cartItemId);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-full gap-4 md:gap-0 pt-8">
-      <div className="flex flex-col space-y-4 p-0 md:p-8 md:pt-0">
-        <div className="relative aspect-square rounded-lg overflow-hidden flex-shrink-0">
+    <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-full gap-0">
+      <div className="flex flex-col space-y-4 p-0 md:p-8 md:pt-4">
+        <div className="relative aspect-square overflow-hidden flex-shrink-0">
           <Image
             src={product.image.url}
             alt={product.name}
             fill
             className="object-cover"
-            sizes="100vw"
+            sizes="(max-width: 768px) 100vw, 50vw"
             data-ai-hint={product.image.hint}
+            priority
           />
         </div>
 
-        <div className="space-y-3 mt-auto pt-4 px-4 md:px-0">
-          <h1 className="font-headline text-xl md:text-4xl font-bold tracking-tight">{product.name}</h1>
+        <div className="space-y-3 mt-4 md:mt-auto pt-0 md:pt-4 px-5 md:px-0">
+          <h1 className="font-headline text-2xl md:text-4xl font-bold tracking-tight">{product.name}</h1>
 
           <div className="flex flex-col gap-1">
             {isVendor ? (
@@ -268,9 +269,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           </div>
         </div>
       </div>
-
-      <ScrollArea className="h-full md:h-auto">
-        <div className="space-y-6 p-4 md:p-8">
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-6 p-5 md:p-8">
           <div>
             <h2 className="text-xl md:text-2xl font-bold font-headline mb-3">Overview</h2>
             <div className="prose prose-base md:prose-lg font-medium text-muted-foreground max-w-none">
@@ -331,7 +331,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
             </Accordion>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
