@@ -40,7 +40,6 @@ import ProductReviews from '@/components/product-reviews';
 import GlobalLoader from "@/components/GlobalLoader";
 import { getAuth, signOut } from "firebase/auth";
 import { Input } from '@/components/ui/input';
-import { useVendorPricing } from '@/hooks/useVendor';
 
 type HeroSlide = {
   id: string;
@@ -521,7 +520,6 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
-  const { isVendor, getPrice, getDiscount } = useVendorPricing();
 
   const getCartItemId = (productId: string, variantId?: string) => {
     return variantId ? `${productId}-${variantId}` : productId;
@@ -562,11 +560,6 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
 
   const price = selectedVariant?.price ?? product.defaultPrice;
   const salePrice = selectedVariant?.salePrice ?? product.salePrice;
-
-  // Calculate vendor pricing
-  const displayPrice = salePrice || price;
-  const vendorPrice = isVendor ? getPrice(displayPrice, product.id, quantity) : displayPrice;
-  const vendorDiscount = isVendor ? getDiscount(product.id, quantity) : 0;
 
 
   return (
@@ -641,21 +634,11 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
             }
 
             <div className="flex flex-wrap justify-between items-center mt-4 gap-2">
-              <div className="flex flex-col gap-1">
-                {isVendor ? (
+              <div className="flex items-baseline gap-2">
+                {salePrice ? (
                   <>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-2xl font-bold text-green-600"><span className="font-currency">₹</span>{formatPrice(vendorPrice)}</p>
-                      {(salePrice || price > vendorPrice) && <p className="text-base text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>}
-                    </div>
-                    <Badge variant="secondary" className="w-fit text-xs">💎 Your Price ({vendorDiscount}% off)</Badge>
-                  </>
-                ) : salePrice ? (
-                  <>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-2xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
-                      <p className="text-base text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
-                    </div>
+                    <p className="text-2xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</p>
+                    <p className="text-base text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</p>
                   </>
                 ) : (
                   <p className="text-2xl font-bold"><span className="font-currency">₹</span>{formatPrice(price)}</p>
@@ -720,7 +703,7 @@ function ProductCard({ product, isDeal }: { product: WithId<Product>, isDeal?: b
           </div>
         </CardContent>
       </Card>
-      <DialogContent className="max-w-4xl p-0">
+      <DialogContent className="w-[calc(100vw-32px)] max-h-[90vh] h-[90vh] md:w-full md:h-auto md:max-h-none max-w-4xl p-0 rounded-2xl md:rounded-lg overflow-hidden md:overflow-visible flex flex-col md:block">
         <DialogHeader className="sr-only">
           <DialogTitle>{product.name}</DialogTitle>
           <DialogDescription>Details for {product.name}</DialogDescription>
