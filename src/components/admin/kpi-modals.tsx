@@ -806,7 +806,7 @@ function SalesModalContent() {
                     </Card>
                 ))}
             </div>
-            <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <ChartContainer config={chartConfig} className="h-[250px] w-full font-currency">
                 <ComposedChart data={salesStats || []}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="period" tickLine={false} axisLine={false} tickMargin={8} />

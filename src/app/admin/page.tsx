@@ -591,7 +591,7 @@ export default function AdminDashboardPage() {
           <CardContent className="px-1 sm:px-2">
             <ChartContainer
               config={chartConfig}
-              className="relative h-[180px] sm:h-[300px] w-full overflow-hidden"
+              className="relative h-[180px] sm:h-[300px] w-full overflow-hidden font-currency"
             >
 
               <ComposedChart
