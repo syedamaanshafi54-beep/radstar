@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -18,10 +17,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
-// import { ScrollArea } from "./ui/scroll-area";
 import { ToastAction } from "./ui/toast";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { useVendorPricing } from "@/hooks/useVendor";
 
 type ProductDetailsProps = {
   product: Product;
@@ -35,20 +35,18 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants?.find(v => v.price === product.defaultPrice) || product.variants?.[0]
   );
+  const { isVendor, getPrice, getDiscount } = useVendorPricing();
 
   const handleAddToCart = () => {
     const amountToAdd = quantity;
-    // Check variant stock first, then product stock
     const availableStock = selectedVariant?.stock ?? product.stock;
 
-    // If stock is undefined, allow unlimited (no stock tracking for this product)
     if (availableStock !== undefined) {
-      // Check if requested quantity exceeds available stock
       if (cartQty + amountToAdd > availableStock) {
         toast({
           variant: "destructive",
           title: "Insufficient Stock",
-          description: `Only ${availableStock} units available. ${Math.max(0, availableStock - cartQty)} more can be added. Contact us for bulk orders.`,
+          description: `Only ${availableStock} units available. ${Math.max(0, availableStock - cartQty)} more can be added.`,
           action: (
             <ToastAction
               altText="Contact on WhatsApp"
@@ -67,15 +65,14 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
       toast({
         variant: "destructive",
         title: "Cannot Add to Cart",
-        description: "Stock limit reached. Please reduce quantity.",
+        description: "Stock limit reached.",
       });
       return;
     }
 
     toast({
       title: "Added to cart",
-      description: `${amountToAdd} x ${product.name} ${selectedVariant ? `(${selectedVariant.name})` : ""
-        } has been added.`,
+      description: `${amountToAdd} x ${product.name} ${selectedVariant ? `(${selectedVariant.name})` : ""} has been added.`,
       duration: 5000,
       action: (
         <ToastAction altText="View Cart" onClick={() => router.push("/cart")}>
@@ -83,7 +80,6 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         </ToastAction>
       ),
     });
-    // Reset quantity after adding
     setQuantity(1);
   };
 
@@ -93,27 +89,16 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
   const handleQuantityChange = (change: number) => {
     const newQty = Math.max(1, quantity + change);
-    // Check variant stock first, then product stock
     const availableStock = selectedVariant?.stock ?? product.stock;
 
-    // If stock is defined, validate against it
     if (availableStock !== undefined && newQty > availableStock) {
       toast({
         variant: "destructive",
         title: "Stock Limit Reached",
-        description: `Only ${availableStock} units available. Contact us for bulk orders.`,
-        action: (
-          <ToastAction
-            altText="Contact on WhatsApp"
-            onClick={() => window.open('https://wa.me/919032561974', '_blank')}
-          >
-            WhatsApp
-          </ToastAction>
-        ),
+        description: `Only ${availableStock} units available.`,
       });
       return;
     }
-
     setQuantity(newQty);
   };
 
@@ -125,75 +110,78 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const price = selectedVariant?.price ?? product.defaultPrice;
   const salePrice = selectedVariant?.salePrice ?? product.salePrice;
 
-  // Check if product is in cart
+  const displayPrice = salePrice || price;
+  const vendorPrice = isVendor ? getPrice(displayPrice, product.id, quantity) : displayPrice;
+  const vendorDiscount = isVendor ? getDiscount(product.id, quantity) : 0;
+
   const cartItemId = selectedVariant ? `${product.id}-${selectedVariant.id}` : product.id;
   const cartQty = getCartQuantity(cartItemId);
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 h-full md:h-auto min-h-0 bg-background">
-      {/* Top Section (Mobile) / Left Column (Desktop) */}
-      <div className="flex flex-col h-[50%] md:h-auto flex-shrink-0 overflow-hidden p-4 md:p-8 md:pt-0 relative border-b md:border-b-0 border-border/50">
-
-        {/* Image Area - Flexible height on mobile to fit remaining space */}
-        <div className="relative flex-1 min-h-0 w-full mb-2 md:mb-6 rounded-lg overflow-hidden md:aspect-square md:flex-none">
-    <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-full gap-0 overflow-y-auto overflow-x-hidden scrollbar-hide">
-      <div className="flex flex-col space-y-4 p-0 md:p-8 md:pt-4">
-        <div className="relative aspect-square overflow-hidden flex-shrink-0">
+    <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-full gap-0 overflow-y-auto overflow-x-hidden scrollbar-hide bg-background">
+      {/* Left Column: Image & Primary Action */}
+      <div className="flex flex-col space-y-4 p-4 md:p-8 md:pt-4 border-b md:border-b-0 md:border-r border-border/50">
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted/30">
           <Image
             src={product.image.url}
             alt={product.name}
             fill
-            className="object-contain md:object-cover hover:scale-105 transition-transform duration-500"
+            className="object-cover hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 768px) 100vw, 50vw"
             data-ai-hint={product.image.hint}
             priority
           />
         </div>
 
-        {/* Product Info - Fixed at bottom of top section on mobile */}
-        <div className="space-y-3 mt-auto pt-0 px-0 md:px-0 bg-background shrink-0">
-          <h1 className="font-headline text-2xl md:text-4xl font-bold tracking-tight">{product.name}</h1>
+        <div className="space-y-4 pt-2">
+          <h1 className="font-headline text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">{product.name}</h1>
 
-          <div className="flex items-baseline gap-2">
-            {salePrice ? (
+          <div className="flex flex-col gap-1">
+            {isVendor ? (
               <>
-                <p className="text-2xl md:text-3xl font-bold text-destructive">
-                  <span className="font-currency">₹</span>
-                  {formatPrice(salePrice)}
-                </p>
-                <p className="text-lg md:text-xl text-muted-foreground line-through">
-                  <span className="font-currency">₹</span>
-                  {formatPrice(price)}
-                </p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl md:text-3xl font-bold text-green-600">
+                    <span className="font-currency">₹</span>{formatPrice(vendorPrice)}
+                  </p>
+                  {(salePrice || price > vendorPrice) && (
+                    <p className="text-base md:text-xl text-muted-foreground line-through opacity-70">
+                      <span className="font-currency">₹</span>{formatPrice(price)}
+                    </p>
+                  )}
+                </div>
+                <Badge variant="secondary" className="w-fit text-[10px] md:text-xs font-bold tracking-wider uppercase py-0.5 px-2 bg-green-50 text-green-700 border-green-100">
+                  💎 Partner Price ({vendorDiscount}% OFF)
+                </Badge>
               </>
+            ) : salePrice ? (
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl md:text-3xl font-bold text-destructive">
+                  <span className="font-currency">₹</span>{formatPrice(salePrice)}
+                </p>
+                <p className="text-base md:text-xl text-muted-foreground line-through opacity-70">
+                  <span className="font-currency">₹</span>{formatPrice(price)}
+                </p>
+              </div>
             ) : (
               <p className="text-2xl md:text-3xl font-bold text-primary">
-                <span className="font-currency">₹</span>
-                {formatPrice(price)}
+                <span className="font-currency">₹</span>{formatPrice(price)}
               </p>
             )}
           </div>
 
           {product.variants && product.variants.length > 0 && (
-            <div>
-              <Label htmlFor="product-variant" className="text-base font-semibold mb-2 block">
-                Size:
+            <div className="space-y-2">
+              <Label htmlFor="product-variant" className="text-sm font-semibold text-muted-foreground">
+                Select Size
               </Label>
-              <Select
-                onValueChange={handleVariantChange}
-                defaultValue={selectedVariant?.id}
-              >
-                <SelectTrigger
-                  id="product-variant"
-                  className="w-full md:w-[200px] h-11 text-base"
-                >
+              <Select onValueChange={handleVariantChange} defaultValue={selectedVariant?.id}>
+                <SelectTrigger id="product-variant" className="w-full h-11 text-base rounded-lg">
                   <SelectValue placeholder="Select a size" />
                 </SelectTrigger>
                 <SelectContent>
                   {product.variants.map((v) => (
                     <SelectItem key={v.id} value={v.id} className="text-base">
-                      {v.name} - <span className="font-currency">₹</span>
-                      {formatPrice(v.salePrice || v.price)}
+                      {v.name} - ₹{formatPrice(v.salePrice || v.price)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -201,129 +189,102 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 pt-2">
-            <div className="flex items-center border rounded-md w-full md:w-auto">
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center border rounded-lg bg-muted/20 overflow-hidden shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-11 md:w-11"
+                className="h-10 w-10 md:h-11 md:w-11 rounded-none"
                 onClick={() => handleQuantityChange(-1)}
                 disabled={quantity <= 1}
               >
-                <Minus className="h-5 w-5" />
+                <Minus className="h-4 w-4" />
               </Button>
-
               <Input
                 type="number"
                 value={quantity}
-                onChange={(e) =>
-                  setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                }
-                className="w-full md:w-20 h-10 md:h-11 text-center border-0 focus-visible:ring-0 text-lg font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-12 md:w-16 h-10 md:h-11 text-center border-0 bg-transparent focus-visible:ring-0 text-base md:text-lg font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
               />
-
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-11 md:w-11"
+                className="h-10 w-10 md:h-11 md:w-11 rounded-none"
                 onClick={() => handleQuantityChange(1)}
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
 
             {cartQty > 0 ? (
-              <Button
-                size="lg"
-                className="flex-1 h-10 md:h-11 text-base w-full"
-                onClick={handleGoToCart}
-              >
-                <ArrowRight className="mr-2 h-5 w-5" /> Go to Cart ({cartQty})
+              <Button className="flex-1 h-10 md:h-11 font-bold text-base shadow-md group" onClick={handleGoToCart}>
+                <ArrowRight className="h-5 w-5 mr-2 group-hover:translate-x-1 transition-transform" />
+                Go to Cart ({cartQty})
               </Button>
             ) : (
-              <Button
-                size="lg"
-                className="flex-1 h-10 md:h-11 text-base w-full"
-                onClick={handleAddToCart}
-              >
-                <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+              <Button className="flex-1 h-10 md:h-11 font-bold text-base shadow-md" onClick={handleAddToCart}>
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Add to Cart
               </Button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Bottom Section (Mobile) / Right Column (Desktop) */}
-      <div className="h-[50%] md:h-auto overflow-y-auto md:overflow-visible overscroll-contain p-4 md:p-8 space-y-6 bg-muted/5 md:bg-transparent">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold font-headline mb-3">
-            Overview
-          </h2>
-          <div className="prose prose-base md:prose-lg font-medium text-muted-foreground max-w-none">
-            <p>{product.description}</p>
-          </div>
-        </div>
-      <div className="md:flex-1 md:overflow-y-auto">
-        <div className="space-y-6 p-5 md:p-8">
+      {/* Right Column: Detailed Info */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-8 p-6 md:p-8">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold font-headline mb-3">Overview</h2>
-            <div className="prose prose-base md:prose-lg font-medium text-muted-foreground max-w-none">
-              <p>{product.description}</p>
+            <h2 className="text-xl md:text-2xl font-bold font-headline mb-4">Description</h2>
+            <div className="prose prose-slate prose-base leading-relaxed text-muted-foreground max-w-none">
+              <p className="whitespace-pre-line">{product.description}</p>
             </div>
           </div>
 
-        <Separator />
+          {product.benefits && product.benefits.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg md:text-xl font-bold font-headline">Key Highlights</h3>
+              <ul className="grid grid-cols-1 gap-3">
+                {product.benefits.map((benefit) => (
+                  <li key={benefit} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 text-primary-nav-foreground">
+                    <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    <span className="text-sm md:text-base font-medium">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        <div>
-          <h3 className="text-lg md:text-xl font-bold font-headline mb-3">
-            Key Highlights
-          </h3>
-          <ul className="space-y-2 text-sm">
-            {product.benefits.map((benefit) => (
-              <li key={benefit} className="flex items-start font-medium">
-                <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
+          {(product.ingredients || product.nutritionFacts) && (
+            <Accordion type="single" collapsible className="w-full border-t border-border/50">
+              {product.ingredients && product.ingredients.length > 0 && (
+                <AccordionItem value="ingredients" className="border-b-border/50">
+                  <AccordionTrigger className="text-lg font-bold hover:no-underline">Ingredients</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {product.ingredients.map((item) => (
+                        <Badge key={item} variant="outline" className="text-sm py-1 px-3 rounded-full font-medium">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {product.nutritionFacts && (
+                <AccordionItem value="nutrition" className="border-b-0">
+                  <AccordionTrigger className="text-lg font-bold hover:no-underline">Nutritional Facts</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="bg-muted/30 p-4 rounded-xl text-base text-muted-foreground font-medium leading-relaxed">
+                      {product.nutritionFacts}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
+          )}
         </div>
-
-        <Separator />
-
-        {(product.ingredients || product.nutritionFacts) && (
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full"
-            defaultValue="ingredients"
-          >
-            {product.ingredients && product.ingredients.length > 0 && (
-              <AccordionItem value="ingredients">
-                <AccordionTrigger className="text-lg">
-                  Ingredients
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ul className="list-disc list-inside text-muted-foreground font-medium text-base">
-                    {product.ingredients.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {product.nutritionFacts && (
-              <AccordionItem value="nutrition">
-                <AccordionTrigger className="text-lg">
-                  Nutritional Facts
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground font-medium text-base">
-                  {product.nutritionFacts}
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </Accordion>
-        )}
       </div>
     </div>
   );

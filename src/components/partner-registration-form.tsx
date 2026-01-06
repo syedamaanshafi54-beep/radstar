@@ -33,7 +33,7 @@ import { Loader2 } from "lucide-react";
 const formSchema = z.object({
   fullName: z.string().min(1, "Full Name is required"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "A valid phone number is required"),
+  phone: z.string().length(10, "Phone number must be exactly 10 digits"),
   address: z.string().min(1, "Address is required"),
   businessName: z.string().optional(),
 });
@@ -162,7 +162,15 @@ export default function PartnerRegistrationForm() {
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your phone number" {...field} />
+                    <Input
+                      placeholder="9876543210"
+                      {...field}
+                      maxLength={10}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -211,4 +219,3 @@ export default function PartnerRegistrationForm() {
   );
 }
 
-    

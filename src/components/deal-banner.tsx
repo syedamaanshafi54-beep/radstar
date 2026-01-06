@@ -13,6 +13,8 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import ProductDetails from './product-details';
 import { formatPrice } from '@/lib/utils';
+import { useVendorPricing } from '@/hooks/useVendor';
+import { Badge } from './ui/badge';
 
 type DealInfo = {
   productId: string;
@@ -71,32 +73,33 @@ export const DealBanner = () => {
   const firestore = useFirestore();
   const [dealProduct, setDealProduct] = useState<WithId<Product> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isVendor, getPrice, getDiscount } = useVendorPricing();
 
   const dealInfoRef = useMemoFirebase(
     () => doc(firestore, 'site-config', 'dealsOfTheDay'),
     [firestore]
   );
   const { data: dealInfo, isLoading: isDealInfoLoading } = useDoc<DealInfo>(dealInfoRef);
-  
+
   useEffect(() => {
     const fetchDealProduct = async () => {
       if (isDealInfoLoading) return;
-      
+
       let productId: string | undefined = dealInfo?.productId;
-      
+
       if (!productId) {
-         setIsLoading(false);
-         return;
+        setIsLoading(false);
+        return;
       }
-      
+
       try {
         const productRef = doc(firestore, 'products', productId);
         const productSnap = await getDoc(productRef);
-        
+
         if (productSnap.exists()) {
           setDealProduct({ id: productSnap.id, ...productSnap.data() } as WithId<Product>);
         } else {
-           setDealProduct(null);
+          setDealProduct(null);
         }
       } catch (error) {
         console.error("Error fetching deal product:", error);
@@ -113,7 +116,7 @@ export const DealBanner = () => {
     return (
       <div className="container mx-auto px-4 mt-8">
         <div className="flex h-24 items-center justify-center rounded-lg bg-secondary/50">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -139,13 +142,13 @@ export const DealBanner = () => {
         <div className="container mx-auto px-4 mt-8">
           <div className="relative grid grid-cols-12 items-center gap-4 rounded-lg bg-gradient-to-r from-primary/10 via-background to-secondary/20 p-2 md:p-0 shadow-inner overflow-hidden border">
             <div className="hidden md:block col-span-2 relative h-full">
-                  <Image
-                      src={dealProduct.image.url as string}
-                      alt={dealProduct.name}
-                      fill
-                      className="object-contain p-2"
-                      sizes="150px"
-                  />
+              <Image
+                src={dealProduct.image.url as string}
+                alt={dealProduct.name}
+                fill
+                className="object-contain p-2"
+                sizes="150px"
+              />
             </div>
 
             <div className="col-span-12 md:col-span-10 grid grid-cols-1 md:grid-cols-3 gap-4 items-center text-center md:text-left p-4">
@@ -158,16 +161,38 @@ export const DealBanner = () => {
                 <p className="font-bold text-lg md:text-xl text-foreground mt-1">{dealProduct.name}</p>
                 <p className="text-sm font-medium text-muted-foreground">{dealProduct.tagline}</p>
               </div>
-              
+
               {/* Column 2: Prices and Countdown */}
               <div className="md:col-span-1 flex flex-col items-center">
-                  <div className="flex items-baseline gap-3">
-                      <span className="text-3xl font-bold text-destructive"><span className="font-currency">₹</span>{formatPrice(salePrice)}</span>
-                      <span className="text-xl text-muted-foreground line-through"><span className="font-currency">₹</span>{formatPrice(price)}</span>
-                  </div>
-                  <div className="text-primary mt-1">
-                      <Countdown />
-                  </div>
+                <div className="flex flex-col items-center gap-1">
+                  {isVendor ? (
+                    <>
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-3xl font-bold text-green-600">
+                          <span className="font-currency">₹</span>{formatPrice(getPrice(salePrice, dealProduct.id, 1))}
+                        </span>
+                        <span className="text-xl text-muted-foreground line-through opacity-70">
+                          <span className="font-currency">₹</span>{formatPrice(price)}
+                        </span>
+                      </div>
+                      <Badge variant="secondary" className="w-fit text-[10px] bg-green-50 text-green-700 border-green-100 uppercase font-bold tracking-wider">
+                        💎 Partner Price ({getDiscount(dealProduct.id, 1)}% OFF)
+                      </Badge>
+                    </>
+                  ) : (
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-bold text-destructive">
+                        <span className="font-currency">₹</span>{formatPrice(salePrice)}
+                      </span>
+                      <span className="text-xl text-muted-foreground line-through">
+                        <span className="font-currency">₹</span>{formatPrice(price)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-primary mt-1">
+                  <Countdown />
+                </div>
               </div>
 
               {/* Column 3: Button */}
@@ -183,14 +208,13 @@ export const DealBanner = () => {
         </div>
       </motion.div>
       <DialogContent className="max-w-4xl w-full p-0 h-full max-h-full overflow-y-auto sm:h-auto sm:max-h-[90vh] sm:rounded-lg">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{dealProduct.name}</DialogTitle>
-            <DialogDescription>Details for {dealProduct.name}</DialogDescription>
-          </DialogHeader>
-          <ProductDetails product={dealProduct} />
-        </DialogContent>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{dealProduct.name}</DialogTitle>
+          <DialogDescription>Details for {dealProduct.name}</DialogDescription>
+        </DialogHeader>
+        <ProductDetails product={dealProduct} />
+      </DialogContent>
     </Dialog>
   );
 };
 
-    

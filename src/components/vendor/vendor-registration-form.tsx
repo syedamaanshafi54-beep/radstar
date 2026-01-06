@@ -81,11 +81,19 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
             return;
         }
 
-        // Validation
         if (!businessName.trim() || !phone.trim() || !email.trim() || !address.trim()) {
             toast({
                 title: 'Error',
                 description: 'Please fill in all required fields',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        if (phone.length !== 10) {
+            toast({
+                title: 'Error',
+                description: 'Phone number must be exactly 10 digits',
                 variant: 'destructive',
             });
             return;
@@ -208,8 +216,12 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
                             id="phone"
                             type="tel"
                             value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            placeholder="Enter your phone number"
+                            onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                if (value.length <= 10) setPhone(value);
+                            }}
+                            placeholder="Enter 10-digit phone number"
+                            maxLength={10}
                             required
                         />
                     </div>
