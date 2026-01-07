@@ -162,10 +162,10 @@ export default function AboutPage() {
                           {slide.id === "about-1"
                             ? "A Legacy of Trust"
                             : slide.id === "about-2"
-                            ? "Rooted in Nature"
-                            : slide.id === "about-3"
-                            ? "Nourishing Communities"
-                            : "The Future of Wellness"}
+                              ? "Rooted in Nature"
+                              : slide.id === "about-3"
+                                ? "Nourishing Communities"
+                                : "The Future of Wellness"}
                         </motion.h1>
                         <motion.h2
                           className="mt-3 font-headline text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold leading-tight"
@@ -174,10 +174,10 @@ export default function AboutPage() {
                           {slide.id === "about-1"
                             ? "Quality & Purity"
                             : slide.id === "about-2"
-                            ? "Crafted with Care"
-                            : slide.id === "about-3"
-                            ? "One Bowl at a Time"
-                            : "Innovating Tradition"}
+                              ? "Crafted with Care"
+                              : slide.id === "about-3"
+                                ? "One Bowl at a Time"
+                                : "Innovating Tradition"}
                         </motion.h2>
                         <motion.div
                           className="w-16 sm:w-20 h-1 bg-primary my-4 sm:my-6"
@@ -195,11 +195,10 @@ export default function AboutPage() {
             <button
               key={index}
               onClick={() => api?.scrollTo(index)}
-              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-colors ${
-                index === current
+              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-colors ${index === current
                   ? "bg-primary"
                   : "bg-white/50 hover:bg-white/75"
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -344,9 +343,8 @@ export default function AboutPage() {
                   <div className="relative flex flex-col items-center group">
                     <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary rounded-full border-2 border-background shadow-md z-10 transition-transform group-hover:scale-125" />
                     <div
-                      className={`text-center mt-3 w-32 xs:w-40 sm:w-48 transition-opacity duration-300 ${
-                        index % 2 === 0 ? "absolute top-5" : "absolute bottom-5"
-                      }`}
+                      className={`text-center mt-3 w-32 xs:w-40 sm:w-48 transition-opacity duration-300 ${index % 2 === 0 ? "absolute top-5" : "absolute bottom-5"
+                        }`}
                     >
                       <h3 className="font-headline text-sm xs:text-base sm:text-lg md:text-2xl font-bold text-foreground leading-tight">
                         {item.event}
@@ -361,7 +359,7 @@ export default function AboutPage() {
             </motion.div>
 
             {/* Mobile timeline */}
-            
+
           </div>
         </section>
 
@@ -407,7 +405,7 @@ export default function AboutPage() {
         <section className="grid gap-6 md:grid-cols-2">
           <div
             className="relative flex items-center justify-center p-8 md:p-12"
-            style={{ backgroundColor: "#F3F0D9" }}
+            style={{ backgroundColor: "#fafaf9" }}
           >
             <Image
               src={"/images/aslitalbina/vision.png"}
@@ -445,8 +443,8 @@ export default function AboutPage() {
             </motion.div>
           </div>
           <div
-            className="relative flex items-center justify-center p-8 md:p-12"
-            style={{ backgroundColor: "#FFFFFF" }}
+            className="relative flex items-center justify-center p-8 md:p-12 border-t md:border-t-0 md:border-l border-primary/10"
+            style={{ backgroundColor: "#f0fdf4" }}
           >
             <Image
               src={"/images/aslitalbina/mission.png"}

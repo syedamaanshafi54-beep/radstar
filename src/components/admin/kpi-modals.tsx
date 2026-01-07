@@ -126,7 +126,7 @@ function ProductListModalContent() {
     }));
 
     return (
-        <DialogContent className="sm:max-w-4xl" data-modal-content="products">
+        <DialogContent className="sm:max-w-4xl p-6" data-modal-content="products">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><Package /> Product List</DialogTitle>
                 <DialogDescription>Complete list of available products in your inventory.</DialogDescription>
@@ -223,7 +223,7 @@ function OrderListModalContent() {
     }));
 
     return (
-        <DialogContent className="sm:max-w-4xl" data-modal-content="orders">
+        <DialogContent className="sm:max-w-4xl p-6" data-modal-content="orders">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><ShoppingCart /> Recent Orders</DialogTitle>
                 <DialogDescription>A list of the most recent orders from your store.</DialogDescription>
@@ -350,7 +350,7 @@ function CustomerListModalContent() {
     }, [users, orders, usersLoading, ordersLoading]);
 
     return (
-        <DialogContent className="sm:max-w-4xl" data-modal-content="customers">
+        <DialogContent className="sm:max-w-4xl p-6" data-modal-content="customers">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><Users /> Customer Details</DialogTitle>
                 <DialogDescription>Details of customers who have placed orders.</DialogDescription>
@@ -475,7 +475,7 @@ function IncomeModalContent() {
 
     if (isLoading) {
         return (
-            <DialogContent className="sm:max-w-xl flex items-center justify-center h-96" data-modal-content="income-loading">
+            <DialogContent className="sm:max-w-xl p-6 flex items-center justify-center h-96" data-modal-content="income-loading">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2"><TrendingUp /> Income Overview</DialogTitle>
                 </DialogHeader>
@@ -498,7 +498,7 @@ function IncomeModalContent() {
     };
 
     return (
-        <DialogContent className="sm:max-w-2xl" data-modal-content="income">
+        <DialogContent className="sm:max-w-2xl p-6" data-modal-content="income">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl"><TrendingUp /> Income Overview</DialogTitle>
                 <DialogDescription>Performance metrics based on delivered orders.</DialogDescription>
@@ -651,7 +651,7 @@ function VisitorInsightsModalContent() {
     if (!visitorData) return null;
 
     return (
-        <DialogContent className="sm:max-w-3xl" data-modal-content="visitors">
+        <DialogContent className="sm:max-w-3xl p-6" data-modal-content="visitors">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl"><Users /> Visitor Insights</DialogTitle>
                 <DialogDescription>Engagement metrics derived from order activity.</DialogDescription>
@@ -791,7 +791,7 @@ function SalesModalContent() {
     if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>;
 
     return (
-        <DialogContent className="sm:max-w-2xl" data-modal-content="sales">
+        <DialogContent className="sm:max-w-2xl p-6" data-modal-content="sales">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><IndianRupee /> Total Sales Details</DialogTitle>
                 <DialogDescription>Real-time sales performance from your store.</DialogDescription>

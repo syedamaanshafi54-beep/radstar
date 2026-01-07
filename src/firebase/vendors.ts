@@ -104,8 +104,13 @@ export function getVendorDiscount(
     productId: string,
     quantity?: number
 ): number {
-    // Check for product-specific discount first
-    let discount = vendor.productDiscounts?.[productId] ?? vendor.defaultDiscount;
+    // Start with default discount
+    let discount = vendor.defaultDiscount || 0;
+
+    // Add product-specific discount if it exists
+    if (vendor.productDiscounts?.[productId]) {
+        discount += vendor.productDiscounts[productId];
+    }
 
     // Check bulk discount tiers if quantity is provided
     if (quantity && vendor.bulkDiscountTiers && vendor.bulkDiscountTiers.length > 0) {

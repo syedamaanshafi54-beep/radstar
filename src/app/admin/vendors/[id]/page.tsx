@@ -169,8 +169,9 @@ export default function VendorDetailPage() {
 
     const handleUpdateProductDiscount = (product: Product) => {
         setSelectedProduct(product);
-        const currentDiscount = vendor?.productDiscounts?.[product.id] || vendor?.defaultDiscount || 0;
-        setProductDiscount(currentDiscount.toString());
+        // Additional discount is stored directly in productDiscounts
+        const additionalDiscount = vendor?.productDiscounts?.[product.id] || 0;
+        setProductDiscount(additionalDiscount.toString());
         setConfirmAction('product');
         setShowConfirmDialog(true);
     };
@@ -206,7 +207,7 @@ export default function VendorDetailPage() {
                 vendor.id,
                 vendor.businessName,
                 'product',
-                vendor.productDiscounts?.[selectedProduct.id] || vendor.defaultDiscount,
+                vendor.productDiscounts?.[selectedProduct.id] || 0,
                 discount,
                 user.uid,
                 user.displayName || user.email || 'Admin',
@@ -215,8 +216,8 @@ export default function VendorDetailPage() {
             );
 
             toast({
-                title: 'Product Discount Updated',
-                description: `${selectedProduct.name} discount set to ${discount}%`,
+                title: 'Additional Discount Updated',
+                description: `${selectedProduct.name} additional discount set to ${discount}%`,
             });
 
             setShowConfirmDialog(false);
@@ -373,7 +374,7 @@ export default function VendorDetailPage() {
                         <CardHeader>
                             <CardTitle>Product-Specific Discounts</CardTitle>
                             <CardDescription>
-                                Override default discount for specific products
+                                These discounts are <strong>added on top</strong> of the {vendor.defaultDiscount}% default discount.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -382,15 +383,16 @@ export default function VendorDetailPage() {
                                     <TableRow>
                                         <TableHead>Product</TableHead>
                                         <TableHead>Sale Price</TableHead>
-                                        <TableHead>Current Discount</TableHead>
+                                        <TableHead>Additional Discount</TableHead>
+                                        <TableHead>Total Discount</TableHead>
                                         <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {products?.map((product) => {
-                                        const currentDiscount =
-                                            vendor.productDiscounts?.[product.id] || vendor.defaultDiscount;
-                                        const isCustom = vendor.productDiscounts?.[product.id] !== undefined;
+                                        const additionalDiscount = vendor.productDiscounts?.[product.id] || 0;
+                                        const totalDiscount = vendor.defaultDiscount + additionalDiscount;
+                                        const isCustom = additionalDiscount > 0;
 
                                         return (
                                             <TableRow key={product.id}>
@@ -403,7 +405,12 @@ export default function VendorDetailPage() {
                                                 <TableCell><span className="font-currency">₹</span>{product.salePrice || product.defaultPrice}</TableCell>
                                                 <TableCell>
                                                     <Badge variant={isCustom ? 'default' : 'outline'}>
-                                                        {currentDiscount}% {isCustom && '⭐'}
+                                                        +{additionalDiscount}% {isCustom && '⭐'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                                        {totalDiscount}%
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">
@@ -562,19 +569,49 @@ export default function VendorDetailPage() {
                         <DialogDescription>
                             {confirmAction === 'default'
                                 ? `Set default discount to ${defaultDiscount}%`
-                                : `Set ${selectedProduct?.name} discount to ${productDiscount}%`}
+                                : `Set ${selectedProduct?.name} additional discount to +${productDiscount}%`}
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                        <p className="text-sm font-medium text-yellow-900">⚠️ Confirmation Required</p>
-                        <p className="text-sm text-yellow-700 mt-1">
-                            Vendor will be given{' '}
-                            <strong>
-                                {confirmAction === 'default' ? defaultDiscount : productDiscount}%
-                            </strong>{' '}
-                            discount. Are you sure?
-                        </p>
+                    <div className="space-y-4 py-4">
+                        {confirmAction === 'product' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="additionalDiscount">Additional Discount (%)</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id="additionalDiscount"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={productDiscount}
+                                        onChange={(e) => setProductDiscount(e.target.value)}
+                                        placeholder="Enter additional %"
+                                    />
+                                    <span className="text-xl font-bold font-headline">%</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    This will be added to the {vendor.defaultDiscount}% default discount.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                            <p className="text-sm font-medium text-yellow-900">⚠️ Confirmation Required</p>
+                            <div className="text-sm text-yellow-700 mt-1">
+                                {confirmAction === 'default' ? (
+                                    <>Vendor default discount will be set to <strong>{defaultDiscount}%</strong>.</>
+                                ) : (
+                                    <div className="space-y-1">
+                                        <p>
+                                            Additional discount for <strong>{selectedProduct?.name}</strong> will be set to <strong>+{productDiscount || '0'}%</strong>.
+                                        </p>
+                                        <p className="font-bold">
+                                            Total Discount: {vendor.defaultDiscount + parseFloat(productDiscount || '0')}%
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <DialogFooter>
