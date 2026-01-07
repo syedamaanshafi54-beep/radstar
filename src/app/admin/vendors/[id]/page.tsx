@@ -36,8 +36,6 @@ import {
     Package,
     TrendingUp,
     History,
-    Trash2,
-    Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { logDiscountChange, getVendorDiscountHistory } from '@/firebase/vendors';
@@ -57,9 +55,7 @@ export default function VendorDetailPage() {
     const [confirmAction, setConfirmAction] = useState<'default' | 'product' | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [productDiscount, setProductDiscount] = useState('');
-    const [bulkTiers, setBulkTiers] = useState<BulkDiscountTier[]>([]);
-    const [newTierQty, setNewTierQty] = useState('');
-    const [newTierDiscount, setNewTierDiscount] = useState('');
+
 
     const vendorRef = useMemo(() => doc(firestore, 'vendors', vendorId), [firestore, vendorId]);
 
@@ -83,7 +79,7 @@ export default function VendorDetailPage() {
                     const vData = { id: vDoc.id, ...vDoc.data() } as Vendor;
                     setVendor(vData);
                     setDefaultDiscount(vData.defaultDiscount?.toString() || '0');
-                    setBulkTiers(vData.bulkDiscountTiers || []);
+
                 }
 
                 // Fetch products
@@ -234,60 +230,7 @@ export default function VendorDetailPage() {
         }
     };
 
-    const handleAddBulkTier = async () => {
-        if (!vendor || !user) return;
 
-        const qty = parseInt(newTierQty);
-        const discount = parseFloat(newTierDiscount);
-
-        if (isNaN(qty) || qty <= 0) {
-            toast({ title: 'Invalid quantity', variant: 'destructive' });
-            return;
-        }
-
-        if (isNaN(discount) || discount < 0 || discount > 100) {
-            toast({ title: 'Invalid discount', variant: 'destructive' });
-            return;
-        }
-
-        const newTier: BulkDiscountTier = { minQuantity: qty, discount };
-        const updatedTiers = [...bulkTiers, newTier].sort((a, b) => a.minQuantity - b.minQuantity);
-
-        try {
-            await updateDoc(vendorRef, {
-                bulkDiscountTiers: updatedTiers,
-                lastModifiedAt: serverTimestamp(),
-                lastModifiedBy: user.uid,
-            });
-
-            setBulkTiers(updatedTiers);
-            setNewTierQty('');
-            setNewTierDiscount('');
-
-            toast({ title: 'Bulk tier added' });
-        } catch (error) {
-            toast({ title: 'Error adding tier', variant: 'destructive' });
-        }
-    };
-
-    const handleRemoveBulkTier = async (index: number) => {
-        if (!vendor || !user) return;
-
-        const updatedTiers = bulkTiers.filter((_, i) => i !== index);
-
-        try {
-            await updateDoc(vendorRef, {
-                bulkDiscountTiers: updatedTiers,
-                lastModifiedAt: serverTimestamp(),
-                lastModifiedBy: user.uid,
-            });
-
-            setBulkTiers(updatedTiers);
-            toast({ title: 'Bulk tier removed' });
-        } catch (error) {
-            toast({ title: 'Error removing tier', variant: 'destructive' });
-        }
-    };
 
     if (vendorLoading || productsLoading) {
         return (
@@ -333,7 +276,7 @@ export default function VendorDetailPage() {
                 <TabsList>
                     <TabsTrigger value="default">Default Discount</TabsTrigger>
                     <TabsTrigger value="products">Product Discounts</TabsTrigger>
-                    <TabsTrigger value="bulk">Bulk Tiers</TabsTrigger>
+
                     <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
 
@@ -431,82 +374,7 @@ export default function VendorDetailPage() {
                     </Card>
                 </TabsContent>
 
-                {/* Bulk Tiers Tab */}
-                <TabsContent value="bulk">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Bulk Discount Tiers</CardTitle>
-                            <CardDescription>
-                                Set quantity-based discounts for bulk orders
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {/* Existing Tiers */}
-                            {bulkTiers.length > 0 && (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Min Quantity</TableHead>
-                                            <TableHead>Discount</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {bulkTiers.map((tier, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell>{tier.minQuantity}+</TableCell>
-                                                <TableCell>
-                                                    <Badge>{tier.discount}%</Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="destructive"
-                                                        onClick={() => handleRemoveBulkTier(index)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            )}
 
-                            {/* Add New Tier */}
-                            <div className="border-t pt-4">
-                                <h4 className="font-medium mb-4">Add New Tier</h4>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Min Quantity</Label>
-                                        <Input
-                                            type="number"
-                                            value={newTierQty}
-                                            onChange={(e) => setNewTierQty(e.target.value)}
-                                            placeholder="50"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Discount %</Label>
-                                        <Input
-                                            type="number"
-                                            value={newTierDiscount}
-                                            onChange={(e) => setNewTierDiscount(e.target.value)}
-                                            placeholder="15"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>&nbsp;</Label>
-                                        <Button onClick={handleAddBulkTier} className="w-full">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Add Tier
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
 
                 {/* History Tab */}
                 <TabsContent value="history">
@@ -563,7 +431,7 @@ export default function VendorDetailPage() {
 
             {/* Confirmation Dialog */}
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Confirm Discount Change</DialogTitle>
                         <DialogDescription>
@@ -583,6 +451,7 @@ export default function VendorDetailPage() {
                                         type="number"
                                         min="0"
                                         max="100"
+                                        className="h-12 text-lg"
                                         value={productDiscount}
                                         onChange={(e) => setProductDiscount(e.target.value)}
                                         placeholder="Enter additional %"
