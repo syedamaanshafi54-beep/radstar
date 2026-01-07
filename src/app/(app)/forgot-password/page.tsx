@@ -22,7 +22,8 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth, sendPasswordReset } from '@/firebase';
+import { useAuth } from '@/firebase';
+import { sendCustomPasswordResetEmailAction } from '@/actions/auth-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -45,8 +46,12 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      await sendPasswordReset(auth, values.email);
-      setIsSuccess(true);
+      const result = await sendCustomPasswordResetEmailAction(values.email);
+      if (result.success) {
+        setIsSuccess(true);
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -64,15 +69,15 @@ export default function ForgotPasswordPage() {
         <CardHeader>
           <CardTitle>Forgot Your Password?</CardTitle>
           <CardDescription>
-            {isSuccess 
-              ? "Check your inbox for a password reset link." 
+            {isSuccess
+              ? "Check your inbox for a password reset link."
               : "No problem. Enter your email and we'll send you a link to reset it."
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isSuccess ? (
-             <div className="text-center">
+            <div className="text-center">
               <p className="text-muted-foreground mb-4">
                 If you don't see the email, please check your spam folder.
               </p>

@@ -64,6 +64,7 @@ import { Input } from '@/components/ui/input';
 import SiteContentManagement from '@/components/admin/site-content-management.tsx';
 import { InventoryManagement } from '@/components/admin/inventory-management';
 import { CategoryManagement } from '@/components/admin/category-management';
+import { ShippingManagement } from '@/components/admin/shipping-management';
 
 
 type DealsData = {
@@ -943,6 +944,10 @@ export default function AdminDashboardPage() {
 
       <div className="card-premium rounded-xl overflow-hidden border">
         <CategoryManagement />
+      </div>
+
+      <div className="card-premium rounded-xl overflow-hidden border">
+        <ShippingManagement />
       </div>
 
       <Card className="hidden sm:block">

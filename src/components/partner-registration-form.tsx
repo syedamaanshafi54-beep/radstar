@@ -116,7 +116,7 @@ export default function PartnerRegistrationForm() {
           </CardContent>
         </Card>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl p-8">
         <DialogHeader>
           <DialogTitle>Partner Registration</DialogTitle>
           <DialogDescription>
@@ -132,7 +132,7 @@ export default function PartnerRegistrationForm() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your full name" {...field} />
+                    <Input placeholder="Enter your full name" {...field} className="h-12 text-base rounded-xl" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -149,6 +149,7 @@ export default function PartnerRegistrationForm() {
                       placeholder="you@example.com"
                       type="email"
                       {...field}
+                      className="h-12 text-base rounded-xl"
                     />
                   </FormControl>
                   <FormMessage />
@@ -166,6 +167,7 @@ export default function PartnerRegistrationForm() {
                       placeholder="9876543210"
                       {...field}
                       maxLength={10}
+                      className="h-12 text-base rounded-xl"
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, '');
                         field.onChange(value);
@@ -183,7 +185,7 @@ export default function PartnerRegistrationForm() {
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter your full address" {...field} />
+                    <Textarea placeholder="Enter your full address" {...field} className="min-h-[100px] text-base rounded-xl resize-none" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -196,13 +198,13 @@ export default function PartnerRegistrationForm() {
                 <FormItem>
                   <FormLabel>Business Name (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your company name" {...field} />
+                    <Input placeholder="Your company name" {...field} className="h-12 text-base rounded-xl" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full h-12 text-base rounded-xl" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

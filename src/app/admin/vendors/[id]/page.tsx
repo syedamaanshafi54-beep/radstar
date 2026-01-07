@@ -431,7 +431,7 @@ export default function VendorDetailPage() {
 
             {/* Confirmation Dialog */}
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] rounded-2xl p-8">
                     <DialogHeader>
                         <DialogTitle>Confirm Discount Change</DialogTitle>
                         <DialogDescription>
@@ -451,7 +451,7 @@ export default function VendorDetailPage() {
                                         type="number"
                                         min="0"
                                         max="100"
-                                        className="h-12 text-lg"
+                                        className="h-12 text-lg rounded-xl"
                                         value={productDiscount}
                                         onChange={(e) => setProductDiscount(e.target.value)}
                                         placeholder="Enter additional %"
@@ -484,7 +484,7 @@ export default function VendorDetailPage() {
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowConfirmDialog(false)} disabled={isSaving}>
+                        <Button variant="outline" onClick={() => setShowConfirmDialog(false)} disabled={isSaving} className="h-12 rounded-xl">
                             Cancel
                         </Button>
                         <Button
@@ -494,6 +494,7 @@ export default function VendorDetailPage() {
                                     : handleConfirmProductDiscount
                             }
                             disabled={isSaving}
+                            className="h-12 rounded-xl"
                         >
                             {isSaving ? (
                                 <>

@@ -196,8 +196,8 @@ export default function AboutPage() {
               key={index}
               onClick={() => api?.scrollTo(index)}
               className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-colors ${index === current
-                  ? "bg-primary"
-                  : "bg-white/50 hover:bg-white/75"
+                ? "bg-primary"
+                : "bg-white/50 hover:bg-white/75"
                 }`}
             />
           ))}
@@ -405,16 +405,8 @@ export default function AboutPage() {
         <section className="grid gap-6 md:grid-cols-2">
           <div
             className="relative flex items-center justify-center p-8 md:p-12"
-            style={{ backgroundColor: "#fafaf9" }}
+            style={{ backgroundColor: "#fefce8" }}
           >
-            <Image
-              src={"/images/aslitalbina/vision.png"}
-              alt="Vision"
-              fill
-              className="object-cover opacity-20"
-              data-ai-hint="mountain sunrise"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
             <motion.div
               className="relative z-10 text-center max-w-md"
               initial="initial"

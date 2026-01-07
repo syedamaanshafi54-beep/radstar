@@ -47,7 +47,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
 import ProductDetails from "@/components/product-details";
+import { sendCODOrderConfirmationAction } from "@/actions/order-actions";
 
 declare global {
   interface Window {
@@ -134,6 +136,33 @@ export default function CheckoutPage() {
     },
   });
 
+  const shippingDocRef = useMemo(() => doc(firestore, "site-config", "shipping"), [firestore]);
+  const { data: shippingConfig } = useDoc<any>(shippingDocRef);
+  const zipCode = form.watch("zip");
+
+  const shippingCost = useMemo(() => {
+    if (!shippingConfig) return 0;
+
+    // Check free shipping threshold
+    if (shippingConfig.freeShippingThreshold > 0 && cartTotal >= shippingConfig.freeShippingThreshold) {
+      return 0;
+    }
+
+    if (shippingConfig.strategy === 'pincode') {
+      const rates = shippingConfig.pincodeRates || {};
+      // precise match
+      if (rates[zipCode] !== undefined) {
+        return rates[zipCode];
+      }
+      return shippingConfig.defaultPincodeRate || 0;
+    }
+
+    // Flat rate
+    return shippingConfig.flatRate || 0;
+  }, [shippingConfig, cartTotal, zipCode]);
+
+  const grandTotal = cartTotal + shippingCost;
+
   useEffect(() => {
     if (!user) return;
     if (userProfile) {
@@ -201,8 +230,8 @@ export default function CheckoutPage() {
         zip: shippingInfo.zip,
       },
       subtotal: cartTotal,
-      shipping: 0,
-      totalAmount: cartTotal,
+      shipping: shippingCost,
+      totalAmount: grandTotal,
       paymentMethod: shippingInfo.paymentMethod,
       paymentStatus: 'created',
       status: status,
@@ -283,7 +312,7 @@ export default function CheckoutPage() {
           'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          amount: cartTotal,
+          amount: grandTotal,
           receipt: `rcpt_${Date.now()}`,
           orderPayload: orderPayload
         }),
@@ -392,7 +421,11 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     try {
       if (shippingInfo.paymentMethod === "cod") {
-        await placeOrderInFirestore(shippingInfo);
+        const orderId = await placeOrderInFirestore(shippingInfo);
+        if (user) {
+          // Non-blocking email send
+          sendCODOrderConfirmationAction(user.uid, orderId).catch(console.error);
+        }
         clearCart();
         setShowSuccess(true);
         setTimeout(() => {
@@ -610,12 +643,12 @@ export default function CheckoutPage() {
                         )}
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Shipping</span>
-                          <span>Free</span>
+                          <span><span className="font-currency">₹</span>{shippingCost}</span>
                         </div>
                         <Separator className="my-2" />
                         <div className="flex justify-between font-bold text-lg">
                           <span>Total {isVendor ? 'Payable' : ''}</span>
-                          <span className={isVendor ? "text-primary" : ""}><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                          <span className={isVendor ? "text-primary" : ""}><span className="font-currency">₹</span>{formatPrice(grandTotal)}</span>
                         </div>
                       </div>
                       <Button type="submit" disabled={isProcessing} className="w-full mt-4">

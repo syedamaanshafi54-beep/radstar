@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/firebase/firebase-admin';
 import crypto from 'crypto';
 import { z } from 'zod';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -82,6 +83,31 @@ export async function POST(req: Request) {
     });
 
     console.log('Payment verified and order confirmed on server:', firestoreOrderId);
+
+    // Send Confirmation Email
+    try {
+      const orderDoc = await firestore.collection('users').doc(decodedToken.uid).collection('orders').doc(firestoreOrderId).get();
+      const orderData = orderDoc.data();
+      if (orderData && orderData.shippingInfo && orderData.shippingInfo.email) {
+        const { shippingInfo, orderNumber, createdAt } = orderData;
+        const orderDate = createdAt ? new Date(createdAt.toMillis()).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString();
+        const orderUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://radstar.in'}/orders/${firestoreOrderId}`;
+
+        // Since this is a route handler, static import is fine.
+
+        await sendOrderConfirmationEmail(
+          shippingInfo.email,
+          shippingInfo.name,
+          orderNumber || firestoreOrderId,
+          orderDate,
+          orderUrl
+        );
+      }
+    } catch (emailError) {
+      console.error("Failed to send order confirmation email:", emailError);
+      // Don't fail the request just because email failed
+    }
+
     return NextResponse.json({ success: true, message: "Payment verified successfully!", orderId: firestoreOrderId });
 
   } catch (error: any) {

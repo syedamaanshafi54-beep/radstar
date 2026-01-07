@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { initialCategories } from '@/data/categories';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +69,26 @@ export function CategoryManagement() {
                 title: 'Error',
                 description: 'Failed to add category. Please try again.',
             });
+        }
+    };
+
+    const handleInitializeCategories = async () => {
+        try {
+            // const { initialCategories } = await import('@/data/categories');
+            for (const cat of initialCategories) {
+                await addDoc(categoriesCollection, {
+                    name: cat.name,
+                    slug: cat.slug,
+                    order: cat.order,
+                    isActive: cat.isActive
+                });
+            }
+            toast({
+                title: 'Initialized',
+                description: 'Default categories have been added.',
+            });
+        } catch (error) {
+            console.error("Error seeding:", error);
         }
     };
 
@@ -239,6 +260,11 @@ export function CategoryManagement() {
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center text-muted-foreground">
                                         No categories found. Add your first category to get started.
+                                        <div className="mt-4">
+                                            <Button variant="outline" size="sm" onClick={handleInitializeCategories}>
+                                                Load Defaults
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
