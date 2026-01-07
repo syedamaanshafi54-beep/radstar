@@ -438,14 +438,6 @@ export default function AboutPage() {
             className="relative flex items-center justify-center p-8 md:p-12 border-t md:border-t-0 md:border-l border-primary/10"
             style={{ backgroundColor: "#f0fdf4" }}
           >
-            <Image
-              src={"/images/aslitalbina/mission.png"}
-              alt="Mission"
-              fill
-              className="object-cover opacity-5"
-              data-ai-hint="clean factory"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
             <motion.div
               className="relative z-10 text-center max-w-md"
               initial="initial"
