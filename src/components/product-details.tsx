@@ -39,36 +39,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
 
   const handleAddToCart = () => {
     const amountToAdd = quantity;
-    const availableStock = selectedVariant?.stock ?? product.stock;
 
-    if (availableStock !== undefined) {
-      if (cartQty + amountToAdd > availableStock) {
-        toast({
-          variant: "destructive",
-          title: "Insufficient Stock",
-          description: `Only ${availableStock} units available. ${Math.max(0, availableStock - cartQty)} more can be added.`,
-          action: (
-            <ToastAction
-              altText="Contact on WhatsApp"
-              onClick={() => window.open('https://wa.me/919032561974', '_blank')}
-            >
-              WhatsApp
-            </ToastAction>
-          ),
-        });
-        return;
-      }
-    }
-
-    const success = addToCart(product, amountToAdd, selectedVariant);
-    if (!success) {
-      toast({
-        variant: "destructive",
-        title: "Cannot Add to Cart",
-        description: "Stock limit reached.",
-      });
-      return;
-    }
+    addToCart(product, amountToAdd, selectedVariant);
 
     toast({
       title: "Added to cart",
@@ -88,18 +60,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   };
 
   const handleQuantityChange = (change: number) => {
-    const newQty = Math.max(1, quantity + change);
-    const availableStock = selectedVariant?.stock ?? product.stock;
-
-    if (availableStock !== undefined && newQty > availableStock) {
-      toast({
-        variant: "destructive",
-        title: "Stock Limit Reached",
-        description: `Only ${availableStock} units available.`,
-      });
-      return;
-    }
-    setQuantity(newQty);
+    setQuantity(prev => Math.max(1, prev + change));
   };
 
   const handleVariantChange = (variantId: string) => {

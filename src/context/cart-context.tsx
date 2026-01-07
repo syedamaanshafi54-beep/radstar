@@ -127,55 +127,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 
   const addToCart = (product: Product, quantity: number = 1, variant?: ProductVariant): boolean => {
-    // Get available stock
-    const availableStock = variant?.stock ?? product.stock;
-
-    // If no stock info, allow (assume unlimited)
-    if (availableStock === undefined) {
-      setCart(prevCart => {
-        const newCart = [...prevCart];
-        const cartItemId = getCartItemId(product.id, variant?.id);
-
-        const existingItemIndex = newCart.findIndex(
-          (item) => getCartItemId(item.productId, item.variantId) === cartItemId
-        );
-
-        if (existingItemIndex > -1) {
-          newCart[existingItemIndex].quantity += quantity;
-        } else {
-          newCart.push({
-            productId: product.id,
-            quantity,
-            variantId: variant?.id
-          });
-        }
-
-        if (user) {
-          updateFirestoreCart(user.uid, newCart);
-        } else {
-          updateGuestCart(newCart);
-        }
-        return newCart;
-      });
-      return true;
-    }
-
-    // Check current quantity in cart
-    const cartItemId = getCartItemId(product.id, variant?.id);
-    const currentCartItem = cart.find(
-      (item) => getCartItemId(item.productId, item.variantId) === cartItemId
-    );
-    const currentQuantity = currentCartItem?.quantity || 0;
-    const newTotalQuantity = currentQuantity + quantity;
-
-    // Validate against stock
-    if (newTotalQuantity > availableStock) {
-      console.warn(`Cannot add ${quantity} items. Only ${availableStock - currentQuantity} more available in stock.`);
-      return false;
-    }
-
     setCart(prevCart => {
       const newCart = [...prevCart];
+      const cartItemId = getCartItemId(product.id, variant?.id);
+
       const existingItemIndex = newCart.findIndex(
         (item) => getCartItemId(item.productId, item.variantId) === cartItemId
       );
@@ -214,42 +169,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (newQuantity <= 0) {
       removeFromCart(cartItemId);
       return true;
-    }
-
-    // Find the cart item to get product and variant info
-    const cartItem = cart.find(item => getCartItemId(item.productId, item.variantId) === cartItemId);
-    if (!cartItem) return false;
-
-    // Find the product in allProducts
-    const product = allProducts?.find(p => p.id === cartItem.productId);
-    if (!product) return false;
-
-    // Get variant if applicable
-    const variant = product.variants?.find(v => v.id === cartItem.variantId);
-
-    // Get available stock
-    const availableStock = variant?.stock ?? product.stock;
-
-    // If no stock info, allow (assume unlimited)
-    if (availableStock === undefined) {
-      const newCart = cart.map((item) =>
-        getCartItemId(item.productId, item.variantId) === cartItemId
-          ? { ...item, quantity: newQuantity }
-          : item
-      );
-      setCart(newCart);
-      if (user) {
-        updateFirestoreCart(user.uid, newCart);
-      } else {
-        updateGuestCart(newCart);
-      }
-      return true;
-    }
-
-    // Validate against stock
-    if (newQuantity > availableStock) {
-      console.warn(`Cannot update quantity to ${newQuantity}. Only ${availableStock} available in stock.`);
-      return false;
     }
 
     const newCart = cart.map((item) =>
