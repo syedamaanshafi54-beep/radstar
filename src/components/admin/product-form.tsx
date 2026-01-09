@@ -27,7 +27,7 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { initialCategories } from '@/data/categories';
+
 
 const formSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters.'),
@@ -77,7 +77,7 @@ export function ProductForm({ product }: ProductFormProps) {
         name: cat.name || cat.id
       }));
     }
-    return initialCategories;
+    return [];
   }, [firestoreCategories]);
 
   const defaultValues = product

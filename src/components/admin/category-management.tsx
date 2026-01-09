@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { initialCategories } from '@/data/categories';
+import { useState, useMemo } from 'react';
+
+import { type Product } from '@/lib/types';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Plus, Trash2, Edit2, Check, X, Loader2 } from 'lucide-react';
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { Plus, Trash2, Edit2, Check, X, Loader2, RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 type Category = {
     id: string;
@@ -28,6 +31,7 @@ export function CategoryManagement() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [newCategory, setNewCategory] = useState({ name: '', order: 1 });
     const [editCategory, setEditCategory] = useState({ name: '', order: 1 });
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const categoriesCollection = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
     const { data: categories, isLoading } = useCollection<Category>(categoriesCollection, { listen: true });
@@ -72,23 +76,57 @@ export function CategoryManagement() {
         }
     };
 
-    const handleInitializeCategories = async () => {
+
+    const handleSyncFromProducts = async () => {
+        setIsSyncing(true);
         try {
-            // const { initialCategories } = await import('@/data/categories');
-            for (const cat of initialCategories) {
-                await addDoc(categoriesCollection, {
-                    name: cat.name,
-                    slug: cat.slug,
-                    order: cat.order,
-                    isActive: cat.isActive
+            const productsSnap = await getDocs(collection(firestore, 'products'));
+            const productCategoriesUsed = new Set<string>();
+            productsSnap.forEach(doc => {
+                const data = doc.data();
+                if (data.category) {
+                    const catName = data.category.trim();
+                    if (catName) productCategoriesUsed.add(catName);
+                }
+            });
+
+
+            const existingCategoryNamesNormalized = new Set((categories || []).map(c => c.name.trim().toLowerCase()));
+            const missing = Array.from(productCategoriesUsed).filter(name => !existingCategoryNamesNormalized.has(name.toLowerCase()));
+
+            if (missing.length === 0) {
+                toast({
+                    title: 'Already Synced',
+                    description: 'All categories used in products are already managed.',
                 });
+                return;
             }
+
+            let addedCount = 0;
+            for (const name of missing) {
+                const slug = generateSlug(name);
+                await addDoc(categoriesCollection, {
+                    name,
+                    slug,
+                    order: (categories?.length || 0) + addedCount + 1,
+                    isActive: true,
+                });
+                addedCount++;
+            }
+
             toast({
-                title: 'Initialized',
-                description: 'Default categories have been added.',
+                title: 'Sync Complete',
+                description: `Successfully added ${addedCount} missing categories: ${missing.join(', ')}`,
             });
         } catch (error) {
-            console.error("Error seeding:", error);
+            console.error('Error syncing categories:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Sync Failed',
+                description: 'An error occurred while syncing categories from products.',
+            });
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -195,10 +233,16 @@ export function CategoryManagement() {
                         </CardDescription>
                     </div>
                     {!isAdding && (
-                        <Button onClick={() => setIsAdding(true)} size="sm">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Category
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button onClick={handleSyncFromProducts} variant="outline" size="sm" disabled={isSyncing}>
+                                <RefreshCw className={cn("h-4 w-4 mr-2", isSyncing && "animate-spin")} />
+                                Sync from Products
+                            </Button>
+                            <Button onClick={() => setIsAdding(true)} size="sm">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Category
+                            </Button>
+                        </div>
                     )}
                 </div>
             </CardHeader>
@@ -260,11 +304,6 @@ export function CategoryManagement() {
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center text-muted-foreground">
                                         No categories found. Add your first category to get started.
-                                        <div className="mt-4">
-                                            <Button variant="outline" size="sm" onClick={handleInitializeCategories}>
-                                                Load Defaults
-                                            </Button>
-                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (

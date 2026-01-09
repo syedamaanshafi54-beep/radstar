@@ -99,11 +99,8 @@ service cloud.firestore {
       // Users can create their own vendor application
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       
-      // Allow get if owner or admin
-      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-      
-      // Allow list if admin or if filtering by own userId
-      allow list: if isAdmin() || (isSignedIn() && request.query.filters.userId == request.auth.uid);
+      // Allow user to read their own vendor application/profile, and admins to read all
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       
       // Only admins can update or delete
       allow update, delete: if isAdmin();

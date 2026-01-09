@@ -1,5 +1,7 @@
-
 "use client";
+import { useMemo } from "react";
+import { useFirestore, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -44,6 +46,25 @@ export default function CartPage() {
   }, 0);
 
   const totalSavings = originalTotal - cartTotal;
+
+  const firestore = useFirestore();
+  const shippingDocRef = useMemo(() => doc(firestore, "site-config", "shipping"), [firestore]);
+  const { data: shippingConfig, isLoading: isLoadingShipping } = useDoc<any>(shippingDocRef);
+
+  const shippingCost = useMemo(() => {
+    if (!shippingConfig) return 0;
+    if (shippingConfig.freeShippingThreshold > 0 && cartTotal >= shippingConfig.freeShippingThreshold) {
+      return 0;
+    }
+    // For cart page, we'll show flat rate if it's the strategy, 
+    // or default pincode rate if that's the strategy (as we don't have zip yet)
+    if (shippingConfig.strategy === 'pincode') {
+      return shippingConfig.defaultPincodeRate || 0;
+    }
+    return shippingConfig.flatRate || 0;
+  }, [shippingConfig, cartTotal]);
+
+  const grandTotal = cartTotal + shippingCost;
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-16 lg:py-24 pt-28 sm:pt-8">
@@ -223,12 +244,18 @@ export default function CartPage() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span>Free</span>
+                  <span>
+                    {isLoadingShipping ? (
+                      <span className="text-xs text-muted-foreground italic">Calculating...</span>
+                    ) : (
+                      shippingCost > 0 ? `₹${formatPrice(shippingCost)}` : "Free"
+                    )}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total {isVendor ? 'Payable' : ''}</span>
-                  <span className={isVendor ? "text-primary" : ""}><span className="font-currency">₹</span>{formatPrice(cartTotal)}</span>
+                  <span className={isVendor ? "text-primary" : ""}><span className="font-currency">₹</span>{formatPrice(grandTotal)}</span>
                 </div>
                 {isVendor && totalSavings > 0 && (
                   <p className="text-xs text-center text-green-600 font-medium mt-2 animate-pulse">

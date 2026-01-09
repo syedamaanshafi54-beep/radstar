@@ -7,7 +7,7 @@ import { Suspense, useMemo } from "react";
 import React from "react";
 import { WithId, useCollection, useFirestore, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc } from 'firebase/firestore';
-import { staticProducts } from "@/data/static-products";
+
 import { ProductCard } from "@/components/product-card";
 import { motion } from 'framer-motion';
 
@@ -41,7 +41,7 @@ function ProductsGrid() {
   const dealsDocRef = useMemoFirebase(() => doc(firestore, 'site-config', 'dealsOfTheDay'), [firestore]);
   const { data: dealsData, isLoading: dealsLoading } = useDoc<DealsData>(dealsDocRef);
 
-  const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
+  const products = firestoreProducts || [];
 
   const dealIdSet = useMemo(() => {
     if (!dealsData || !dealsData.productIds) return new Set();

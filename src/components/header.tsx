@@ -20,6 +20,9 @@ import {
   Sprout,
   ChevronDown,
 } from 'lucide-react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { useMemo } from 'react';
 import CartIcon from '@/components/cart-icon';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter } from 'next/navigation';
@@ -55,12 +58,6 @@ const storyLinks = [
   { href: '/quality', label: 'Quality' },
 ];
 
-const productCategories = [
-  { href: '/#Asli-Talbina', label: 'Asli Talbina' },
-  { href: '/#Toast', label: 'Toast' },
-  { href: "/#Kings-Asli-Honey", label: "King's Asli Honey" },
-];
-
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -75,6 +72,23 @@ export function Header() {
   const [storyOpen, setStoryOpen] = useState(false);
   const productsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const storyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const firestore = useFirestore();
+  const categoriesCollection = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
+  const { data: firestoreCategories } = useCollection<any>(categoriesCollection, { listen: true });
+
+  const productCategories = useMemo(() => {
+    if (firestoreCategories && firestoreCategories.length > 0) {
+      return firestoreCategories
+        .filter((cat: any) => cat.isActive !== false)
+        .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+        .map((cat: any) => ({
+          href: `/#${(cat.slug || cat.name).replace(/\s+/g, '-')}`,
+          label: cat.name
+        }));
+    }
+    return [];
+  }, [firestoreCategories]);
 
 
   const [isScrolled, setIsScrolled] = useState(false);

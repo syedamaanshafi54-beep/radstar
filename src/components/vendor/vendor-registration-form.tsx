@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { createVendorApplication, hasPendingVendorApplication } from '@/firebase/vendors';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,38 +36,124 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
     const [email, setEmail] = useState(user?.email || '');
     const [locationType, setLocationType] = useState<'manual' | 'geolocation'>('manual');
     const [address, setAddress] = useState('');
+    const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
     const [gettingLocation, setGettingLocation] = useState(false);
+    const [status, setStatus] = useState<'none' | 'pending' | 'approved'>('none');
+    const [checkingStatus, setCheckingStatus] = useState(true);
+
+    // Check application status on mount
+    useEffect(() => {
+        async function checkStatus() {
+            if (!user) {
+                setCheckingStatus(false);
+                return;
+            }
+
+            try {
+                // Check if already approved (check if vendor context says so, or from firestore)
+                // For simplicity, let's just check firestore here
+                const hasPending = await hasPendingVendorApplication(firestore, user.uid);
+                if (hasPending) {
+                    setStatus('pending');
+                } else {
+                    // Check if approved
+                    const q = query(
+                        collection(firestore, 'vendors'),
+                        where('userId', '==', user.uid),
+                        where('status', '==', 'approved')
+                    );
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        setStatus('approved');
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking vendor status:', err);
+            } finally {
+                setCheckingStatus(false);
+            }
+        }
+        checkStatus();
+    }, [user, firestore]);
+
+    // Update email when user is available
+    useEffect(() => {
+        if (user?.email && !email) {
+            setEmail(user.email);
+        }
+    }, [user, email]);
 
     const handleGetLocation = () => {
+        console.log('Location button clicked. Initiating geolocation request...');
         if (!navigator.geolocation) {
             toast({
-                title: 'Error',
-                description: 'Geolocation is not supported by your browser',
+                title: 'Not Supported',
+                description: 'Geolocation is not supported by your browser.',
                 variant: 'destructive',
             });
             return;
         }
 
         setGettingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setLocationType('geolocation');
-                setAddress(`Lat: ${position.coords.latitude.toFixed(6)}, Lng: ${position.coords.longitude.toFixed(6)}`);
-                setGettingLocation(false);
-                toast({
-                    title: 'Location Captured',
-                    description: 'Your location has been captured successfully',
-                });
-            },
-            (error) => {
-                setGettingLocation(false);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to get your location. Please enter manually.',
-                    variant: 'destructive',
-                });
-            }
-        );
+
+        const tryGetPosition = (highAccuracy: boolean) => {
+            console.log(`Attempting geolocation (highAccuracy: ${highAccuracy})...`);
+
+            const options = {
+                enableHighAccuracy: highAccuracy,
+                timeout: highAccuracy ? 8000 : 12000,
+                maximumAge: 0
+            };
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setLocationType('geolocation');
+                    setCoordinates({ lat, lng });
+                    setAddress(`Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`);
+                    setGettingLocation(false);
+                    toast({
+                        title: 'Location Captured',
+                        description: `Successfully captured ${highAccuracy ? 'precise' : 'approximate'} coordinates.`,
+                    });
+                },
+                (error) => {
+                    console.warn(`Geolocation error (highAccuracy: ${highAccuracy}): Code ${error.code} - ${error.message}`);
+
+                    // IF high accuracy failed, try once more with standard accuracy
+                    if (highAccuracy && (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT)) {
+                        console.log('High accuracy failed/unavailable, falling back to standard accuracy...');
+                        tryGetPosition(false);
+                        return;
+                    }
+
+                    setGettingLocation(false);
+                    let errorMessage = 'Failed to get your location. Please enter manually.';
+
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "Location permission denied. Please enable it in browser settings.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = "Location info is unavailable. Your device might not have a location sensor.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = "Location request timed out. Check your internet/GPS signal.";
+                            break;
+                    }
+
+                    toast({
+                        title: 'Location Error',
+                        description: errorMessage,
+                        variant: 'destructive',
+                    });
+                },
+                options
+            );
+        };
+
+        tryGetPosition(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -116,13 +203,11 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
 
             // Parse location
             let location: VendorLocation;
-            if (locationType === 'geolocation' && address.includes('Lat:')) {
-                const [latPart, lngPart] = address.split(', ');
-                const lat = parseFloat(latPart.split(': ')[1]);
-                const lng = parseFloat(lngPart.split(': ')[1]);
+            if (locationType === 'geolocation' && coordinates) {
                 location = {
                     type: 'geolocation',
-                    coordinates: { lat, lng },
+                    coordinates: coordinates,
+                    address: address.trim(), // Save the lat/lng string as address too
                 };
             } else {
                 location = {
@@ -145,6 +230,7 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
                 location
             );
 
+            setStatus('pending');
             toast({
                 title: 'Application Submitted',
                 description: 'Your vendor application has been submitted. Admin will review and contact you.',
@@ -174,6 +260,50 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
         }
     };
 
+    if (checkingStatus) {
+        return (
+            <Card className="w-full max-w-2xl mx-auto p-8 flex justify-center items-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </Card>
+        );
+    }
+
+    if (status === 'approved') {
+        return (
+            <Card className="w-full max-w-2xl mx-auto border-green-200 bg-green-50/50">
+                <CardHeader>
+                    <CardTitle className="text-green-700">Vendor Account Active</CardTitle>
+                    <CardDescription>
+                        You are already a registered vendor. You can see your special pricing across the store.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm font-medium text-green-600">
+                        Visit your account page to see more details about your vendor status and discounts.
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (status === 'pending') {
+        return (
+            <Card className="w-full max-w-2xl mx-auto border-yellow-200 bg-yellow-50/50">
+                <CardHeader>
+                    <CardTitle className="text-yellow-700">Application Pending</CardTitle>
+                    <CardDescription>
+                        Your vendor application has been submitted and is currently being reviewed by our team.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm font-medium text-yellow-600">
+                        We will contact you via email or phone once your application has been processed.
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
         <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
@@ -198,8 +328,8 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
                     <div className="space-y-2">
                         <Label htmlFor="businessType">Business Type *</Label>
                         <Select value={businessType} onValueChange={(value: any) => setBusinessType(value)}>
-                            <SelectTrigger id="businessType">
-                                <SelectValue />
+                            <SelectTrigger id="businessType" className="w-full">
+                                <SelectValue placeholder="Select business type" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Retailer">Retailer</SelectItem>

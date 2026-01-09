@@ -25,7 +25,15 @@ import React from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { ChartTooltipContent } from "@/components/ui/chart";
-import PartnerRegistrationForm from "@/components/partner-registration-form";
+import { VendorRegistrationForm } from "@/components/vendor/vendor-registration-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 40 },
@@ -82,7 +90,10 @@ const growthData = [
 ];
 
 export default function AboutPage() {
-  const founderImage = PlaceHolderImages.find((p) => p.id === "founder");
+  const founderImage = {
+    imageUrl: "/images/fd.jpeg",
+    description: "Syed Abdul Qader, Imran - Founder & CEO"
+  };
   const plugin = React.useRef(
     Autoplay({ delay: 5000, stopOnInteraction: false })
   );
@@ -478,11 +489,10 @@ export default function AboutPage() {
               variants={fadeInUp}
             >
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline">
-                Join Our Mission
+                Partner With Us
               </h2>
               <p className="mt-3 sm:mt-4 text-base sm:text-lg font-medium text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                We're empowering our community and building a prosperous sales
-                force inspired by ethical principles.
+                Become a registered vendor and join our growing network of trust.
               </p>
             </motion.div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
@@ -514,7 +524,38 @@ export default function AboutPage() {
                   </p>
                 </CardContent>
               </Card>
-              <PartnerRegistrationForm />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Card className="transition-all duration-300 cursor-pointer bg-white border border-primary/20 hover:bg-primary/5 hover:shadow-lg border-dashed">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2" style={{ color: "#1B3518" }}>
+                        <Handshake className="h-5 w-5" />
+                        Become a Partner
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="font-medium text-sm sm:text-base leading-relaxed" style={{ color: "#4A4A4A" }}>
+                        Join our mission and grow your business with us. Click here to submit your vendor registration application.
+                      </p>
+                      <div className="mt-4 text-primary font-bold flex items-center gap-1 group">
+                        Register Now
+                        <span className="transition-transform group-hover:translate-x-1">→</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+                  <div className="max-h-[85vh] overflow-y-auto p-6 pt-12">
+                    <DialogHeader className="mb-6">
+                      <DialogTitle className="text-2xl font-headline">Vendor Registration</DialogTitle>
+                      <DialogDescription>
+                        Please fill out the form below to register as a vendor. Our team will review your application.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <VendorRegistrationForm />
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </section>

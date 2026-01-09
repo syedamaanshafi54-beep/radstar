@@ -34,7 +34,7 @@ import { DealBanner } from '@/components/deal-banner';
 import { useRouter, usePathname } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { formatPrice } from '@/lib/utils';
-import { staticProducts } from '@/data/static-products';
+
 import { Review } from '@/lib/types/reviews';
 import ProductReviews from '@/components/product-reviews';
 import GlobalLoader from "@/components/GlobalLoader";
@@ -157,7 +157,7 @@ export default function Home() {
   const { data: heroSlidesData, isLoading: heroSlidesLoading } = useDoc<HeroSlidesData>(heroSlidesDocRef);
 
 
-  const products = (firestoreProducts && firestoreProducts.length > 0) ? firestoreProducts : staticProducts;
+  const products = firestoreProducts || [];
 
   const productsByCategory = products.reduce((acc, product) => {
     const category = product.category;
@@ -475,11 +475,10 @@ export default function Home() {
             <motion.div variants={fadeInUp} className="order-2 md:order-1 relative aspect-square rounded-2xl overflow-hidden shadow-lg">
               <Image
                 src={'/images/aslitalbina/rss.png'}
-                alt="Founder of Rad Star Trading"
+                alt="story of Rad Star Trading"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
-                data-ai-hint="founder portrait"
               />
             </motion.div>
           </motion.div>

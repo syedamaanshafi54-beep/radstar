@@ -140,6 +140,14 @@ export default function SiteContentManagement({
                                                         placeholder="Hero Headline"
                                                     />
                                                 </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Top Subtext (Tagline)</Label>
+                                                    <Input
+                                                        value={slide.tagline}
+                                                        onChange={(e) => onHeroSlideChange(index, 'tagline', e.target.value)}
+                                                        placeholder="e.g., Pure, Raw, and Unprocessed"
+                                                    />
+                                                </div>
                                                 <div className="space-y-2">
                                                     <Label>CTA Link</Label>
                                                     <Input

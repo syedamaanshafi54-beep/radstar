@@ -137,7 +137,7 @@ export default function CheckoutPage() {
   });
 
   const shippingDocRef = useMemo(() => doc(firestore, "site-config", "shipping"), [firestore]);
-  const { data: shippingConfig } = useDoc<any>(shippingDocRef);
+  const { data: shippingConfig, isLoading: isLoadingShipping } = useDoc<any>(shippingDocRef);
   const zipCode = form.watch("zip");
 
   const shippingCost = useMemo(() => {
@@ -643,7 +643,13 @@ export default function CheckoutPage() {
                         )}
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Shipping</span>
-                          <span><span className="font-currency">₹</span>{shippingCost}</span>
+                          <span>
+                            {isLoadingShipping ? (
+                              <span className="text-xs text-muted-foreground italic">Calculating...</span>
+                            ) : (
+                              shippingCost > 0 ? <><span className="font-currency">₹</span>{formatPrice(shippingCost)}</> : "Free"
+                            )}
+                          </span>
                         </div>
                         <Separator className="my-2" />
                         <div className="flex justify-between font-bold text-lg">
