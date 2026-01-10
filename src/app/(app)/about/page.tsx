@@ -4,12 +4,14 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  ArrowRight,
   Award,
   Building,
   Check,
   Goal,
   Handshake,
   Heart,
+  MapPin,
   ShieldCheck,
   Sprout,
 } from "lucide-react";
@@ -25,15 +27,8 @@ import React from "react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { ChartTooltipContent } from "@/components/ui/chart";
-import { VendorRegistrationForm } from "@/components/vendor/vendor-registration-form";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 40 },
@@ -524,39 +519,58 @@ export default function AboutPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Card className="transition-all duration-300 cursor-pointer bg-white border border-primary/20 hover:bg-primary/5 hover:shadow-lg border-dashed">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2" style={{ color: "#1B3518" }}>
-                        <Handshake className="h-5 w-5" />
-                        Become a Partner
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="font-medium text-sm sm:text-base leading-relaxed" style={{ color: "#4A4A4A" }}>
-                        Join our mission and grow your business with us. Click here to submit your vendor registration application.
-                      </p>
-                      <div className="mt-4 text-primary font-bold flex items-center gap-1 group">
-                        Register Now
-                        <span className="transition-transform group-hover:translate-x-1">→</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
-                  <div className="max-h-[85vh] overflow-y-auto p-6 pt-12">
-                    <DialogHeader className="mb-6">
-                      <DialogTitle className="text-2xl font-headline">Vendor Registration</DialogTitle>
-                      <DialogDescription>
-                        Please fill out the form below to register as a vendor. Our team will review your application.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <VendorRegistrationForm />
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Card className="transition-all duration-300 bg-white border border-primary/20 hover:bg-primary/5 hover:shadow-lg border-dashed">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2" style={{ color: "#1B3518" }}>
+                    <Handshake className="h-5 w-5" />
+                    Become a Partner
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-medium text-sm sm:text-base leading-relaxed" style={{ color: "#4A4A4A" }}>
+                    Join our mission and grow your business with us. You can apply for vendor status through your account dashboard or during login.
+                  </p>
+                  <Button asChild variant="link" className="mt-4 p-0 h-auto text-primary font-bold flex items-center gap-1 group">
+                    <Link href="/login">
+                      Register Now
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+        </section>
+
+        {/* Visit Us Section */}
+        <section className="py-12 md:py-20 bg-background text-center">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true, amount: 0.5 }}
+              variants={fadeInUp}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="bg-primary/10 p-4 w-fit mx-auto rounded-full mb-6">
+                <MapPin className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-3xl md:text-5xl font-headline font-bold mb-4">Visit Our Location</h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Experience the purity of our products firsthand. We invite you to visit our main distribution center in Hyderabad.
+              </p>
+              <Button asChild size="lg" className="rounded-full px-8 h-12 text-lg shadow-lg hover:shadow-xl transition-all">
+                <a
+                  href="https://maps.app.goo.gl/8WWStUXYjXdhC2ao9?g_st=ac"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  Visit Us on Google Maps
+                  <ArrowRight className="h-5 w-5" />
+                </a>
+              </Button>
+            </motion.div>
           </div>
         </section>
       </div>

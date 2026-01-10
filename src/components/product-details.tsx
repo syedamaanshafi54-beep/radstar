@@ -142,7 +142,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                 <SelectContent>
                   {product.variants.map((v) => (
                     <SelectItem key={v.id} value={v.id} className="text-base">
-                      {v.name} - ₹{formatPrice(v.salePrice || v.price)}
+                      {v.name} - <span className="font-currency">₹</span>{formatPrice(v.salePrice || v.price)}
                     </SelectItem>
                   ))}
                 </SelectContent>

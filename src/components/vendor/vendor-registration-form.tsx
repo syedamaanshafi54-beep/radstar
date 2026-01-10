@@ -25,7 +25,7 @@ interface VendorRegistrationFormProps {
 }
 
 export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrationFormProps) {
-    const { user } = useUser();
+    const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -218,8 +218,6 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
 
             // Create application
             console.log('Creating vendor application for user:', user.uid);
-            console.log('Firestore instance:', firestore);
-
             await createVendorApplication(
                 firestore,
                 user.uid,
@@ -239,9 +237,6 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
             onSuccess?.();
         } catch (error: any) {
             console.error('Error submitting vendor application:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-
             let errorMessage = 'Failed to submit application. Please try again.';
 
             if (error.code === 'permission-denied') {
@@ -260,7 +255,7 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
         }
     };
 
-    if (checkingStatus) {
+    if (isUserLoading || (user && checkingStatus)) {
         return (
             <Card className="w-full max-w-2xl mx-auto p-8 flex justify-center items-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -300,6 +295,19 @@ export function VendorRegistrationForm({ onSuccess, onCancel }: VendorRegistrati
                         We will contact you via email or phone once your application has been processed.
                     </p>
                 </CardContent>
+            </Card>
+        );
+    }
+
+    if (!user) {
+        return (
+            <Card className="w-full max-w-2xl mx-auto border-red-100 bg-red-50/50">
+                <CardHeader>
+                    <CardTitle className="text-red-800">Login Required</CardTitle>
+                    <CardDescription>
+                        You must be logged in to apply for a vendor account. Please sign in to continue.
+                    </CardDescription>
+                </CardHeader>
             </Card>
         );
     }

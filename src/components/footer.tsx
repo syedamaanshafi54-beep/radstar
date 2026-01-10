@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { Sprout } from "lucide-react";
+import { Sprout, MapPin } from "lucide-react";
 import { InstagramIcon, WhatsAppIcon } from "./icons/social-icons";
 
 export function Footer() {
@@ -16,13 +16,13 @@ export function Footer() {
             </Link>
             <p className="text-muted-foreground">The Original Taste of Wellness.</p>
             <div className="flex space-x-4 mt-4 justify-center md:justify-start">
-               <a
+              <a
                 href="https://www.instagram.com/aslitalbina.official"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:opacity-80 transition-opacity"
                 aria-label="Instagram"
-                >
+              >
                 <InstagramIcon className="h-6 w-6" />
               </a>
               <a
@@ -31,7 +31,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:opacity-80 transition-opacity"
                 aria-label="WhatsApp"
-                >
+              >
                 <WhatsAppIcon className="h-6 w-6" />
               </a>
             </div>
@@ -49,6 +49,17 @@ export function Footer() {
                 <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">Our Story</Link></li>
                 <li><Link href="/quality" className="text-muted-foreground hover:text-primary transition-colors">Quality Assurance</Link></li>
                 <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
+                <li>
+                  <a
+                    href="https://maps.app.goo.gl/8WWStUXYjXdhC2ao9?g_st=ac"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
+                  >
+                    <MapPin className="h-4 w-4 text-primary transition-transform group-hover:scale-110" />
+                    Visit Us
+                  </a>
+                </li>
               </ul>
             </div>
             <div>

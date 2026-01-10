@@ -130,10 +130,10 @@ export default function CartPage() {
                           {isVendor ? (
                             <>
                               <div className="flex flex-col">
-                                <span className="text-[10px] uppercase font-bold text-muted-foreground">MRP: ₹{formatPrice(price)}</span>
+                                <span className="text-[10px] uppercase font-bold text-muted-foreground">MRP: <span className="font-currency">₹</span>{formatPrice(price)}</span>
                                 <p className="font-semibold text-green-600"><span className="font-currency">₹</span>{formatPrice(vendorPrice)}</p>
                               </div>
-                              <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1 font-currency">💎 -₹{formatPrice((displayPrice - vendorPrice) * quantity)} Partner Discount</Badge>
+                              <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1 font-currency">💎 -<span className="font-currency">₹</span>{formatPrice((displayPrice - vendorPrice) * quantity)} Partner Discount</Badge>
                             </>
                           ) : salePrice ? (
                             <>
@@ -190,7 +190,7 @@ export default function CartPage() {
                             <p className="font-semibold text-green-600">
                               <span className="font-currency">₹</span>{formatPrice(vendorPrice * quantity)}
                             </p>
-                            <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 mt-1 font-currency">💎 -₹{formatPrice((displayPrice - vendorPrice) * quantity)} Partner Discount</Badge>
+                            <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 mt-1 font-currency">💎 -<span className="font-currency">₹</span>{formatPrice((displayPrice - vendorPrice) * quantity)} Partner Discount</Badge>
                           </>
                         ) : (
                           <p className="font-semibold"><span className="font-currency">₹</span>{formatPrice(vendorPrice * quantity)}</p>
@@ -248,7 +248,7 @@ export default function CartPage() {
                     {isLoadingShipping ? (
                       <span className="text-xs text-muted-foreground italic">Calculating...</span>
                     ) : (
-                      shippingCost > 0 ? `₹${formatPrice(shippingCost)}` : "Free"
+                      shippingCost > 0 ? <><span className="font-currency">₹</span>{formatPrice(shippingCost)}</> : "Free"
                     )}
                   </span>
                 </div>

@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Sprout } from "lucide-react";
+import { Mail, Phone, MapPin, Sprout, ArrowRight } from "lucide-react";
 
 export const metadata = {
   title: "Contact Us - Asli Talbina",
@@ -50,7 +50,7 @@ export default function ContactPage() {
             </a>
           </CardContent>
         </Card>
-        
+
         <Card className="md:col-span-2 lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -66,23 +66,35 @@ export default function ContactPage() {
         </Card>
       </div>
 
-       <div className="mt-16 text-center">
+      <div className="mt-16 text-center">
         <h2 className="text-3xl font-headline font-bold">Visit Us</h2>
         <p className="mt-2 text-lg font-medium text-muted-foreground">Find our products at over 150 locations.</p>
-        <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 max-w-4xl mx-auto">
-            <div className="flex items-center justify-center p-4 border rounded-lg">
-                <MapPin className="h-5 w-5 mr-3 text-muted-foreground"/>
-                <span className="font-medium">Supermarkets & Kirana Stores</span>
-            </div>
-            <div className="flex items-center justify-center p-4 border rounded-lg">
-                <MapPin className="h-5 w-5 mr-3 text-muted-foreground"/>
-                <span className="font-medium">Gyms & Fitness Centers</span>
-            </div>
-            <div className="flex items-center justify-center p-4 border rounded-lg">
-                <MapPin className="h-5 w-5 mr-3 text-muted-foreground"/>
-                <span className="font-medium">Clinics & Pharmacies</span>
-            </div>
+        <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 max-w-4xl mx-auto mb-12">
+          <div className="flex items-center justify-center p-4 border rounded-lg bg-card">
+            <MapPin className="h-5 w-5 mr-3 text-primary" />
+            <span className="font-medium">Supermarkets & Kirana Stores</span>
+          </div>
+          <div className="flex items-center justify-center p-4 border rounded-lg bg-card">
+            <MapPin className="h-5 w-5 mr-3 text-primary" />
+            <span className="font-medium">Gyms & Fitness Centers</span>
+          </div>
+          <div className="flex items-center justify-center p-4 border rounded-lg bg-card">
+            <MapPin className="h-5 w-5 mr-3 text-primary" />
+            <span className="font-medium">Clinics & Pharmacies</span>
+          </div>
         </div>
+
+        <Button asChild size="lg" className="rounded-full shadow-lg">
+          <a
+            href="https://maps.app.goo.gl/8WWStUXYjXdhC2ao9?g_st=ac"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2"
+          >
+            Visit Our Main Distribution Center
+            <ArrowRight className="h-5 w-5" />
+          </a>
+        </Button>
       </div>
 
     </div>
