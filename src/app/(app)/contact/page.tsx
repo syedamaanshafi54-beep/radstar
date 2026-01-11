@@ -86,7 +86,7 @@ export default function ContactPage() {
 
         <Button asChild size="lg" className="rounded-full shadow-lg">
           <a
-            href="https://maps.app.goo.gl/8WWStUXYjXdhC2ao9?g_st=ac"
+            href="https://maps.app.goo.gl/M5nPkg4FzbQ6PfhAA?g_st=awb"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2"

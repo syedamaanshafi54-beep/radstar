@@ -1,3 +1,7 @@
+# Security
+.env
+.env.local
+.env.*.local
 
 # Ignore the large catalog file specifically
 data/RAD STAR NEW CATALOG.pdf

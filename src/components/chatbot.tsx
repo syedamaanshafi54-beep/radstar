@@ -46,27 +46,29 @@ export default function Chatbot() {
   const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsCollection);
 
   const products = productsData || [];
-  
+
   useEffect(() => {
     const tooltipShown = sessionStorage.getItem('nutritionAssistantTooltipShown');
     if (!tooltipShown) {
       const timer = setTimeout(() => {
         setShowTooltip(true);
         sessionStorage.setItem('nutritionAssistantTooltipShown', 'true');
-        
+
         const hideTimer = setTimeout(() => {
           setShowTooltip(false);
         }, 4000); // Hide after 4 seconds
-        
+
         return () => clearTimeout(hideTimer);
       }, 500); // Show after a short delay
       return () => clearTimeout(timer);
     }
   }, []);
 
-  if (products.length > 0 && !variant) {
-    setVariant(products[0].name);
-  }
+  useEffect(() => {
+    if (products.length > 0 && !variant) {
+      setVariant(products[0].name);
+    }
+  }, [products, variant]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,41 +123,39 @@ export default function Chatbot() {
           </SheetHeader>
           <div className="flex-1 flex flex-col my-4">
             <ScrollArea className="flex-1 pr-4 -mr-4">
-                <div className="space-y-4">
+              <div className="space-y-4">
                 {messages.map((message, index) => (
-                    <div
+                  <div
                     key={index}
-                    className={`flex items-start gap-3 ${
-                        message.role === "user" ? "justify-end" : ""
-                    }`}
-                    >
+                    className={`flex items-start gap-3 ${message.role === "user" ? "justify-end" : ""
+                      }`}
+                  >
                     {message.role === "bot" && (
-                        <div className="p-2 bg-primary rounded-full text-primary-foreground">
+                      <div className="p-2 bg-primary rounded-full text-primary-foreground">
                         <Bot size={16} />
-                        </div>
+                      </div>
                     )}
                     <div
-                        className={`rounded-lg p-3 max-w-[80%] text-sm ${
-                        message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary"
+                      className={`rounded-lg p-3 max-w-[80%] text-sm ${message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary"
                         }`}
                     >
-                        {message.content}
+                      {message.content}
                     </div>
-                    </div>
+                  </div>
                 ))}
                 {isLoading && (
-                    <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary rounded-full text-primary-foreground">
-                        <Bot size={16} />
+                      <Bot size={16} />
                     </div>
                     <div className="bg-secondary rounded-lg p-3 flex items-center">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     </div>
-                    </div>
+                  </div>
                 )}
-                </div>
+              </div>
             </ScrollArea>
           </div>
           <SheetFooter>
@@ -176,25 +176,25 @@ export default function Chatbot() {
                 </Select>
               </div>
               <div className="space-y-2">
-                 <Label htmlFor="question-input">Your Question</Label>
+                <Label htmlFor="question-input">Your Question</Label>
                 <div className="flex gap-2">
-                    <Textarea
-                        id="question-input"
-                        value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
-                        placeholder="e.g., What are the benefits of..."
-                        className="flex-1"
-                        rows={1}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSubmit(e);
-                            }
-                        }}
-                    />
-                     <Button type="submit" disabled={isLoading || !question.trim()} size="icon">
-                        <Send className="h-4 w-4" />
-                     </Button>
+                  <Textarea
+                    id="question-input"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="e.g., What are the benefits of..."
+                    className="flex-1"
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                  />
+                  <Button type="submit" disabled={isLoading || !question.trim()} size="icon">
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </form>

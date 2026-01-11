@@ -7,12 +7,14 @@
  * - NutritionalInformationChatbotOutput - The return type for the nutritionalInformationChatbot function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const NutritionalInformationChatbotInputSchema = z.object({
   variant: z.string().describe('The Asli Talbina variant to query about (e.g., Regular, Chocolate Almond, etc.).'),
   question: z.string().describe('The question about the nutritional information or ingredients of the specified variant.'),
+  description: z.string().optional().describe('The description of the variant.'),
+  benefits: z.string().optional().describe('The benefits of the variant.'),
 });
 export type NutritionalInformationChatbotInput = z.infer<typeof NutritionalInformationChatbotInputSchema>;
 
@@ -25,7 +27,7 @@ export async function nutritionalInformationChatbot(input: NutritionalInformatio
   return nutritionalInformationChatbotFlow(input);
 }
 
-const productDetails = {
+const productDetails: Record<string, { benefits: string; description: string }> = {
   'Talbina Regular': {
     benefits: 'Super Breakfast - Immunity Booster - Omega 3-6 Fatty Acids - Balanced Diet - Mental Fitness - Activeness in Body - Calcium to Bone & Lower Back',
     description: 'Introducing harmonious blend that redefines nourishment. Embark on a flavor journey that combines the earthy richness of roasted barley with the natural sweetness of succulent dry dates. This unique medley not only fuels your body but also delights your palate. With each scoop, you\'re embracing the wholesome goodness of protein while savoring the authentic taste of nature\'s treasures. Powder offers a revitalizing experience like no other Elevate your nutrition game with this exceptional fusion and embrace the power of real ingredients. Unveil the perfect balance of taste and wellness in every sip.',
@@ -62,9 +64,16 @@ const productDetails = {
 
 const nutritionalInformationChatbotPrompt = ai.definePrompt({
   name: 'nutritionalInformationChatbotPrompt',
-  input: {schema: NutritionalInformationChatbotInputSchema},
-  output: {schema: NutritionalInformationChatbotOutputSchema},
-  prompt: `You are a chatbot designed to answer questions about Asli Talbina products. Use the following information to answer the user's question about the {{variant}} variant.\n\nDescription: {{{productDetails.[variant].description}}}\nBenefits: {{{productDetails.[variant].benefits}}}\n\nQuestion: {{{question}}}\n\nAnswer:`, // Accessing nested fields directly
+  input: { schema: NutritionalInformationChatbotInputSchema },
+  output: { schema: NutritionalInformationChatbotOutputSchema },
+  prompt: `You are a chatbot designed to answer questions about Asli Talbina products. Use the following information to answer the user's question about the {{variant}} variant.
+
+Description: {{description}}
+Benefits: {{benefits}}
+
+Question: {{question}}
+
+Answer:`,
 });
 
 const nutritionalInformationChatbotFlow = ai.defineFlow(
@@ -74,19 +83,27 @@ const nutritionalInformationChatbotFlow = ai.defineFlow(
     outputSchema: NutritionalInformationChatbotOutputSchema,
   },
   async input => {
-    // const {
-    //   output,
-    // } = await nutritionalInformationChatbotPrompt(input);
-    // return output!;
     const {
       variant,
       question,
     } = input;
 
-    if (!productDetails[variant]) {
-      return {
-        answer: `Sorry, I don't have information about the ${variant} variant.`,
-      };
+    // Use a fuzzy match/prefix match if possible, or just exact match
+    const variantKey = Object.keys(productDetails).find(k =>
+      variant.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(variant.toLowerCase())
+    );
+
+    if (!variantKey || !productDetails[variantKey]) {
+      // If we don't have specific info, let the AI try to answer based on general knowledge of Talbina
+      const {
+        output,
+      } = await nutritionalInformationChatbotPrompt({
+        variant: variant,
+        question: question,
+        description: "Talbina is a traditional barley-based porridge known for its high fiber, protein, and various health benefits according to Islamic tradition.",
+        benefits: "General benefits include heart health, digestion improvement, and mood elevation.",
+      });
+      return output!;
     }
 
     const {
@@ -94,7 +111,8 @@ const nutritionalInformationChatbotFlow = ai.defineFlow(
     } = await nutritionalInformationChatbotPrompt({
       variant: variant,
       question: question,
-      productDetails: productDetails,
+      description: productDetails[variantKey].description,
+      benefits: productDetails[variantKey].benefits,
     });
     return output!;
   }

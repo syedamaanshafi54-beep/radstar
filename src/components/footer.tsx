@@ -51,7 +51,7 @@ export function Footer() {
                 <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
                 <li>
                   <a
-                    href="https://maps.app.goo.gl/8WWStUXYjXdhC2ao9?g_st=ac"
+                    href="https://maps.app.goo.gl/M5nPkg4FzbQ6PfhAA?g_st=awb"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
